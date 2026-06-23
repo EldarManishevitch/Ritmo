@@ -1,0 +1,29 @@
+{
+  "name": "SavedWord",
+  "type": "object",
+  "properties": {
+    "spanish_word": {
+      "type": "string"
+    },
+    "english_meaning": {
+      "type": "string"
+    },
+    "pronunciation_hint": {
+      "type": "string"
+    },
+    "song_id": {
+      "type": "string"
+    },
+    "song_title": {
+      "type": "string"
+    },
+    "mastered": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "spanish_word",
+    "english_meaning"
+  ]
+}

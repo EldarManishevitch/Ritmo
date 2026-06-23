@@ -1,0 +1,65 @@
+{
+  "name": "Song",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Song title"
+    },
+    "artist": {
+      "type": "string",
+      "description": "Artist name"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "description": "YouTube or image thumbnail URL"
+    },
+    "video_id": {
+      "type": "string",
+      "description": "YouTube video ID"
+    },
+    "lyrics_lines": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of lyric lines in Spanish"
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": [
+        "A1",
+        "A2",
+        "B1",
+        "B2",
+        "C1"
+      ],
+      "default": "A2"
+    },
+    "genre": {
+      "type": "string",
+      "enum": [
+        "Reggaeton",
+        "Pop",
+        "Latin Pop",
+        "Bachata",
+        "Salsa",
+        "Trap",
+        "Rock"
+      ],
+      "default": "Reggaeton"
+    },
+    "preview_seconds": {
+      "type": "number",
+      "default": 10
+    },
+    "is_featured": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "title",
+    "artist"
+  ]
+}
