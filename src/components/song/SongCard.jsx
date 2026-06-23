@@ -4,7 +4,7 @@ import { Play, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export default function SongCard({ song, featured = false }) {
-  const thumbnail = song.thumbnail_url || `https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80`;
+  const thumbnail = song.album_art_url || `https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80`;
 
   if (featured) {
     return (

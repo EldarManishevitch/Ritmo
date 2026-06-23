@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import AppShell from '@/components/layout/AppShell';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -55,12 +56,14 @@ const AuthenticatedApp = () => {
 
       {/* Authenticated app */}
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route element={<AppShell />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/conversations" element={<Conversations />} />
+          <Route path="/roleplay" element={<Roleplay />} />
+          <Route path="/review" element={<ReviewRoom />} />
+          <Route path="/settings" element={<Settings />} />
+        </Route>
         <Route path="/song/:id" element={<SongPage />} />
-        <Route path="/conversations" element={<Conversations />} />
-        <Route path="/roleplay" element={<Roleplay />} />
-        <Route path="/review" element={<ReviewRoom />} />
-        <Route path="/settings" element={<Settings />} />
       </Route>
 
       <Route path="*" element={<PageNotFound />} />

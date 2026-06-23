@@ -1,12 +1,12 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Music, BookOpen, User } from 'lucide-react';
+import { Home, MessageCircle, BookOpen, User } from 'lucide-react';
 
 const tabs = [
-  { path: '/', icon: Home, label: 'Home' },
-  { path: '/catalog', icon: Music, label: 'Catalog' },
-  { path: '/vocabulary', icon: BookOpen, label: 'Words' },
-  { path: '/profile', icon: User, label: 'Profile' },
+  { path: '/dashboard', icon: Home, label: 'Learn' },
+  { path: '/conversations', icon: MessageCircle, label: 'Chat' },
+  { path: '/review', icon: BookOpen, label: 'Review' },
+  { path: '/settings', icon: User, label: 'Profile' },
 ];
 
 export default function BottomNav() {
