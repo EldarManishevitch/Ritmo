@@ -173,7 +173,7 @@ export default function SongPage() {
 
       {/* YouTube player */}
       <div className="relative bg-black">
-        <div id={playerContainerId} className="w-full aspect-video" />
+        <div id={playerContainerId} className="w-full aspect-video max-h-[30vh] mx-auto" />
         {!ready && (
           <div className="absolute inset-0 flex items-center justify-center bg-black">
             <Loader2 className="h-8 w-8 animate-spin text-white/60" />
