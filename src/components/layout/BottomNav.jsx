@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, MessageCircle, BookOpen, User } from 'lucide-react';
+import { Home, MessageCircle, BookOpen, User, Library } from 'lucide-react';
 
 const tabs = [
   { path: '/dashboard', icon: Home, label: 'Learn' },
   { path: '/conversations', icon: MessageCircle, label: 'Chat' },
+  { path: '/vocab', icon: Library, label: 'Vocab' },
   { path: '/review', icon: BookOpen, label: 'Review' },
   { path: '/settings', icon: User, label: 'Profile' },
 ];

@@ -20,6 +20,12 @@ import Conversations from './pages/Conversations';
 import Roleplay from './pages/Roleplay';
 import ReviewRoom from './pages/ReviewRoom';
 import Settings from './pages/Settings';
+import Vocab from './pages/Vocab';
+import HowToLearnSpanishWithMusic from './pages/HowToLearnSpanishWithMusic';
+import ReggaetonSlangGuide from './pages/ReggaetonSlangGuide';
+import DominicanSlangGuide from './pages/DominicanSlangGuide';
+import BestReggaetonSongs from './pages/BestReggaetonSongs';
+import BestBachataSongs from './pages/BestBachataSongs';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -54,6 +60,13 @@ const AuthenticatedApp = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
 
+      {/* Public blog/SEO pages */}
+      <Route path="/how-to-learn-spanish-with-music" element={<HowToLearnSpanishWithMusic />} />
+      <Route path="/reggaeton-slang-guide" element={<ReggaetonSlangGuide />} />
+      <Route path="/dominican-slang-guide" element={<DominicanSlangGuide />} />
+      <Route path="/best-reggaeton-songs" element={<BestReggaetonSongs />} />
+      <Route path="/best-bachata-songs" element={<BestBachataSongs />} />
+
       {/* Authenticated app */}
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route element={<AppShell />}>
@@ -61,6 +74,7 @@ const AuthenticatedApp = () => {
           <Route path="/conversations" element={<Conversations />} />
           <Route path="/roleplay" element={<Roleplay />} />
           <Route path="/review" element={<ReviewRoom />} />
+          <Route path="/vocab" element={<Vocab />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
         <Route path="/song/:id" element={<SongPage />} />
