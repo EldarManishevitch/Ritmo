@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Loader2, Plus, X } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -7,6 +9,7 @@ import { youtubeSearch } from '@/lib/aiHelpers';
 import { generateLyrics } from '@/lib/lyricsPipeline';
 
 export default function AddSongDialog({ open, onClose, onAdded }) {
+  const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [result, setResult] = useState(null);
@@ -33,17 +36,23 @@ export default function AddSongDialog({ open, onClose, onAdded }) {
     setGenerating(true);
     setError('');
     try {
-      const res = await generateLyrics({
+      // Create the song immediately so we can navigate without waiting
+      // for the full lyrics pipeline (which runs in the background).
+      const song = await base44.entities.Song.create({
         title: result.title,
         artist: result.artist || 'Unknown',
-        youtubeId: result.youtube_id,
+        youtube_id: result.youtube_id,
+        sync_status: 'fetching_lyrics',
       });
-      onAdded?.(res);
+      // Fire the pipeline in the background; SongPage polls and shows progress.
+      generateLyrics({ songId: song.id }).catch(() => {});
+      onAdded?.();
       setQuery('');
       setResult(null);
       onClose?.();
+      navigate(`/song/${song.id}`);
     } catch (e) {
-      setError(e.message || 'Failed to generate lyrics');
+      setError(e.message || 'Failed to add song');
     }
     setGenerating(false);
   };
