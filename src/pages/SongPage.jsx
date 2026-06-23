@@ -191,7 +191,10 @@ export default function SongPage() {
       ) : song.sync_status === 'failed' ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center">
           <p className="text-sm font-medium text-destructive">{STATUS_LABELS.failed}</p>
-          <Button size="sm" variant="outline" onClick={() => generateLyrics({ songId: id }).then(() => loadSong())}>
+          <Button size="sm" variant="outline" onClick={() => {
+            setSong({ ...song, sync_status: 'fetching_lyrics' });
+            generateLyrics({ songId: id }).catch(() => {}).finally(() => loadSong());
+          }}>
             <RefreshCw className="h-4 w-4 mr-1" /> Retry
           </Button>
         </div>
