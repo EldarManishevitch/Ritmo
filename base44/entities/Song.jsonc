@@ -26,14 +26,11 @@
     "difficulty": {
       "type": "string",
       "enum": [
-        "A1",
-        "A2",
-        "B1",
-        "B2",
-        "C1",
-        "C2"
+        "beginner",
+        "intermediate",
+        "advanced"
       ],
-      "default": "A1"
+      "default": "beginner"
     },
     "youtube_id": {
       "type": "string",

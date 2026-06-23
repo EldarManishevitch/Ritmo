@@ -6,9 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import SongCard from '@/components/song/SongCard';
 import DailyPhraseCard from '@/components/song/DailyPhraseCard';
 import AddSongDialog from '@/components/song/AddSongDialog';
+import { CEFR_LEVELS, songCefr } from '@/lib/cefr';
 
 const GENRES = ['reggaeton', 'bachata', 'pop latino', 'trap latino', 'merengue', 'salsa', 'rock latino'];
-const DIFFICULTIES = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
 export default function Dashboard() {
   const [songs, setSongs] = useState([]);
@@ -33,7 +33,7 @@ export default function Dashboard() {
 
   const filtered = songs.filter((s) =>
     (genre === 'all' || s.genre === genre) &&
-    (difficulty === 'all' || s.difficulty === difficulty)
+    (difficulty === 'all' || songCefr(s.difficulty) === difficulty)
   );
 
   const featured = songs.find((s) => s.is_featured) || songs[0];
@@ -77,7 +77,7 @@ export default function Dashboard() {
       </div>
       <div className="flex gap-2 overflow-x-auto no-scrollbar mb-4 pb-1">
         <FilterChip label="Any level" active={difficulty === 'all'} onClick={() => setDifficulty('all')} />
-        {DIFFICULTIES.map((d) => (
+        {CEFR_LEVELS.map((d) => (
           <FilterChip key={d} label={d} active={difficulty === d} onClick={() => setDifficulty(d)} />
         ))}
       </div>

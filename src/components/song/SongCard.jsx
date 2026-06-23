@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Play, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { songCefr } from '@/lib/cefr';
 
 export default function SongCard({ song, featured = false }) {
   const thumbnail = song.album_art_url || `https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80`;
@@ -29,7 +30,7 @@ export default function SongCard({ song, featured = false }) {
           </div>
           <div className="bg-card p-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="text-xs font-medium uppercase">{song.difficulty || 'A2'}</Badge>
+              <Badge variant="secondary" className="text-xs font-medium">{songCefr(song.difficulty)}</Badge>
               <Badge variant="outline" className="text-xs">{song.genre || 'Reggaeton'}</Badge>
             </div>
             <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
@@ -55,8 +56,8 @@ export default function SongCard({ song, featured = false }) {
           <h4 className="font-semibold text-sm truncate">{song.title}</h4>
           <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
         </div>
-        <Badge variant="secondary" className="text-[10px] font-medium flex-shrink-0 uppercase">
-          {song.difficulty || 'A2'}
+        <Badge variant="secondary" className="text-[10px] font-medium flex-shrink-0">
+          {songCefr(song.difficulty)}
         </Badge>
       </div>
     </Link>
