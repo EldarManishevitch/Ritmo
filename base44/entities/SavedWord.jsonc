@@ -2,20 +2,24 @@
   "name": "SavedWord",
   "type": "object",
   "properties": {
-    "spanish_word": {
-      "type": "string"
+    "word": {
+      "type": "string",
+      "description": "Spanish word saved by the user"
     },
     "english_meaning": {
-      "type": "string"
+      "type": "string",
+      "description": "English translation"
     },
     "pronunciation_hint": {
       "type": "string"
     },
-    "song_id": {
-      "type": "string"
+    "is_slang": {
+      "type": "boolean",
+      "default": false
     },
-    "song_title": {
-      "type": "string"
+    "source_song_id": {
+      "type": "string",
+      "description": "FK to Song where the word was saved"
     },
     "mastered": {
       "type": "boolean",
@@ -23,7 +27,7 @@
     }
   },
   "required": [
-    "spanish_word",
+    "word",
     "english_meaning"
   ]
 }

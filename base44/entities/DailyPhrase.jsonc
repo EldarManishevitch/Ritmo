@@ -1,0 +1,34 @@
+{
+  "name": "DailyPhrase",
+  "type": "object",
+  "properties": {
+    "phrase_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date this phrase is featured"
+    },
+    "spanish_phrase": {
+      "type": "string"
+    },
+    "english_translation": {
+      "type": "string"
+    },
+    "pronunciation": {
+      "type": "string"
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced"
+      ],
+      "default": "beginner"
+    }
+  },
+  "required": [
+    "phrase_date",
+    "spanish_phrase",
+    "english_translation"
+  ]
+}

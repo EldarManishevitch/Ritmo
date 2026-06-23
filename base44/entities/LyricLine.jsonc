@@ -1,0 +1,44 @@
+{
+  "name": "LyricLine",
+  "type": "object",
+  "properties": {
+    "song_id": {
+      "type": "string",
+      "description": "FK to Song"
+    },
+    "line_index": {
+      "type": "number",
+      "description": "Order of the line in the song"
+    },
+    "spanish_text": {
+      "type": "string",
+      "description": "Original Spanish lyric line"
+    },
+    "pronunciation": {
+      "type": "string",
+      "description": "Phonetic guide in English letters, hyphenated by syllable, CAPS on stressed syllable"
+    },
+    "english_translation": {
+      "type": "string",
+      "description": "Natural English translation"
+    },
+    "start_seconds": {
+      "type": "number",
+      "default": 0,
+      "description": "Sync timestamp (0 placeholder when static)"
+    },
+    "end_seconds": {
+      "type": "number",
+      "default": 0
+    },
+    "is_chorus": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "song_id",
+    "line_index",
+    "spanish_text"
+  ]
+}

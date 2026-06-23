@@ -1,17 +1,24 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
-import Home from './pages/Home';
-import Catalog from './pages/Catalog';
-import SongDetail from './pages/SongDetail';
-import Vocabulary from './pages/Vocabulary';
-import Profile from './pages/Profile';
-import AppShell from './components/layout/AppShell';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import Login from '@/pages/Login';
+import Register from '@/pages/Register';
+import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
+// Page imports
+import Landing from './pages/Landing';
+import Dashboard from './pages/Dashboard';
+import SongPage from './pages/SongPage';
+import Conversations from './pages/Conversations';
+import Roleplay from './pages/Roleplay';
+import ReviewRoom from './pages/ReviewRoom';
+import Settings from './pages/Settings';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -39,13 +46,23 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      <Route element={<AppShell />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/catalog" element={<Catalog />} />
-        <Route path="/song/:id" element={<SongDetail />} />
-        <Route path="/vocabulary" element={<Vocabulary />} />
-        <Route path="/profile" element={<Profile />} />
+      {/* Public */}
+      <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+
+      {/* Authenticated app */}
+      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/song/:id" element={<SongPage />} />
+        <Route path="/conversations" element={<Conversations />} />
+        <Route path="/roleplay" element={<Roleplay />} />
+        <Route path="/review" element={<ReviewRoom />} />
+        <Route path="/settings" element={<Settings />} />
       </Route>
+
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

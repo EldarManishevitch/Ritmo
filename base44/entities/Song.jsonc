@@ -10,44 +10,35 @@
       "type": "string",
       "description": "Artist name"
     },
-    "thumbnail_url": {
+    "genre": {
       "type": "string",
-      "description": "YouTube or image thumbnail URL"
-    },
-    "video_id": {
-      "type": "string",
-      "description": "YouTube video ID"
-    },
-    "lyrics_lines": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "Array of lyric lines in Spanish"
+      "enum": [
+        "reggaeton",
+        "bachata",
+        "pop latino",
+        "trap latino",
+        "merengue",
+        "salsa",
+        "rock latino"
+      ],
+      "default": "reggaeton"
     },
     "difficulty": {
       "type": "string",
       "enum": [
-        "A1",
-        "A2",
-        "B1",
-        "B2",
-        "C1"
+        "beginner",
+        "intermediate",
+        "advanced"
       ],
-      "default": "A2"
+      "default": "beginner"
     },
-    "genre": {
+    "youtube_id": {
       "type": "string",
-      "enum": [
-        "Reggaeton",
-        "Pop",
-        "Latin Pop",
-        "Bachata",
-        "Salsa",
-        "Trap",
-        "Rock"
-      ],
-      "default": "Reggaeton"
+      "description": "YouTube video ID for the IFrame player"
+    },
+    "album_art_url": {
+      "type": "string",
+      "description": "Thumbnail / album art URL"
     },
     "preview_seconds": {
       "type": "number",
@@ -56,6 +47,23 @@
     "is_featured": {
       "type": "boolean",
       "default": false
+    },
+    "sync_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "fetching_lyrics",
+        "translating",
+        "ready",
+        "failed",
+        "static"
+      ],
+      "default": "pending"
+    },
+    "sync_offset_seconds": {
+      "type": "number",
+      "default": 0,
+      "description": "Global calibration offset for music videos"
     }
   },
   "required": [

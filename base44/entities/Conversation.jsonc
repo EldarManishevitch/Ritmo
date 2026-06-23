@@ -1,0 +1,49 @@
+{
+  "name": "Conversation",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "scenario": {
+      "type": "string",
+      "description": "Roleplay scenario prompt"
+    },
+    "roleplay_type": {
+      "type": "string",
+      "enum": [
+        "restaurant",
+        "market",
+        "directions",
+        "smalltalk",
+        "custom"
+      ],
+      "default": "smalltalk"
+    },
+    "messages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant"
+            ]
+          },
+          "content": {
+            "type": "string"
+          },
+          "translation": {
+            "type": "string"
+          }
+        }
+      },
+      "default": []
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

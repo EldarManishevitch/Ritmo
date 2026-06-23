@@ -1,0 +1,22 @@
+{
+  "name": "PracticeFlag",
+  "type": "object",
+  "properties": {
+    "word": {
+      "type": "string",
+      "description": "Spanish word the user struggles with"
+    },
+    "miss_count": {
+      "type": "number",
+      "default": 1,
+      "description": "Times missed in quizzes"
+    },
+    "song_id": {
+      "type": "string",
+      "description": "Song context where it was missed"
+    }
+  },
+  "required": [
+    "word"
+  ]
+}
