@@ -29,7 +29,7 @@ export default function SongCard({ song, featured = false }) {
           </div>
           <div className="bg-card p-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="text-xs font-medium">{song.difficulty || 'A2'}</Badge>
+              <Badge variant="secondary" className="text-xs font-medium uppercase">{song.difficulty || 'A2'}</Badge>
               <Badge variant="outline" className="text-xs">{song.genre || 'Reggaeton'}</Badge>
             </div>
             <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
@@ -55,7 +55,7 @@ export default function SongCard({ song, featured = false }) {
           <h4 className="font-semibold text-sm truncate">{song.title}</h4>
           <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
         </div>
-        <Badge variant="secondary" className="text-[10px] font-medium flex-shrink-0">
+        <Badge variant="secondary" className="text-[10px] font-medium flex-shrink-0 uppercase">
           {song.difficulty || 'A2'}
         </Badge>
       </div>

@@ -8,7 +8,7 @@ import DailyPhraseCard from '@/components/song/DailyPhraseCard';
 import AddSongDialog from '@/components/song/AddSongDialog';
 
 const GENRES = ['reggaeton', 'bachata', 'pop latino', 'trap latino', 'merengue', 'salsa', 'rock latino'];
-const DIFFICULTIES = ['beginner', 'intermediate', 'advanced'];
+const DIFFICULTIES = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
 export default function Dashboard() {
   const [songs, setSongs] = useState([]);
@@ -113,7 +113,7 @@ function FilterChip({ label, active, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors capitalize ${
+      className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
         active ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/70'
       }`}
     >
