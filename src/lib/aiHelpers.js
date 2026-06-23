@@ -21,22 +21,8 @@ export async function translateWord({ word, context }) {
 
 /** Find the official YouTube video for a song query. */
 export async function youtubeSearch({ query }) {
-  return base44.integrations.Core.InvokeLLM({
-    prompt: `Find the official YouTube video for the song: "${query}". Return the 11-character YouTube video ID, the full video title, the artist/channel name, the duration in seconds, and the thumbnail URL (https://i.ytimg.com/vi/<ID>/hqdefault.jpg).`,
-    add_context_from_internet: true,
-    model: 'gemini_3_flash',
-    response_json_schema: {
-      type: 'object',
-      properties: {
-        youtube_id: { type: 'string' },
-        title: { type: 'string' },
-        artist: { type: 'string' },
-        duration_seconds: { type: 'number' },
-        thumbnail_url: { type: 'string' },
-      },
-      required: ['youtube_id', 'title'],
-    },
-  });
+  const res = await base44.functions.invoke('youtubeSearch', { query });
+  return res.data;
 }
 
 /** Get (or create) today's daily phrase. Idempotent per day. */
