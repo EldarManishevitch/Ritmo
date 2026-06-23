@@ -1,23 +1,5 @@
 import { base44 } from '@/api/base44Client';
 
-// ---------- LRCLIB ----------
-async function fetchLrclib(title, artist) {
-  try {
-    const url = `https://lrclib.net/api/search?track_name=${encodeURIComponent(title)}&artist_name=${encodeURIComponent(artist)}`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const results = await res.json();
-    if (!Array.isArray(results) || results.length === 0) return null;
-    const synced = results.find((r) => r.syncedLyrics) || results[0];
-    return {
-      syncedLyrics: synced.syncedLyrics || null,
-      plainLyrics: synced.plainLyrics || null,
-    };
-  } catch {
-    return null;
-  }
-}
-
 // ---------- LRC parser ----------
 function parseLRC(lrc) {
   const lines = [];
@@ -40,38 +22,57 @@ function parseLRC(lrc) {
   return lines;
 }
 
-// ---------- AI translate + pronounce, parallel chunks ----------
+// ---------- AI translate + pronounce, 3-model race per chunk ----------
+const TRANSLATION_MODELS = ['gemini_3_flash', 'gpt_5_mini', 'claude_sonnet_4_6'];
+
 async function translateLines(spanishTexts) {
   const CHUNK = 8;
   const chunks = [];
   for (let i = 0; i < spanishTexts.length; i += CHUNK) chunks.push(spanishTexts.slice(i, i + CHUNK));
 
-  const results = await Promise.all(
-    chunks.map((chunk) =>
-      base44.integrations.Core.InvokeLLM({
-        prompt: `For these Spanish lyric lines, return a natural English translation and a pronunciation guide for each, in order. Pronunciation guide: English letters, hyphenated by syllable, CAPS on the stressed syllable (e.g. "ba-CI-a"). Mark is_chorus true if the line is part of a repeated chorus.\nLines:\n${JSON.stringify(chunk)}`,
-        response_json_schema: {
+  const prompt = (chunk) =>
+    `For these Spanish lyric lines, return a natural English translation and a pronunciation guide for each, in order. Pronunciation guide: English letters, hyphenated by syllable, CAPS on the stressed syllable (e.g. "ba-CI-a"). Mark is_chorus true if the line is part of a repeated chorus.\nLines:\n${JSON.stringify(chunk)}`;
+  const schema = {
+    type: 'object',
+    properties: {
+      lines: {
+        type: 'array',
+        items: {
           type: 'object',
           properties: {
-            lines: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  english_translation: { type: 'string' },
-                  pronunciation: { type: 'string' },
-                  is_chorus: { type: 'boolean' },
-                },
-              },
-            },
+            english_translation: { type: 'string' },
+            pronunciation: { type: 'string' },
+            is_chorus: { type: 'boolean' },
           },
-          required: ['lines'],
         },
-      })
-    )
+      },
+    },
+    required: ['lines'],
+  };
+
+  // Race 3 models per chunk — first valid response (≥80% lines) wins, rest discarded.
+  const results = await Promise.all(
+    chunks.map((chunk) => {
+      const minLines = Math.ceil(chunk.length * 0.8);
+      return Promise.any(
+        TRANSLATION_MODELS.map((model) =>
+          base44.integrations.Core.InvokeLLM({ prompt: prompt(chunk), model, response_json_schema: schema })
+            .then((r) => {
+              if (!r?.lines || r.lines.length < minLines) {
+                throw new Error(`${model} returned ${r?.lines?.length || 0}/${chunk.length} lines`);
+              }
+              console.log(`translation race: ${model} won (${r.lines.length} lines)`);
+              return r.lines;
+            })
+        )
+      ).catch(() => {
+        console.log('translation race: all models failed for chunk');
+        return null;
+      });
+    })
   );
 
-  return results.flatMap((c) => c.lines || []);
+  return results.flatMap((c) => c || []);
 }
 
 /**
@@ -93,17 +94,10 @@ export async function generateLyrics({ songId, title, artist, youtubeId }) {
   const id = song.id;
   await base44.entities.Song.update(id, { sync_status: 'fetching_lyrics' });
 
-  const lrc = await fetchLrclib(song.title, song.artist);
-  let syncedLines = null;
-  let staticText = null;
-
-  if (lrc?.syncedLyrics) {
-    syncedLines = parseLRC(lrc.syncedLyrics);
-  } else if (lrc?.plainLyrics) {
-    staticText = lrc.plainLyrics;
-  } else {
-    // AI fallback for raw lyrics text (web search)
-    const aiLyrics = await base44.integrations.Core.InvokeLLM({
+  // Race 3 lyric sources in parallel: LRCLIB + Genius (backend) + LLM web search
+  const [lyricsRes, aiRes] = await Promise.allSettled([
+    base44.functions.invoke('fetchLyrics', { title: song.title, artist: song.artist }),
+    base44.integrations.Core.InvokeLLM({
       prompt: `Return the full Spanish lyrics for the song "${song.title}" by "${song.artist}". Only the lyrics, one line per line, no metadata or section labels.`,
       add_context_from_internet: true,
       model: 'gemini_3_flash',
@@ -112,8 +106,22 @@ export async function generateLyrics({ songId, title, artist, youtubeId }) {
         properties: { lines: { type: 'array', items: { type: 'string' } } },
         required: ['lines'],
       },
-    });
-    staticText = (aiLyrics.lines || []).join('\n');
+    }),
+  ]);
+
+  const lrc = lyricsRes.status === 'fulfilled' ? lyricsRes.value?.data : null;
+  const aiLyrics = aiRes.status === 'fulfilled' ? aiRes.value : null;
+  console.log(`lyrics race: lrclib=${!!lrc?.syncedLyrics || !!lrc?.plainLyrics} genius=${!!lrc?.plainLyrics} llm=${!!aiLyrics?.lines?.length}`);
+
+  let syncedLines = null;
+  let staticText = null;
+
+  if (lrc?.syncedLyrics) {
+    syncedLines = parseLRC(lrc.syncedLyrics);
+  } else if (lrc?.plainLyrics) {
+    staticText = lrc.plainLyrics;
+  } else if (aiLyrics?.lines?.length) {
+    staticText = aiLyrics.lines.join('\n');
   }
 
   if (!syncedLines && !staticText) {
