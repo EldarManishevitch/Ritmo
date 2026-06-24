@@ -28,20 +28,31 @@ export default function Dashboard() {
     return () => { cancelled = true; };
   }, []);
 
+  // Deduplicate by youtube_id (or title+artist fallback) so the same track never appears twice
+  const deduped = useMemo(() => {
+    const seen = new Set();
+    return songs.filter((s) => {
+      const key = s.youtube_id || `${s.title?.toLowerCase()}|${s.artist?.toLowerCase()}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [songs]);
+
   const recommended = useMemo(() => {
-    const atLevel = songs.filter((s) => songCefr(s.difficulty) === USER_LEVEL);
+    const atLevel = deduped.filter((s) => songCefr(s.difficulty) === USER_LEVEL);
     const shuffled = [...atLevel].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, 6);
-  }, [songs, refreshKey]);
+  }, [deduped, refreshKey]);
 
   const challenges = useMemo(() => {
-    const aboveLevel = songs.filter((s) => LEVEL_ORDER.indexOf(songCefr(s.difficulty)) > LEVEL_ORDER.indexOf(USER_LEVEL));
+    const aboveLevel = deduped.filter((s) => LEVEL_ORDER.indexOf(songCefr(s.difficulty)) > LEVEL_ORDER.indexOf(USER_LEVEL));
     return aboveLevel.slice(0, 3);
-  }, [songs]);
+  }, [deduped]);
 
   const history = useMemo(() => {
-    return [...songs].sort((a, b) => new Date(b.updated_date) - new Date(a.updated_date)).slice(0, 3);
-  }, [songs]);
+    return [...deduped].sort((a, b) => new Date(b.updated_date) - new Date(a.updated_date)).slice(0, 3);
+  }, [deduped]);
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-24">
