@@ -26,6 +26,8 @@ import ReggaetonSlangGuide from './pages/ReggaetonSlangGuide';
 import DominicanSlangGuide from './pages/DominicanSlangGuide';
 import BestReggaetonSongs from './pages/BestReggaetonSongs';
 import BestBachataSongs from './pages/BestBachataSongs';
+import About from './pages/About';
+import Contact from './pages/Contact';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -66,6 +68,8 @@ const AuthenticatedApp = () => {
       <Route path="/dominican-slang-guide" element={<DominicanSlangGuide />} />
       <Route path="/best-reggaeton-songs" element={<BestReggaetonSongs />} />
       <Route path="/best-bachata-songs" element={<BestBachataSongs />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/contact" element={<Contact />} />
 
       {/* Authenticated app */}
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>

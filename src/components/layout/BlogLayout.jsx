@@ -36,6 +36,10 @@ export default function BlogLayout({ title, badge, children }) {
             <Music className="h-4 w-4 text-primary" /> Ritmo
           </Link>
           <p>Learn Spanish through synced music lyrics, instant translations, and AI roleplay.</p>
+          <div className="flex items-center justify-center gap-4 mt-3">
+            <Link to="/about" className="text-primary font-medium hover:underline">About</Link>
+            <Link to="/contact" className="text-primary font-medium hover:underline">Contact</Link>
+          </div>
         </div>
       </footer>
     </div>

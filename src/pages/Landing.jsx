@@ -302,6 +302,10 @@ export default function Landing() {
             <Music className="h-4 w-4 text-primary" /> Ritmo
           </div>
           <p className="text-sm text-muted-foreground">Learn Spanish through synced music lyrics, instant translations, and AI roleplay.</p>
+          <div className="flex items-center justify-center gap-4 mt-3">
+            <Link to="/about" className="text-sm text-primary font-medium hover:underline">About</Link>
+            <Link to="/contact" className="text-sm text-primary font-medium hover:underline">Contact</Link>
+          </div>
         </div>
       </footer>
 
