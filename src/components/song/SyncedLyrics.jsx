@@ -5,7 +5,8 @@ export default function SyncedLyrics({
   lines = [],
   currentTime = 0,
   offset = 0,
-  mode = 'synced', // 'synced' | 'static'
+  mode = 'synced',
+  showEnglish = true,
   onWordTap,
   onLineSeek,
 }) {
@@ -14,7 +15,6 @@ export default function SyncedLyrics({
 
   const adjustedTime = currentTime + offset;
 
-  // Find active line index
   let activeIndex = -1;
   if (mode === 'synced') {
     for (let i = 0; i < lines.length; i++) {
@@ -23,7 +23,6 @@ export default function SyncedLyrics({
         activeIndex = i;
       }
     }
-    // If past the last line's start, keep last active
     if (activeIndex === -1 && lines.length && adjustedTime >= lines[0].start_seconds) {
       for (let i = lines.length - 1; i >= 0; i--) {
         if (adjustedTime >= lines[i].start_seconds) { activeIndex = i; break; }
@@ -31,7 +30,6 @@ export default function SyncedLyrics({
     }
   }
 
-  // Auto-scroll active line into view
   useEffect(() => {
     if (activeRef.current && containerRef.current) {
       const c = containerRef.current;
@@ -74,17 +72,34 @@ export default function SyncedLyrics({
     <div ref={containerRef} className="h-full overflow-y-auto px-4 py-6 space-y-3 no-scrollbar">
       {lines.map((line, idx) => {
         const active = idx === activeIndex;
+        const isInstrumental = !line.spanish_text || line.spanish_text.trim().length < 2;
+
+        if (isInstrumental) {
+          return (
+            <div key={line.id || idx} className="flex justify-center">
+              <span className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded-full">
+                Instrumental...
+              </span>
+            </div>
+          );
+        }
+
         return (
           <div
             key={line.id || idx}
             ref={active ? activeRef : null}
             onClick={() => mode === 'synced' && onLineSeek?.(line.start_seconds - offset)}
-            className={`rounded-2xl px-4 py-3 transition-all duration-300 ${
+            className={`rounded-2xl px-4 py-3 transition-all duration-300 relative ${
               active
                 ? 'bg-primary/10 border-l-4 border-primary scale-[1.02]'
                 : 'border-l-4 border-transparent opacity-60 hover:opacity-90'
             } ${mode === 'synced' ? 'cursor-pointer' : ''}`}
           >
+            {idx < 3 && !active && (
+              <span className="absolute -top-1 right-2 text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
+                CLICK ME
+              </span>
+            )}
             <p
               className={`font-medium leading-snug ${
                 active ? 'text-primary text-lg font-bold' : 'text-foreground text-base'
@@ -92,7 +107,7 @@ export default function SyncedLyrics({
             >
               {renderWords(line.spanish_text, line.spanish_text)}
             </p>
-            {line.english_translation && (
+            {showEnglish && line.english_translation && (
               <p className={`text-sm mt-1 ${active ? 'text-foreground/80' : 'text-muted-foreground'}`}>
                 {line.english_translation}
               </p>

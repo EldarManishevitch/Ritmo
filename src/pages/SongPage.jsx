@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, RefreshCw, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowLeft, Loader2, RefreshCw, SlidersHorizontal, X, Music, BookOpen, Trophy, Volume2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,7 @@ import SyncedLyrics from '@/components/song/SyncedLyrics';
 import WordLookup from '@/components/song/WordLookup';
 import ChorusQuiz from '@/components/song/ChorusQuiz';
 import { generateLyrics } from '@/lib/lyricsPipeline';
-import { BookOpen, Music, Trophy, Volume2 } from 'lucide-react';
+import { songCefr } from '@/lib/cefr';
 
 const STATUS_LABELS = {
   pending: 'Preparing…',
@@ -19,6 +19,13 @@ const STATUS_LABELS = {
   static: 'Ready (unsynced)',
   failed: 'Failed to load',
 };
+
+const SECTIONS = [
+  { id: 'full', label: 'Full Song' },
+  { id: 'verse1', label: 'Verse 1' },
+  { id: 'verse2', label: 'Verse 2' },
+  { id: 'chorus', label: 'The Chorus' },
+];
 
 export default function SongPage() {
   const { id } = useParams();
@@ -33,9 +40,10 @@ export default function SongPage() {
   const [tab, setTab] = useState('lyrics');
   const [vocab, setVocab] = useState([]);
   const [flags, setFlags] = useState([]);
+  const [section, setSection] = useState('full');
+  const [showEnglish, setShowEnglish] = useState(true);
   const playerContainerId = 'yt-player';
 
-  // Load song
   const loadSong = async () => {
     const s = await base44.entities.Song.get(id);
     setSong(s);
@@ -49,7 +57,6 @@ export default function SongPage() {
     loadSong()
       .then(async (s) => {
         if (cancelled) return;
-        // Auto-trigger pipeline if pending
         if (s.sync_status === 'pending') {
           generateLyrics({ songId: id }).catch(() => {});
         }
@@ -59,12 +66,10 @@ export default function SongPage() {
     return () => { cancelled = true; };
   }, [id]);
 
-  // Poll song status + load lines when ready
   useEffect(() => {
     if (!song) return;
     const inProgress = ['pending', 'fetching_lyrics', 'translating'].includes(song.sync_status);
     if (!inProgress) {
-      // Load lines
       base44.entities.LyricLine.filter({ song_id: id }, 'line_index', 500)
         .then(setLines)
         .catch(() => {});
@@ -119,6 +124,15 @@ export default function SongPage() {
     speechSynthesis.speak(u);
   };
 
+  const filteredLines = useMemo(() => {
+    if (section === 'full') return lines;
+    if (section === 'chorus') return lines.filter((l) => l.is_chorus);
+    const nonChorus = lines.filter((l) => !l.is_chorus);
+    if (section === 'verse1') return nonChorus.slice(0, Math.ceil(nonChorus.length / 2));
+    if (section === 'verse2') return nonChorus.slice(Math.ceil(nonChorus.length / 2));
+    return lines;
+  }, [lines, section]);
+
   if (loadingSong) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -138,6 +152,7 @@ export default function SongPage() {
 
   const inProgress = ['pending', 'fetching_lyrics', 'translating'].includes(song.sync_status);
   const mode = song.sync_status === 'static' ? 'static' : 'synced';
+  const thumbnail = song.album_art_url || `https://i.ytimg.com/vi/${song.youtube_id}/mqdefault.jpg`;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -146,10 +161,6 @@ export default function SongPage() {
         <button onClick={() => navigate('/dashboard')} className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <div className="text-center min-w-0 flex-1 px-2">
-          <h1 className="font-semibold text-sm truncate">{song.title}</h1>
-          <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
-        </div>
         <button onClick={() => setShowOffset(!showOffset)} className="p-2 -mr-2 rounded-lg hover:bg-muted transition-colors">
           <SlidersHorizontal className="h-5 w-5" />
         </button>
@@ -171,17 +182,51 @@ export default function SongPage() {
         </div>
       )}
 
-      {/* YouTube player */}
-      <div className="relative bg-black">
-        <div id={playerContainerId} className="w-full aspect-video max-h-[30vh] mx-auto" />
-        {!ready && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black">
-            <Loader2 className="h-8 w-8 animate-spin text-white/60" />
+      {/* Song header */}
+      <div className="px-4 py-4 flex items-center gap-4 border-b border-border">
+        <img src={thumbnail} alt={song.title} className="w-16 h-16 rounded-xl object-cover flex-shrink-0" />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            {song.genre && (
+              <span className="text-[10px] font-semibold text-white px-2 py-0.5 rounded-full" style={{ backgroundColor: '#2A4B62' }}>
+                {song.genre}
+              </span>
+            )}
           </div>
-        )}
+          <h1 className="text-xl font-bold text-primary truncate">{song.title}</h1>
+          <p className="text-sm text-muted-foreground truncate">{song.artist}</p>
+        </div>
       </div>
 
-      {/* Status / Lyrics */}
+      {/* Tab pills */}
+      <div className="px-4 py-3 flex gap-2 border-b border-border">
+        {[
+          { id: 'lyrics', label: 'Lyrics', icon: Music },
+          { id: 'vocab', label: 'Vocab', icon: BookOpen, badge: vocab.length + flags.length },
+          { id: 'quiz', label: 'Quiz', icon: Trophy },
+        ].map((t) => {
+          const Icon = t.icon;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                tab === t.id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/70'
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {t.label}
+              {t.badge > 0 && (
+                <span className="ml-0.5 text-xs bg-white/30 rounded-full px-1.5 min-w-[18px] text-center">
+                  {t.badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Main content */}
       {inProgress ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -199,102 +244,127 @@ export default function SongPage() {
           </Button>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col min-h-0">
-          {/* Tab bar */}
-          <div className="flex border-b border-border">
-            {[
-              { id: 'lyrics', label: 'Lyrics', icon: Music },
-              { id: 'vocab', label: 'Vocab', icon: BookOpen, badge: vocab.length + flags.length },
-              { id: 'quiz', label: 'Quiz', icon: Trophy },
-            ].map((t) => {
-              const Icon = t.icon;
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => setTab(t.id)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-medium transition-colors relative ${
-                    tab === t.id ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {t.label}
-                  {t.badge > 0 && (
-                    <span className="ml-0.5 text-xs bg-primary text-white rounded-full px-1.5 min-w-[18px] text-center">
-                      {t.badge}
-                    </span>
-                  )}
-                  {tab === t.id && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
-                </button>
-              );
-            })}
+        <div className="flex-1 flex flex-col lg:flex-row min-h-0">
+          {/* Left column: video + quiz button */}
+          <div className="lg:w-3/5 flex flex-col">
+            <div className="relative bg-black">
+              <div id={playerContainerId} className="w-full aspect-video" />
+              {!ready && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black">
+                  <Loader2 className="h-8 w-8 animate-spin text-white/60" />
+                </div>
+              )}
+            </div>
+            <div className="px-4 py-3 flex items-center gap-3 border-b lg:border-b-0 lg:border-r border-border">
+              <Button size="sm" variant="outline" onClick={() => setTab('quiz')} className="flex-shrink-0">
+                <Trophy className="h-4 w-4 mr-1" /> Practice with a Quiz
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                Listen, tap any unfamiliar word, then ace the quiz to mark this song complete.
+              </p>
+            </div>
           </div>
 
-          {/* Lyrics tab */}
-          {tab === 'lyrics' && (
-            <div className="flex-1 min-h-0">
-              {/* Word lookup panel */}
-              {selectedWord && (
-                <div className="px-4 pt-3 relative">
-                  <button
-                    onClick={() => setSelectedWord(null)}
-                    className="absolute top-4 right-6 z-10 h-7 w-7 rounded-full bg-muted flex items-center justify-center"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                  <WordLookup word={selectedWord} context={selectedContext} songId={id} />
+          {/* Right column: lyrics/vocab/quiz */}
+          <div className="lg:w-2/5 flex-1 flex flex-col min-h-0">
+            {tab === 'lyrics' && (
+              <>
+                {/* Section filter pills */}
+                <div className="px-4 py-3 flex gap-2 overflow-x-auto no-scrollbar border-b border-border">
+                  {SECTIONS.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => setSection(s.id)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                        section === s.id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/70'
+                      }`}
+                    >
+                      <Music className="h-3 w-3" />
+                      {s.label}
+                    </button>
+                  ))}
                 </div>
-              )}
-              <SyncedLyrics
-                lines={lines}
-                currentTime={currentTime}
-                offset={song.sync_offset_seconds || 0}
-                mode={mode}
-                onWordTap={handleWordTap}
-                onLineSeek={(t) => seekTo(t)}
-              />
-            </div>
-          )}
 
-          {/* Vocab tab */}
-          {tab === 'vocab' && (
-            <div className="flex-1 overflow-y-auto px-4 py-4 no-scrollbar">
-              {vocab.length === 0 && flags.length === 0 ? (
-                <div className="text-center py-12">
-                  <BookOpen className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground">Click words in the lyrics to save them here.</p>
+                {/* Lyrics header with English toggle */}
+                <div className="px-4 py-2 flex items-center justify-between border-b border-border">
+                  <span className="text-sm font-semibold text-foreground">
+                    {SECTIONS.find((s) => s.id === section)?.label}
+                  </span>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <span className="text-xs text-muted-foreground">English</span>
+                    <button
+                      onClick={() => setShowEnglish(!showEnglish)}
+                      className={`relative w-9 h-5 rounded-full transition-colors ${showEnglish ? 'bg-primary' : 'bg-muted'}`}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${showEnglish ? 'translate-x-4' : ''}`} />
+                    </button>
+                  </label>
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  {vocab.map((v) => (
-                    <div key={v.id} className="rounded-xl bg-card border border-border p-3 flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <h3 className="font-bold text-foreground">{v.word}</h3>
-                        <p className="text-sm text-muted-foreground">{v.english_meaning}</p>
-                        {v.pronunciation_hint && <p className="text-xs text-primary mt-0.5">🔊 {v.pronunciation_hint}</p>}
-                        {v.is_slang && <span className="inline-block text-xs bg-primary/10 text-primary px-2 py-0.5 rounded mt-1">slang</span>}
+
+                {/* Word lookup panel */}
+                {selectedWord && (
+                  <div className="px-4 pt-3 relative">
+                    <button
+                      onClick={() => setSelectedWord(null)}
+                      className="absolute top-4 right-6 z-10 h-7 w-7 rounded-full bg-muted flex items-center justify-center"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                    <WordLookup word={selectedWord} context={selectedContext} songId={id} />
+                  </div>
+                )}
+
+                <SyncedLyrics
+                  lines={filteredLines}
+                  currentTime={currentTime}
+                  offset={song.sync_offset_seconds || 0}
+                  mode={mode}
+                  showEnglish={showEnglish}
+                  onWordTap={handleWordTap}
+                  onLineSeek={(t) => seekTo(t)}
+                />
+              </>
+            )}
+
+            {tab === 'vocab' && (
+              <div className="flex-1 overflow-y-auto px-4 py-4 no-scrollbar">
+                {vocab.length === 0 && flags.length === 0 ? (
+                  <div className="text-center py-12">
+                    <BookOpen className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground">Click words in the lyrics to save them here.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {vocab.map((v) => (
+                      <div key={v.id} className="rounded-xl bg-card border border-border p-3 flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-bold text-foreground">{v.word}</h3>
+                          <p className="text-sm text-muted-foreground">{v.english_meaning}</p>
+                          {v.pronunciation_hint && <p className="text-xs text-primary mt-0.5">🔊 {v.pronunciation_hint}</p>}
+                          {v.is_slang && <span className="inline-block text-xs bg-primary/10 text-primary px-2 py-0.5 rounded mt-1">slang</span>}
+                        </div>
+                        <button onClick={() => speakWord(v.word)} className="p-2 rounded-lg hover:bg-muted text-primary flex-shrink-0">
+                          <Volume2 className="h-4 w-4" />
+                        </button>
                       </div>
-                      <button onClick={() => speakWord(v.word)} className="p-2 rounded-lg hover:bg-muted text-primary flex-shrink-0">
-                        <Volume2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
-                  {flags.filter((f) => !vocab.find((v) => v.word === f.word)).map((f) => (
-                    <div key={f.id} className="rounded-xl bg-destructive/5 border border-destructive/20 p-3">
-                      <h3 className="font-bold text-foreground">{f.word}</h3>
-                      <p className="text-xs text-destructive">needs practice · Missed {f.miss_count}× in quiz</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                    ))}
+                    {flags.filter((f) => !vocab.find((v) => v.word === f.word)).map((f) => (
+                      <div key={f.id} className="rounded-xl bg-destructive/5 border border-destructive/20 p-3">
+                        <h3 className="font-bold text-foreground">{f.word}</h3>
+                        <p className="text-xs text-destructive">needs practice · Missed {f.miss_count}× in quiz</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
-          {/* Quiz tab */}
-          {tab === 'quiz' && (
-            <div className="flex-1 overflow-y-auto px-4 py-4 no-scrollbar">
-              <ChorusQuiz songId={id} lines={lines} songTitle={song.title} songArtist={song.artist} />
-            </div>
-          )}
+            {tab === 'quiz' && (
+              <div className="flex-1 overflow-y-auto px-4 py-4 no-scrollbar">
+                <ChorusQuiz songId={id} lines={lines} songTitle={song.title} songArtist={song.artist} />
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
