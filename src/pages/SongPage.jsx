@@ -157,7 +157,7 @@ export default function SongPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+      <div className="safe-area-top flex items-center justify-between px-4 py-3 border-b border-border">
         <button onClick={() => navigate('/dashboard')} className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors">
           <ArrowLeft className="h-5 w-5" />
         </button>

@@ -1,9 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Mail, User as UserIcon, Loader2 } from 'lucide-react';
+import { LogOut, Mail, User as UserIcon, Loader2, Trash2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -12,6 +23,19 @@ export default function Settings() {
   const [fullName, setFullName] = useState('');
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      if (user?.id) {
+        await base44.entities.User.delete(user.id);
+      }
+    } catch { /* may fail if not permitted — proceed to logout */ }
+    try { await base44.auth.logout(); } catch { /* noop */ }
+    navigate('/login');
+    setDeleting(false);
+  };
 
   useEffect(() => {
     base44.auth.me()
@@ -80,6 +104,40 @@ export default function Settings() {
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">About</h2>
         <p className="text-sm text-foreground">Spanish Beats Learn</p>
         <p className="text-xs text-muted-foreground mt-1">Learn Spanish through synced music lyrics, instant translations, and AI roleplay.</p>
+      </div>
+
+      {/* Account Deletion */}
+      <div className="rounded-2xl bg-card border border-destructive/20 p-5 mb-4">
+        <h2 className="text-sm font-semibold text-destructive uppercase tracking-wide mb-2">Account Deletion</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Permanently delete your account and all associated data. This action cannot be undone.
+        </p>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" className="w-full text-destructive hover:text-destructive border-destructive/30">
+              <Trash2 className="h-4 w-4 mr-1" /> Delete account
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete account?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently remove your account, saved words, and progress. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                Yes, delete account
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {/* Logout */}

@@ -9,7 +9,7 @@ export default function BlogLayout({ title, badge, children }) {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-border">
+      <header className="safe-area-top sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 font-bold text-foreground">
             <Music className="h-5 w-5 text-primary" />

@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Volume2, Trash2, Loader2 } from 'lucide-react';
+import PullToRefresh from '@/components/PullToRefresh';
 
 export default function Vocab() {
   const [vocab, setVocab] = useState([]);
@@ -91,6 +92,7 @@ export default function Vocab() {
   }
 
   return (
+    <PullToRefresh onRefresh={load}>
     <div>
       <div className="flex items-center gap-2 mb-6">
         <BookOpen className="h-6 w-6 text-primary" />
@@ -110,5 +112,6 @@ export default function Vocab() {
         </>
       )}
     </div>
+    </PullToRefresh>
   );
 }

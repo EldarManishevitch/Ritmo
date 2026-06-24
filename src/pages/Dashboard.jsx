@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import SlangOfTheDay from '@/components/song/SlangOfTheDay';
 import AddSongSection from '@/components/song/AddSongSection';
 import SongGridCard from '@/components/song/SongGridCard';
+import PullToRefresh from '@/components/PullToRefresh';
 import { songCefr } from '@/lib/cefr';
 
 const LEVEL_ORDER = ['A1', 'A2', 'B1', 'B2'];
@@ -55,6 +56,7 @@ export default function Dashboard() {
   }, [deduped]);
 
   return (
+    <PullToRefresh onRefresh={loadSongs}>
     <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-24">
       {/* Header */}
       <div className="mb-6">
@@ -132,6 +134,7 @@ export default function Dashboard() {
         </div>
       )}
     </div>
+    </PullToRefresh>
   );
 }
 

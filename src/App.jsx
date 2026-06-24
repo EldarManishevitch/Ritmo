@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -7,6 +8,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import PageTransition from '@/components/PageTransition';
 import AppShell from '@/components/layout/AppShell';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
@@ -81,7 +83,7 @@ const AuthenticatedApp = () => {
           <Route path="/vocab" element={<Vocab />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
-        <Route path="/song/:id" element={<SongPage />} />
+        <Route path="/song/:id" element={<PageTransition><SongPage /></PageTransition>} />
       </Route>
 
       <Route path="*" element={<PageNotFound />} />
@@ -91,6 +93,14 @@ const AuthenticatedApp = () => {
 
 
 function App() {
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const apply = () => document.documentElement.classList.toggle('dark', mq.matches);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
 
   return (
     <AuthProvider>
