@@ -5,7 +5,6 @@ import SlangOfTheDay from '@/components/song/SlangOfTheDay';
 import AddSongSection from '@/components/song/AddSongSection';
 import SongGridCard from '@/components/song/SongGridCard';
 import PullToRefresh from '@/components/PullToRefresh';
-import ProgressBadge from '@/components/ProgressBadge';
 import { songCefr } from '@/lib/cefr';
 
 const LEVEL_ORDER = ['A1', 'A2', 'B1', 'B2'];
@@ -68,10 +67,9 @@ export default function Dashboard() {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-24">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex justify-end mb-3">
-          <ProgressBadge />
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Ritmo - the spanish song teacher</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
+          <span className="text-primary">Ritmo</span> - the spanish song teacher
+        </h1>
         <p className="text-sm text-muted-foreground mt-1">Pick a song, Sing along & Pick up Spanish.</p>
       </div>
 
