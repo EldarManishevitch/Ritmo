@@ -1,10 +1,47 @@
 import React, { useEffect, useState } from 'react';
-import { Music, Volume2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Music, Play, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { youtubeSearch } from '@/lib/aiHelpers';
+import { generateLyrics } from '@/lib/lyricsPipeline';
 
 export default function SlangOfTheDay() {
+  const navigate = useNavigate();
   const [slang, setSlang] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [going, setGoing] = useState(false);
+
+  const handlePlay = async () => {
+    if (going || !slang) return;
+    setGoing(true);
+    try {
+      const query = `${slang.source_song} ${slang.source_artist}`;
+      // Try to find an existing song matching title/artist
+      const existing = await base44.entities.Song.filter({}, '-created_date', 200);
+      const match = existing.find((s) => {
+        const t = (s.title || '').toLowerCase();
+        const a = (s.artist || '').toLowerCase();
+        return t.includes(slang.source_song.toLowerCase()) || a.includes(slang.source_artist.toLowerCase());
+      });
+      if (match) {
+        navigate(`/song/${match.id}`);
+        return;
+      }
+      // Not in DB — search YouTube, create, and kick off lyrics pipeline
+      const r = await youtubeSearch({ query });
+      if (!r?.youtube_id) throw new Error('No video found');
+      const song = await base44.entities.Song.create({
+        title: r.title || slang.source_song,
+        artist: r.artist || slang.source_artist,
+        youtube_id: r.youtube_id,
+        sync_status: 'fetching_lyrics',
+      });
+      generateLyrics({ songId: song.id }).catch(() => {});
+      navigate(`/song/${song.id}`);
+    } catch {
+      setGoing(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -52,7 +89,15 @@ export default function SlangOfTheDay() {
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
         <Music className="h-3.5 w-3.5" />
         <span className="font-medium">AS HEARD IN</span>
-        <span className="text-foreground">{slang.source_song} · {slang.source_artist}</span>
+        <span className="text-foreground flex-1 min-w-0 truncate">{slang.source_song} · {slang.source_artist}</span>
+        <button
+          onClick={handlePlay}
+          disabled={going}
+          className="flex-shrink-0 flex items-center justify-center h-7 w-7 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors disabled:opacity-60"
+          title="Open this song"
+        >
+          {going ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5 fill-white" />}
+        </button>
       </div>
       <p className="text-sm italic text-[#a5603c] mb-1">"{slang.excerpt}"</p>
       <p className="text-sm text-muted-foreground">{slang.excerpt_translation}</p>
