@@ -2,8 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { songCefr } from '@/lib/cefr';
 
+const FALLBACK_ART = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=70';
+
 export default function SongGridCard({ song, levelUp = false }) {
-  const thumbnail = song.album_art_url || `https://i.ytimg.com/vi/${song.youtube_id}/mqdefault.jpg`;
+  const initialThumb = song.album_art_url || (song.youtube_id ? `https://i.ytimg.com/vi/${song.youtube_id}/mqdefault.jpg` : FALLBACK_ART);
+  const [thumbnail, setThumbnail] = React.useState(initialThumb);
   const isPending = ['pending', 'fetching_lyrics', 'translating'].includes(song.sync_status);
   const cefr = songCefr(song.difficulty);
 
@@ -14,6 +17,7 @@ export default function SongGridCard({ song, levelUp = false }) {
           <img
             src={thumbnail}
             alt={song.title}
+            onError={() => { if (thumbnail !== FALLBACK_ART) setThumbnail(FALLBACK_ART); }}
             className={`w-full h-full object-cover ${isPending ? 'blur-sm opacity-60' : ''}`}
           />
           <div className="absolute top-2 right-2 flex flex-col gap-1.5 items-end">
