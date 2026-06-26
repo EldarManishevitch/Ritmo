@@ -90,17 +90,21 @@ export default function SlangOfTheDay() {
         <Music className="h-3.5 w-3.5" />
         <span className="font-medium">AS HEARD IN</span>
         <span className="text-foreground flex-1 min-w-0 truncate">{slang.source_song} · {slang.source_artist}</span>
+      </div>
+      <div className="flex items-start gap-3">
         <button
           onClick={handlePlay}
           disabled={going}
-          className="flex-shrink-0 flex items-center justify-center h-7 w-7 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors disabled:opacity-60"
+          className="flex-shrink-0 flex items-center justify-center h-9 w-9 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors disabled:opacity-60 mt-0.5"
           title="Open this song"
         >
-          {going ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5 fill-white" />}
+          {going ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4 fill-white" />}
         </button>
+        <div className="min-w-0">
+          <p className="text-sm italic text-[#a5603c] mb-1">"{slang.excerpt}"</p>
+          <p className="text-sm text-muted-foreground">{slang.excerpt_translation}</p>
+        </div>
       </div>
-      <p className="text-sm italic text-[#a5603c] mb-1">"{slang.excerpt}"</p>
-      <p className="text-sm text-muted-foreground">{slang.excerpt_translation}</p>
     </div>
   );
 }
