@@ -40,11 +40,18 @@ export default function Dashboard() {
     });
   }, [songs]);
 
-  const recommended = useMemo(() => {
+  // Stable bank of up to 18 songs at the user's level
+  const bank = useMemo(() => {
     const atLevel = deduped.filter((s) => songCefr(s.difficulty) === USER_LEVEL);
     const shuffled = [...atLevel].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 18);
+  }, [deduped]);
+
+  // 6 non-duplicate songs drawn from the bank, re-selected on refresh
+  const recommended = useMemo(() => {
+    const shuffled = [...bank].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, 6);
-  }, [deduped, refreshKey]);
+  }, [bank, refreshKey]);
 
   const challenges = useMemo(() => {
     const aboveLevel = deduped.filter((s) => LEVEL_ORDER.indexOf(songCefr(s.difficulty)) > LEVEL_ORDER.indexOf(USER_LEVEL));
