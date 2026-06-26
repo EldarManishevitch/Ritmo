@@ -1,0 +1,47 @@
+import { base44 } from '@/api/base44Client';
+
+export const LEVELS = [
+  { xp: 1000, cefr: 'C1', title: 'Expert' },
+  { xp: 500, cefr: 'B2', title: 'Advanced' },
+  { xp: 250, cefr: 'B1', title: 'Intermediate' },
+  { xp: 100, cefr: 'A2', title: 'Beginner' },
+  { xp: 0, cefr: 'A1', title: 'Novice' },
+];
+
+export function levelForXp(xp = 0) {
+  return LEVELS.find((l) => xp >= l.xp) || LEVELS[LEVELS.length - 1];
+}
+
+const dayStr = (d = new Date()) => d.toISOString().slice(0, 10);
+
+export async function getProgress() {
+  const list = await base44.entities.UserProgress.filter({});
+  if (list && list.length) return list[0];
+  return base44.entities.UserProgress.create({
+    xp: 0,
+    current_streak: 0,
+    best_streak: 0,
+    last_activity_date: '',
+  });
+}
+
+// Award XP + update streak. Call ONLY after a full quiz is completed.
+export async function awardQuizCompletion(score = 0) {
+  const p = await getProgress();
+  const today = dayStr();
+  const xpGain = Math.max(score, 0) * 10;
+
+  let current = p.current_streak || 0;
+  if (p.last_activity_date !== today) {
+    const yesterday = dayStr(new Date(Date.now() - 86400000));
+    current = p.last_activity_date === yesterday ? current + 1 : 1;
+  }
+  const best = Math.max(p.best_streak || 0, current);
+
+  return base44.entities.UserProgress.update(p.id, {
+    xp: (p.xp || 0) + xpGain,
+    current_streak: current,
+    best_streak: best,
+    last_activity_date: today,
+  });
+}

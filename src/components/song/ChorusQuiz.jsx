@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Trophy, Check, X, RotateCcw, Loader2 } from 'lucide-react';
+import { awardQuizCompletion } from '@/lib/progress';
 
 const cleanWord = (w) => w.toLowerCase().replace(/[¿¡!?.,;:"'()]/g, '').trim();
 const shuffle = (a) => [...a].sort(() => Math.random() - 0.5);
@@ -103,6 +104,8 @@ export default function ChorusQuiz({ songId, lines, songTitle, songArtist }) {
   const next = async () => {
     if (idx + 1 >= questions.length) {
       setDone(true);
+      // Award XP + streak ONLY after the full quiz is completed
+      awardQuizCompletion(score).catch(() => {});
     } else {
       setIdx(idx + 1);
       setAnswer(null);

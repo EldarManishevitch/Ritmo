@@ -1,0 +1,67 @@
+{
+  "name": "UserProgress",
+  "type": "object",
+  "properties": {
+    "xp": {
+      "type": "number",
+      "default": 0,
+      "description": "Total experience points earned"
+    },
+    "current_streak": {
+      "type": "number",
+      "default": 0,
+      "description": "Current consecutive-day streak"
+    },
+    "best_streak": {
+      "type": "number",
+      "default": 0,
+      "description": "Best streak ever reached"
+    },
+    "last_activity_date": {
+      "type": "string",
+      "description": "YYYY-MM-DD of the last completed quiz"
+    }
+  },
+  "required": [],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
