@@ -25,12 +25,14 @@ export default function Dashboard() {
     setSongs(list);
   };
 
-  const { lang } = useLanguage();
+  const langCtx = useLanguage();
+  const langStr = langCtx.lang;
+  const langFlag = langCtx.flag;
 
   const filtered = useMemo(() => {
-    const lc = (lang || 'Spanish').toLowerCase();
+    const lc = (langStr || 'Spanish').toLowerCase();
     return deduped.filter((s) => (s.language || 'Spanish').toLowerCase() === lc);
-  }, [deduped, lang]);
+  }, [deduped, langStr]);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,9 +84,9 @@ export default function Dashboard() {
       {/* Header */}
       <div className="mb-6 px-4">
         <h1 className="text-3xl sm:text-4xl font-bold text-foreground pt-4">
-          <span className="text-primary">Ritmo</span> — <span className="capitalize">{lang}</span> Song Teacher
+          <span className="text-primary">Ritmo</span> — <span className="capitalize">{langStr}</span> Song Teacher
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">Pick a {lang} song, sing along, and pick up {lang}.</p>
+        <p className="text-sm text-muted-foreground mt-1">Pick a {langStr} song, sing along, and pick up {langStr}.</p>
       </div>
 
       {/* Word of the Day */}
@@ -109,7 +111,7 @@ export default function Dashboard() {
       {/* Recommended For Your Level */}
       <div className="mb-8 px-4">
         <div className="flex items-center justify-between mb-1">
-          <h2 className="text-lg font-bold text-foreground">🔥 Recommended For Your {lang.flag} {lang.lang || 'Level'} 🔥</h2>
+          <h2 className="text-lg font-bold text-foreground">🔥 Recommended For Your {langFlag} {langStr || 'Level'} 🔥</h2>
           <button
             onClick={() => setRefreshKey((k) => k + 1)}
             className="p-2 rounded-lg hover:bg-muted transition-colors"
@@ -126,7 +128,7 @@ export default function Dashboard() {
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : recommended.length === 0 ? (
-          <EmptyState lang={lang} />
+          <EmptyState langStr={langStr} langFlag={langFlag} />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {recommended.slice(0, 6).map((song) => (
@@ -170,12 +172,12 @@ export default function Dashboard() {
   );
 }
 
-function EmptyState({ lang }) {
+function EmptyState({ langStr = '', langFlag = '' }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
       <Music2 className="h-10 w-10 text-muted-foreground/40 mb-3" />
       <p className="text-sm text-muted-foreground">
-        No {lang?.lang || ''} songs have been generated yet. Be the first to add one below! <span className="inline-block">↓</span>
+        No {langStr} songs have been generated yet. Be the first to add one below! <span className="inline-block">↓</span>
       </p>
     </div>
   );

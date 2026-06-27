@@ -20,7 +20,8 @@ export default function LanguageSwitcher() {
   const handleSelect = (l) => {
     localStorage.setItem('selected_learning_language', l.lang);
     setOpen(false);
-    navigate('/');
+    navigate('/dashboard');
+    navigate(0); // Force refresh to apply language change site-wide
   };
 
   return (
