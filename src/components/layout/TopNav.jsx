@@ -63,11 +63,11 @@ export default function TopNav() {
                 <span className="text-sm font-bold text-foreground">{p.current_streak || 0} Days</span>
                 <span className="text-xs text-muted-foreground">Best {p.best_streak || 0}</span>
               </div>
-              <Link to="/profile" className="hidden lg:flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 hover:border-primary/40 transition-colors">
+              <div className="hidden lg:flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5">
                 <Sparkles className="h-4 w-4 text-primary" />
                 <span className="text-sm font-semibold text-foreground">{level.cefr} · {level.title}</span>
                 <span className="text-xs text-muted-foreground">{p.xp || 0} XP</span>
-              </Link>
+              </div>
             </>
           )}
           <button

@@ -22,7 +22,6 @@ import Conversations from './pages/Conversations';
 import Roleplay from './pages/Roleplay';
 import ReviewRoom from './pages/ReviewRoom';
 import Settings from './pages/Settings';
-import Profile from './pages/Profile';
 import Vocab from './pages/Vocab';
 import Leaderboard from './pages/Leaderboard';
 import HowToLearnSpanishWithMusic from './pages/HowToLearnSpanishWithMusic';
@@ -85,7 +84,6 @@ const AuthenticatedApp = () => {
           <Route path="/vocab" element={<Vocab />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/profile" element={<Profile />} />
         </Route>
         <Route path="/song/:id" element={<PageTransition><SongPage /></PageTransition>} />
       </Route>

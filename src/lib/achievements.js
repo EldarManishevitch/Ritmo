@@ -3,10 +3,8 @@
 export const ACHIEVEMENTS = [
   { id: 'first_quiz', icon: '🎯', label: 'First Steps', desc: 'Complete your first quiz', check: (p) => (p.songs_completed || 0) >= 1 },
   { id: 'songs_5', icon: '🔥', label: 'Getting Warm', desc: 'Complete 5 quizzes', check: (p) => (p.songs_completed || 0) >= 5 },
-  { id: 'songs_10', icon: '🎸', label: 'First Ten', desc: 'Master your first 10 songs', check: (p) => (p.songs_completed || 0) >= 10 },
   { id: 'songs_25', icon: '🏆', label: 'Dedicated', desc: 'Complete 25 quizzes', check: (p) => (p.songs_completed || 0) >= 25 },
   { id: 'streak_3', icon: '⚡', label: 'On a Roll', desc: 'Reach a 3-day streak', check: (p) => (p.best_streak || 0) >= 3 },
-  { id: 'streak_5', icon: '🔥', label: 'Five-Day Fire', desc: 'Reach a 5-day streak', check: (p) => (p.best_streak || 0) >= 5 },
   { id: 'streak_7', icon: '📅', label: 'Week Warrior', desc: 'Reach a 7-day streak', check: (p) => (p.best_streak || 0) >= 7 },
   { id: 'streak_30', icon: '💎', label: 'Unstoppable', desc: 'Reach a 30-day streak', check: (p) => (p.best_streak || 0) >= 30 },
   { id: 'xp_100', icon: '💯', label: 'Centurion', desc: 'Earn 100 XP', check: (p) => (p.xp || 0) >= 100 },
