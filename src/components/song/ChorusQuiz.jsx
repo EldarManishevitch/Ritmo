@@ -6,17 +6,21 @@ import { Trophy, Check, X, RotateCcw, Loader2 } from 'lucide-react';
 import { awardQuizCompletion } from '@/lib/progress';
 import { ACHIEVEMENTS } from '@/lib/achievements';
 import { useToast } from '@/components/ui/use-toast';
+import { issueCertificateIfMastered } from '@/lib/certificates';
+import confetti from 'canvas-confetti';
+import CertificateModal from '@/components/certificate/CertificateModal';
 
 const cleanWord = (w) => w.toLowerCase().replace(/[¿¡!?.,;:"'()]/g, '').trim();
 const shuffle = (a) => [...a].sort(() => Math.random() - 0.5);
 
-export default function ChorusQuiz({ songId, lines, songTitle, songArtist }) {
+export default function ChorusQuiz({ songId, lines, songTitle, songArtist, songDifficulty }) {
   const [seed, setSeed] = useState(0);
   const [idx, setIdx] = useState(0);
   const [answer, setAnswer] = useState(null);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
   const { toast } = useToast();
+  const [certificate, setCertificate] = useState(null);
 
   const questions = useMemo(() => {
     void seed;
@@ -116,6 +120,16 @@ export default function ChorusQuiz({ songId, lines, songTitle, songArtist }) {
             if (a) toast({ title: `${a.icon} ${a.label} unlocked!`, description: a.desc });
           });
         }
+        // Issue a certificate when the song is mastered (80%+)
+        const cert = await issueCertificateIfMastered({
+          song: { id: songId, title: songTitle, artist: songArtist, difficulty: songDifficulty },
+          score,
+          total: questions.length,
+        });
+        if (cert?.isNew) {
+          setCertificate(cert);
+          confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
+        }
       } catch { /* noop */ }
     } else {
       setIdx(idx + 1);
@@ -151,6 +165,7 @@ export default function ChorusQuiz({ songId, lines, songTitle, songArtist }) {
         <Button onClick={restart} className="bg-primary text-white">
           <RotateCcw className="h-4 w-4 mr-1" /> Play again
         </Button>
+        {certificate && <CertificateModal certificate={certificate} onClose={() => setCertificate(null)} />}
       </div>
     );
   }

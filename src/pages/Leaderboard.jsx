@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { levelForXp } from '@/lib/progress';
 import { ACHIEVEMENTS } from '@/lib/achievements';
 import AddFriends from '@/components/friends/AddFriends';
+import CertificatesSection from '@/components/certificate/CertificatesSection';
 
 const medal = (rank) => (rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null);
 
@@ -158,6 +159,8 @@ export default function Leaderboard() {
           })}
         </div>
       </div>
+
+      <CertificatesSection />
     </div>
   );
 }

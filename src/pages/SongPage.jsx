@@ -379,7 +379,7 @@ export default function SongPage() {
 
             {tab === 'quiz' && (
               <div className="flex-1 overflow-y-auto px-4 py-4 no-scrollbar">
-                <ChorusQuiz songId={id} lines={lines} songTitle={song.title} songArtist={song.artist} />
+                <ChorusQuiz songId={id} lines={lines} songTitle={song.title} songArtist={song.artist} songDifficulty={song.difficulty} />
               </div>
             )}
           </div>

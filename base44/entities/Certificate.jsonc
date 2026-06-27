@@ -1,0 +1,56 @@
+{
+  "name": "Certificate",
+  "type": "object",
+  "properties": {
+    "song_id": {
+      "type": "string",
+      "description": "FK to the mastered Song"
+    },
+    "song_title": {
+      "type": "string"
+    },
+    "artist": {
+      "type": "string"
+    },
+    "score": {
+      "type": "number",
+      "description": "Quiz score percentage at mastery"
+    },
+    "cefr_level": {
+      "type": "string",
+      "description": "CEFR level of the song"
+    },
+    "certificate_number": {
+      "type": "string",
+      "description": "Unique certificate identifier"
+    }
+  },
+  "required": [
+    "song_id",
+    "song_title",
+    "score"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
