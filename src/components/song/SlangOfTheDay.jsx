@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Music, Play, Loader2, Volume2 } from 'lucide-react';
+import { Music, Play, Loader2, Volume2, Bookmark, Check } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { youtubeSearch, detectGenre } from '@/lib/aiHelpers';
 import { generateLyrics } from '@/lib/lyricsPipeline';
@@ -10,6 +10,8 @@ export default function SlangOfTheDay() {
   const [slang, setSlang] = useState(null);
   const [loading, setLoading] = useState(true);
   const [going, setGoing] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const handlePlay = async () => {
     if (going || !slang) return;
@@ -53,6 +55,28 @@ export default function SlangOfTheDay() {
     u.lang = 'es-ES';
     u.rate = 0.85;
     speechSynthesis.speak(u);
+  };
+
+  useEffect(() => {
+    if (!slang) return;
+    base44.entities.SavedWord.filter({ word: slang.term })
+      .then((rows) => setSaved(rows.length > 0))
+      .catch(() => {});
+  }, [slang]);
+
+  const handleSave = async () => {
+    if (saving || saved || !slang) return;
+    setSaving(true);
+    try {
+      await base44.entities.SavedWord.create({
+        word: slang.term,
+        english_meaning: slang.meaning,
+        pronunciation_hint: slang.pronunciation,
+        is_slang: true,
+      });
+      setSaved(true);
+    } catch {}
+    setSaving(false);
   };
 
   useEffect(() => {
@@ -130,6 +154,15 @@ export default function SlangOfTheDay() {
           <p className="text-sm text-muted-foreground">{slang.excerpt_translation}</p>
         </div>
       </div>
+
+      <button
+        onClick={handleSave}
+        disabled={saving || saved}
+        className={`w-full mt-4 flex items-center justify-center gap-2 h-10 rounded-xl text-sm font-medium transition-colors ${saved ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15'}`}
+      >
+        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : saved ? <Check className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+        {saved ? 'Saved to vocabulary' : 'Save to vocabulary'}
+      </button>
     </div>
   );
 }
