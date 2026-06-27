@@ -16,11 +16,29 @@ export default function SyncedLyrics({
 }) {
   const containerRef = useRef(null);
   const [karaokeResults, setKaraokeResults] = useState({});
+  // Three-state UI: lyrics render immediately; a background check resolves to synced/static
+  const [syncStatus, setSyncStatus] = useState('checking');
 
+  // Background sync checker: resolve once lyrics are present and timestamps can be verified
+  useEffect(() => {
+    if (!lines.length) return; // keep checking until lyrics render
+    const timer = setTimeout(() => {
+      const hasTimestamps = lines.some((l) => (l.start_seconds || 0) > 0);
+      if (hasTimestamps) {
+        setSyncStatus('synced');
+      } else if (mode === 'static') {
+        setSyncStatus('static');
+      }
+      // else: timestamps may still arrive via realtime updates — keep checking
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [lines, mode]);
+
+  const isSynced = syncStatus === 'synced';
   const adjustedTime = currentTime + offset;
 
   let activeIndex = -1;
-  if (mode === 'synced') {
+  if (isSynced) {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       if (line.start_seconds <= adjustedTime && adjustedTime < (line.end_seconds || line.start_seconds + 5)) {
@@ -37,12 +55,12 @@ export default function SyncedLyrics({
   const activeLineId = activeIndex >= 0 ? (lines[activeIndex]?.id || `line-${activeIndex}`) : null;
 
   useEffect(() => {
-    if (!activeLineId || !containerRef.current) return;
+    if (!isSynced || !activeLineId || !containerRef.current) return;
     const el = containerRef.current.querySelector(`[data-line-id="${activeLineId}"]`);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [activeLineId]);
+  }, [activeLineId, isSynced]);
 
   const handleKaraokeResult = (lineId, result) => {
     setKaraokeResults((prev) => ({ ...prev, [lineId]: result }));
@@ -103,8 +121,26 @@ export default function SyncedLyrics({
 
   return (
     <div ref={containerRef} className="h-full overflow-y-auto px-4 py-[20vh] space-y-3 no-scrollbar">
+      {/* State 1: checking indicator */}
+      {syncStatus === 'checking' && (
+        <div className="flex justify-center mb-2 animate-pulse">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#2C2A29]/10 bg-white px-3 py-1 text-xs text-[#2C2A29]/80">
+            🔄 Checking for time-sync database markers...
+          </span>
+        </div>
+      )}
+
+      {/* State 3: static fallback message */}
+      {syncStatus === 'static' && (
+        <div className="flex justify-center mb-2">
+          <span className="text-xs text-[#2C2A29]/50">
+            Static lyrics — sync unavailable for this track
+          </span>
+        </div>
+      )}
+
       {lines.map((line, idx) => {
-        const active = idx === activeIndex;
+        const active = isSynced && idx === activeIndex;
         const isInstrumental = !line.spanish_text || line.spanish_text.trim().length < 2;
         const lineKey = line.id || `line-${idx}`;
         const karaokeResult = karaokeResults[lineKey];
@@ -123,28 +159,30 @@ export default function SyncedLyrics({
           <div
             key={lineKey}
             data-line-id={lineKey}
-            onClick={() => mode === 'synced' && onLineSeek?.(line.start_seconds - offset)}
+            onClick={() => isSynced && onLineSeek?.(line.start_seconds - offset)}
             className={`rounded-2xl px-4 py-3 transition-all duration-300 relative ${
               active
-                ? 'bg-primary/10 border-l-4 border-primary scale-[1.02]'
-                : 'border-l-4 border-transparent opacity-60 hover:opacity-90'
-            } ${mode === 'synced' ? 'cursor-pointer' : ''}`}
+                ? 'border-2 border-[#D96B43] bg-white font-bold text-[#2C2A29] scale-[1.02] shadow-sm'
+                : isSynced
+                ? 'border-2 border-transparent opacity-60 hover:opacity-90'
+                : 'border-2 border-transparent opacity-100'
+            } ${isSynced ? 'cursor-pointer' : ''}`}
           >
-            {idx < 3 && !active && (
+            {isSynced && idx < 3 && !active && (
               <span className="absolute -top-1 right-2 text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
                 CLICK ME
               </span>
             )}
             <p
-              className={`font-medium leading-snug ${
-                active ? 'text-primary text-lg font-bold' : 'text-foreground text-base'
+              className={`font-medium leading-snug transition-all duration-300 ${
+                active ? 'text-[#2C2A29] text-lg font-bold' : 'text-foreground text-base'
               }`}
             >
               {renderWords(line.spanish_text, line.spanish_text, karaokeResult)}
             </p>
             {showEnglish && (
               line.english_translation ? (
-                <p className={`text-sm mt-1 transition-opacity duration-300 ${active ? 'text-foreground/80' : 'text-muted-foreground'}`}>
+                <p className={`text-sm mt-1 transition-opacity duration-300 ${active ? 'text-[#2C2A29]/80' : 'text-muted-foreground'}`}>
                   {line.english_translation}
                 </p>
               ) : (
@@ -157,7 +195,7 @@ export default function SyncedLyrics({
               </p>
             )}
 
-            {/* Action tray: pronunciation mic (synced only) + grammar insight + score badge */}
+            {/* Action tray: pronunciation mic + grammar insight + score badge */}
             <div className="flex items-center gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
               <PronunciationKaraoke
                 lineId={lineKey}
