@@ -101,19 +101,13 @@ async function fetchOriginalLyrics(title, artist) {
     },
   ];
 
-  for (const prov of providers) {
-    try {
-      const result = await prov.fetch();
-      if (result) {
-        console.log(`Stage 1: ${prov.name} delivered (quick mode)`);
-        return { source: prov.name, ...result };
-      }
-    } catch (err) {
-      console.log(`Stage 1: ${prov.name} failed fast —`, err.message);
-    }
+  try {
+    const result = await Promise.any(providers.map(p => p.fetch().then(r => ({ ...r, name: p.name }))));
+    console.log(`Stage 1: ${result.name} won the race (quick mode)`);
+    return { source: result.name, mainLyrics: result.mainLyrics, syncedLyrics: result.syncedLyrics };
+  } catch {
+    console.warn('Stage 1: All providers failed quickly, using placeholder');
   }
-  
-  console.warn('Stage 1: All providers failed quickly, using placeholder');
   return { 
     source: 'placeholder', 
     mainLyrics: PLACEHOLDER_LYRICS.join('\n'), 
@@ -313,17 +307,26 @@ Deno.serve(async (req) => {
     console.log(`Stage 1: Saved ${rawLines.length} lines from ${lyricsResult.source}`);
 
     // ========== STAGE 2: Independent Translation (Non-blocking) ==========
+    if (!hasSyncedTimestamps) {
+      // Translation only makes sense for lyrics without timestamps
+      // The caption-style display with timestamps doesn't need translations right away
+    }
     runTranslation(base44, songId, sourceLanguage).catch(err => {
       console.error('Stage 2 background failure:', err.message);
     });
 
-    // ========== STAGE 3: Isolated Timestamp Sync with Auto-Retry ==========
+    // ========== STAGE 3: Timestamp Sync — skip if Stage 1 already gave us synced lyrics ==========
+    // Unblock the song page immediately: mark static if we have plain lyrics (sync follows),
+    // or ready if timestamps arrived with the lyrics.
+    const unluckyStatus = hasSyncedTimestamps ? 'ready' : 'static';
+    await base44.entities.Song.update(songId, { sync_status: unluckyStatus });
+    console.log(`Stage 1: Marked song ${unluckyStatus} (${rawLines.length} lines from ${lyricsResult.source})`);
+
     if (!hasSyncedTimestamps && song.youtube_id) {
       syncTimestamps(base44, songId, song.title, song.artist).catch(err => {
         console.error('Stage 3 background failure:', err.message);
       });
-    } else if (hasSyncedTimestamps) {
-      await base44.entities.Song.update(songId, { sync_status: 'ready' });
+      // (Stage 3 will flip to 'ready' when timestamps land)
     }
 
     return Response.json({ 
