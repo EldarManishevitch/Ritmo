@@ -41,69 +41,82 @@ function parseLRC(lrc) {
   return lines;
 }
 
+const QUICK_TIMEOUT = 2500;
+
 async function fetchOriginalLyrics(title, artist) {
-  console.log('Stage 1: Racing lyric providers for', title, 'by', artist);
+  console.log('Stage 1: Sequential quick-fetch for', title, 'by', artist);
   
   const providers = [
-    // LRCLIB (most reliable for Latin music)
-    (async () => {
-      const url = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`;
-      const res = await withTimeout(fetch(url), 8000, 'LRCLIB fetch');
-      if (!res.ok) throw new Error('LRCLIB: not found');
-      const data = await res.json();
-      const plain = data.plainLyrics || data.lyrics;
-      if (!plain || plain.length < 20) throw new Error('LRCLIB: too short');
-      console.log('LRCLIB found', plain.split('\n').length, 'lines');
-      return { source: 'lrclib', plainLyrics: plain, syncedLyrics: data.syncedLyrics || null };
-    })(),
-    
-    // Genius via API
-    (async () => {
-      const token = Deno.env.get('GENIUS_ACCESS_TOKEN');
-      if (!token) throw new Error('Genius token missing');
-      const searchUrl = `https://api.genius.com/search?q=${encodeURIComponent(`${title} ${artist}`)}`;
-      const searchRes = await withTimeout(fetch(searchUrl, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      }), 8000, 'Genius search');
-      const searchData = await searchRes.json();
-      const hit = searchData.response?.hits?.[0];
-      if (!hit) throw new Error('Genius: no match');
-      const lyricsUrl = `https://api.genius.com/songs/${hit.result.id}`;
-      const lyricsRes = await withTimeout(fetch(lyricsUrl, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      }), 8000, 'Genius lyrics');
-      const lyricsData = await lyricsRes.json();
-      const plain = lyricsData.response?.song?.lyrics?.plain || '';
-      if (!plain || plain.length < 20) throw new Error('Genius: no lyrics');
-      console.log('Genius found', plain.split('\n').length, 'lines');
-      return { source: 'genius', plainLyrics: plain, syncedLyrics: null };
-    })(),
-    
-    // Lyrics.ovh fallback
-    (async () => {
-      const url = `https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`;
-      const res = await withTimeout(fetch(url), 8000, 'Lyrics.ovh');
-      if (!res.ok) throw new Error('Lyrics.ovh: not found');
-      const data = await res.json();
-      if (!data.lyrics || data.lyrics.length < 20) throw new Error('Lyrics.ovh: empty');
-      console.log('Lyrics.ovh found', data.lyrics.split('\n').length, 'lines');
-      return { source: 'ovh', plainLyrics: data.lyrics, syncedLyrics: null };
-    })(),
+    {
+      name: 'lrclib',
+      fetch: async () => {
+        const res = await withTimeout(
+          fetch(`https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`),
+          QUICK_TIMEOUT, 'LRCLIB'
+        );
+        if (!res.ok) throw new Error('LRCLIB: not found');
+        const data = await res.json();
+        const plain = data.plainLyrics || data.lyrics;
+        if (!plain || plain.length < 20) throw new Error('LRCLIB: too short');
+        console.log('LRCLIB quick-fetch succeeded');
+        return { mainLyrics: plain, syncedLyrics: data.syncedLyrics || null };
+      },
+    },
+    {
+      name: 'genius',
+      fetch: async () => {
+        const token = Deno.env.get('GENIUS_ACCESS_TOKEN');
+        if (!token) throw new Error('Genius token missing');
+        const searchRes = await withTimeout(
+          fetch(`https://api.genius.com/search?q=${encodeURIComponent(`${title} ${artist}`)}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+          }), QUICK_TIMEOUT, 'Genius search'
+        );
+        const hit = (await searchRes.json()).response?.hits?.[0];
+        if (!hit) throw new Error('Genius: no match');
+        const lyricsRes = await withTimeout(
+          fetch(`https://api.genius.com/songs/${hit.result.id}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+          }), QUICK_TIMEOUT, 'Genius lyrics'
+        );
+        const plain = (await lyricsRes.json()).response?.song?.lyrics?.plain || '';
+        if (!plain || plain.length < 20) throw new Error('Genius: no lyrics');
+        console.log('Genius quick-fetch succeeded');
+        return { mainLyrics: plain, syncedLyrics: null };
+      },
+    },
+    {
+      name: 'ovh',
+      fetch: async () => {
+        const res = await withTimeout(
+          fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`),
+          QUICK_TIMEOUT, 'Lyrics.ovh'
+        );
+        if (!res.ok) throw new Error('Lyrics.ovh: not found');
+        const lyrics = (await res.json()).lyrics;
+        if (!lyrics || lyrics.length < 20) throw new Error('Lyrics.ovh: empty');
+        console.log('Lyrics.ovh quick-fetch succeeded');
+        return { mainLyrics: lyrics, syncedLyrics: null };
+      },
+    },
   ];
 
-  const results = await Promise.allSettled(providers);
-  
-  for (const result of results) {
-    if (result.status === 'fulfilled' && result.value) {
-      console.log(`Stage 1: ${result.value.source} won the race`);
-      return result.value;
+  for (const prov of providers) {
+    try {
+      const result = await prov.fetch();
+      if (result) {
+        console.log(`Stage 1: ${prov.name} delivered (quick mode)`);
+        return { source: prov.name, ...result };
+      }
+    } catch (err) {
+      console.log(`Stage 1: ${prov.name} failed fast —`, err.message);
     }
   }
   
-  console.warn('Stage 1: All providers failed, using placeholder');
+  console.warn('Stage 1: All providers failed quickly, using placeholder');
   return { 
     source: 'placeholder', 
-    plainLyrics: PLACEHOLDER_LYRICS.join('\n'), 
+    mainLyrics: PLACEHOLDER_LYRICS.join('\n'), 
     syncedLyrics: null 
   };
 }
@@ -277,7 +290,7 @@ Deno.serve(async (req) => {
       }));
       hasSyncedTimestamps = true;
     } else {
-      rawLines = lyricsResult.plainLyrics
+      rawLines = (lyricsResult.mainLyrics || '')
         .split('\n')
         .map((t) => ({ spanish_text: t.trim(), start_seconds: 0, end_seconds: 0 }))
         .filter((l) => l.spanish_text);
