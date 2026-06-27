@@ -142,10 +142,14 @@ export default function SyncedLyrics({
             >
               {renderWords(line.spanish_text, line.spanish_text, karaokeResult)}
             </p>
-            {showEnglish && line.english_translation && (
-              <p className={`text-sm mt-1 ${active ? 'text-foreground/80' : 'text-muted-foreground'}`}>
-                {line.english_translation}
-              </p>
+            {showEnglish && (
+              line.english_translation ? (
+                <p className={`text-sm mt-1 transition-opacity duration-300 ${active ? 'text-foreground/80' : 'text-muted-foreground'}`}>
+                  {line.english_translation}
+                </p>
+              ) : (
+                <div className="h-4 w-2/3 bg-[#2C2A29]/10 animate-pulse rounded mt-1" />
+              )
             )}
             {active && line.pronunciation && (
               <p className="text-xs text-muted-foreground/70 mt-1 italic flex items-center gap-1">
