@@ -22,6 +22,14 @@ function parseLRC(lrc) {
   return lines;
 }
 
+// Guard any promise with a hard timeout so a hanging call can't stall the pipeline.
+function withTimeout(promise, ms, label = 'op') {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} timed out`)), ms)),
+  ]);
+}
+
 // ---------- AI translate + pronounce, 3-model race per chunk ----------
 const TRANSLATION_MODELS = ['gemini_3_flash', 'gpt_5_mini', 'claude_sonnet_4_6'];
 
@@ -56,7 +64,11 @@ async function translateLines(spanishTexts) {
       const minLines = Math.ceil(chunk.length * 0.8);
       return Promise.any(
         TRANSLATION_MODELS.map((model) =>
-          base44.integrations.Core.InvokeLLM({ prompt: prompt(chunk), model, response_json_schema: schema })
+          withTimeout(
+            base44.integrations.Core.InvokeLLM({ prompt: prompt(chunk), model, response_json_schema: schema }),
+            45000,
+            `translate ${model}`
+          )
             .then((r) => {
               if (!r?.lines || r.lines.length < minLines) {
                 throw new Error(`${model} returned ${r?.lines?.length || 0}/${chunk.length} lines`);
@@ -96,17 +108,21 @@ export async function generateLyrics({ songId, title, artist, youtubeId }) {
 
   // Race 3 lyric sources in parallel: LRCLIB + Genius (backend) + LLM web search
   const [lyricsRes, aiRes] = await Promise.allSettled([
-    base44.functions.invoke('fetchLyrics', { title: song.title, artist: song.artist }),
-    base44.integrations.Core.InvokeLLM({
-      prompt: `Return the full Spanish lyrics for the song "${song.title}" by "${song.artist}". Only the lyrics, one line per line, no metadata or section labels.`,
-      add_context_from_internet: true,
-      model: 'gemini_3_flash',
-      response_json_schema: {
-        type: 'object',
-        properties: { lines: { type: 'array', items: { type: 'string' } } },
-        required: ['lines'],
-      },
-    }),
+    withTimeout(base44.functions.invoke('fetchLyrics', { title: song.title, artist: song.artist }), 30000, 'fetchLyrics'),
+    withTimeout(
+      base44.integrations.Core.InvokeLLM({
+        prompt: `Return the full Spanish lyrics for the song "${song.title}" by "${song.artist}". Only the lyrics, one line per line, no metadata or section labels.`,
+        add_context_from_internet: true,
+        model: 'gemini_3_flash',
+        response_json_schema: {
+          type: 'object',
+          properties: { lines: { type: 'array', items: { type: 'string' } } },
+          required: ['lines'],
+        },
+      }),
+      30000,
+      'llm lyrics'
+    ),
   ]);
 
   const lrc = lyricsRes.status === 'fulfilled' ? lyricsRes.value?.data : null;
