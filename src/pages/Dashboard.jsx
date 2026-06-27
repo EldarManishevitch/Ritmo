@@ -3,6 +3,7 @@ import { Loader2, RefreshCw, Music2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import SlangOfTheDay from '@/components/song/SlangOfTheDay';
 import DailyWordCard from '@/components/song/DailyWordCard';
+import AchievementBadges from '@/components/achievements/AchievementBadges';
 import AddSongSection from '@/components/song/AddSongSection';
 import SongGridCard from '@/components/song/SongGridCard';
 import PullToRefresh from '@/components/PullToRefresh';
@@ -82,6 +83,11 @@ export default function Dashboard() {
       {/* Slang of the Day */}
       <div className="mb-6">
         <SlangOfTheDay />
+      </div>
+
+      {/* Achievement Badges */}
+      <div className="mb-8">
+        <AchievementBadges />
       </div>
 
       {/* Add a New Song */}
