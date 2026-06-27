@@ -143,9 +143,9 @@ export default function Landing() {
 
       {/* Hero */}
       <section className="max-w-5xl mx-auto px-4 pt-12 pb-8 text-center">
-        <span className="inline-block text-xs font-semibold uppercase tracking-wide text-primary bg-primary/10 px-3 py-1 rounded-full mb-4 hidden">
-          Try it free — no signup
-        </span>
+        
+
+        
         <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 leading-tight">
           Sing the chorus.<br />Speak the language.
         </h1>
