@@ -1,5 +1,8 @@
-import React, { useEffect, useRef } from 'react';
-import { Volume2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Volume2, Star, RotateCcw } from 'lucide-react';
+import { normalizeSpanish } from '@/lib/pronunciationScore';
+import PronunciationKaraoke from '@/components/song/PronunciationKaraoke';
+import GrammarInsight from '@/components/song/GrammarInsight';
 
 export default function SyncedLyrics({
   lines = [],
@@ -9,9 +12,11 @@ export default function SyncedLyrics({
   showEnglish = true,
   onWordTap,
   onLineSeek,
+  onPausePlayer,
 }) {
   const containerRef = useRef(null);
   const activeRef = useRef(null);
+  const [karaokeResults, setKaraokeResults] = useState({});
 
   const adjustedTime = currentTime + offset;
 
@@ -42,11 +47,42 @@ export default function SyncedLyrics({
     }
   }, [activeIndex]);
 
-  const renderWords = (text, lineText) => {
+  const handleKaraokeResult = (lineId, result) => {
+    setKaraokeResults((prev) => ({ ...prev, [lineId]: result }));
+  };
+
+  const clearKaraoke = (lineId) => {
+    setKaraokeResults((prev) => {
+      const next = { ...prev };
+      delete next[lineId];
+      return next;
+    });
+  };
+
+  const renderWords = (text, lineText, karaokeResult) => {
     return text.split(/(\s+)/).map((token, i) => {
       if (/^\s+$/.test(token)) return token;
       const clean = token.replace(/[^a-záéíóúüñ]/gi, '');
       if (!clean) return token;
+      if (karaokeResult) {
+        const normalized = normalizeSpanish(clean);
+        const isCorrect = karaokeResult.correctSet.has(normalized);
+        const isMissed = karaokeResult.missedSet.has(normalized);
+        return (
+          <span
+            key={i}
+            className={`transition-all duration-300 ${
+              isCorrect
+                ? 'text-green-600 font-semibold'
+                : isMissed
+                ? 'text-red-500 line-through bg-red-100 text-red-600 px-1 rounded'
+                : 'text-foreground'
+            }`}
+          >
+            {token}
+          </span>
+        );
+      }
       return (
         <button
           key={i}
@@ -73,10 +109,12 @@ export default function SyncedLyrics({
       {lines.map((line, idx) => {
         const active = idx === activeIndex;
         const isInstrumental = !line.spanish_text || line.spanish_text.trim().length < 2;
+        const lineKey = line.id || `line-${idx}`;
+        const karaokeResult = karaokeResults[lineKey];
 
         if (isInstrumental) {
           return (
-            <div key={line.id || idx} className="flex justify-center">
+            <div key={lineKey} className="flex justify-center">
               <span className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded-full">
                 Instrumental...
               </span>
@@ -86,7 +124,7 @@ export default function SyncedLyrics({
 
         return (
           <div
-            key={line.id || idx}
+            key={lineKey}
             ref={active ? activeRef : null}
             onClick={() => mode === 'synced' && onLineSeek?.(line.start_seconds - offset)}
             className={`rounded-2xl px-4 py-3 transition-all duration-300 relative ${
@@ -105,7 +143,7 @@ export default function SyncedLyrics({
                 active ? 'text-primary text-lg font-bold' : 'text-foreground text-base'
               }`}
             >
-              {renderWords(line.spanish_text, line.spanish_text)}
+              {renderWords(line.spanish_text, line.spanish_text, karaokeResult)}
             </p>
             {showEnglish && line.english_translation && (
               <p className={`text-sm mt-1 ${active ? 'text-foreground/80' : 'text-muted-foreground'}`}>
@@ -117,6 +155,35 @@ export default function SyncedLyrics({
                 <Volume2 className="h-3 w-3" /> /{line.pronunciation}/
               </p>
             )}
+
+            {/* Action tray: pronunciation mic (synced only) + grammar insight + score badge */}
+            <div className="flex items-center gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
+              {mode === 'synced' && (
+                <PronunciationKaraoke
+                  lineId={lineKey}
+                  targetText={line.spanish_text}
+                  onPausePlayer={onPausePlayer}
+                  onResult={handleKaraokeResult}
+                />
+              )}
+              <GrammarInsight line={line} />
+              {karaokeResult && (
+                <div className="flex items-center gap-1.5 ml-auto">
+                  <span className="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full bg-primary/10 text-primary">
+                    <Star className="h-3 w-3 fill-primary" />
+                    {karaokeResult.score}/100
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => clearKaraoke(lineKey)}
+                    className="flex items-center justify-center h-6 w-6 rounded-full text-muted-foreground hover:bg-muted transition-colors"
+                    title="Clear score"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         );
       })}

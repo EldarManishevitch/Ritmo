@@ -87,7 +87,7 @@ export default function SongPage() {
     return () => clearInterval(interval);
   }, [song?.sync_status, id]);
 
-  const { ready, currentTime, seekTo } = useYouTubePlayer(
+  const { ready, currentTime, seekTo, pause } = useYouTubePlayer(
     song?.youtube_id || '',
     playerContainerId
   );
@@ -322,6 +322,7 @@ export default function SongPage() {
                   showEnglish={showEnglish}
                   onWordTap={handleWordTap}
                   onLineSeek={(t) => seekTo(t)}
+                  onPausePlayer={pause}
                 />
               </>
             )}
