@@ -121,19 +121,10 @@ export default function SyncedLyrics({
 
   return (
     <div ref={containerRef} className="h-full overflow-y-auto px-4 py-[20vh] space-y-3 no-scrollbar">
-      {/* State 1: checking indicator */}
-      {syncStatus === 'checking' && (
-        <div className="flex justify-center mb-2 animate-pulse">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#2C2A29]/10 bg-white px-3 py-1 text-xs text-[#2C2A29]/80">
-            🔄 Checking for time-sync database markers...
-          </span>
-        </div>
-      )}
-
-      {/* State 3: static fallback message */}
+      {/* Static fallback message */}
       {syncStatus === 'static' && (
         <div className="flex justify-center mb-2">
-          <span className="text-xs text-[#2C2A29]/50">
+          <span className="text-xs text-muted-foreground">
             Static lyrics — sync unavailable for this track
           </span>
         </div>
@@ -162,17 +153,12 @@ export default function SyncedLyrics({
             onClick={() => isSynced && onLineSeek?.(line.start_seconds - offset)}
             className={`rounded-2xl px-4 py-3 transition-all duration-300 relative ${
               active
-                ? 'border-2 border-[#D96B43] bg-white font-bold text-[#2C2A29] scale-[1.02] shadow-sm'
+                ? 'border-2 border-[#D96B43] bg-white font-bold text-[#2C2A29] scale-[1.02] shadow-md'
                 : isSynced
-                ? 'border-2 border-transparent opacity-60 hover:opacity-90'
+                ? 'border-2 border-transparent opacity-70 hover:opacity-90'
                 : 'border-2 border-transparent opacity-100'
             } ${isSynced ? 'cursor-pointer' : ''}`}
           >
-            {isSynced && idx < 3 && !active && (
-              <span className="absolute -top-1 right-2 text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
-                CLICK ME
-              </span>
-            )}
             <p
               className={`font-medium leading-snug transition-all duration-300 ${
                 active ? 'text-[#2C2A29] text-lg font-bold' : 'text-foreground text-base'
@@ -186,7 +172,7 @@ export default function SyncedLyrics({
                   {line.english_translation}
                 </p>
               ) : (
-                <div className="h-4 w-2/3 bg-[#2C2A29]/10 animate-pulse rounded mt-1" />
+                <div className="h-4 w-2/3 bg-muted animate-pulse rounded mt-1" />
               )
             )}
             {active && line.pronunciation && (

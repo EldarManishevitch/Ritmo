@@ -361,9 +361,11 @@ export default function SongPage() {
                           {v.pronunciation_hint && <p className="text-xs text-primary mt-0.5">🔊 {v.pronunciation_hint}</p>}
                           {v.is_slang && <span className="inline-block text-xs bg-primary/10 text-primary px-2 py-0.5 rounded mt-1">slang</span>}
                         </div>
-                        <button onClick={() => speakWord(v.word)} className="p-2 rounded-lg hover:bg-muted text-primary flex-shrink-0">
-                          <Volume2 className="h-4 w-4" />
-                        </button>
+                        <div className="flex flex-col items-end gap-1">
+                          <button onClick={() => speakWord(v.word)} className="p-2 rounded-lg hover:bg-muted text-primary flex-shrink-0">
+                            <Volume2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                     {flags.filter((f) => !vocab.find((v) => v.word === f.word)).map((f) => (

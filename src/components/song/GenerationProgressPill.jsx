@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Loader2, Check } from 'lucide-react';
 
 const STATUS_TEXT = {
-  pending: 'Preparing your song…',
-  fetching_lyrics: 'Fetching lyrics…',
+  pending: 'Preparing…',
+  fetching_lyrics: 'Fetching lyrics & translating… ⏳',
   translating: 'Translating lines…',
 };
 
