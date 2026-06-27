@@ -12,21 +12,21 @@ const LanguageContext = createContext();
 
 const STORAGE_KEY = 'selected_learning_language';
 
+const getStoredLanguage = () => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) return LANGUAGES.find((l) => l.lang === stored) || LANGUAGES[0];
+  } catch { /* noop */ }
+  return LANGUAGES[0];
+};
+
 export const LanguageProvider = ({ children }) => {
-  const [language, setLanguageState] = useState(LANGUAGES[1] || LANGUAGES[0]);
+  const [language, setLanguageState] = useState(getStoredLanguage());
 
   const languageObj = LANGUAGES.find((l) => l.lang === language.lang) || LANGUAGES[0];
 
   const setLanguage = useCallback((lang) => {
     setLanguageState(lang);
-  }, []);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const match = LANGUAGES.find((l) => l.lang === stored);
-      if (match) setLanguageState(match);
-    }
   }, []);
 
   const switchLanguage = useCallback((newLang) => {

@@ -20,6 +20,7 @@ import ResetPassword from '@/pages/ResetPassword';
 // Page imports
 import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
+import TestPage from './pages/TestPage';
 import SongPage from './pages/SongPage';
 import Conversations from './pages/Conversations';
 import Roleplay from './pages/Roleplay';
@@ -46,7 +47,7 @@ const AuthenticatedApp = () => {
     <LanguageProvider>
     <Routes>
       {/* Step 1: Public auth gate and auth pages */}
-      <Route path="/" element={<Landing />} />
+      <Route path="/" element={<TestPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />

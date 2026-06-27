@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Music, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { LANGUAGES } from '@/lib/LanguageContext';
+import { LANGUAGES, useLanguage } from '@/lib/LanguageContext';
 
 const getLang = (l) => l.lang.toLowerCase();
 
 export default function LanguageGateway() {
   const navigate = useNavigate();
+  const { switchLanguage } = useLanguage();
   const [selected, setSelected] = useState(LANGUAGES[0]);
 
   const handleStart = () => {
-    localStorage.setItem('selected_learning_language', selected.lang);
+    switchLanguage(selected);
     navigate('/dashboard');
   };
 
