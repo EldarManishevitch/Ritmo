@@ -15,7 +15,6 @@ export default function SyncedLyrics({
   onPausePlayer,
 }) {
   const containerRef = useRef(null);
-  const activeRef = useRef(null);
   const [karaokeResults, setKaraokeResults] = useState({});
 
   const adjustedTime = currentTime + offset;
@@ -35,17 +34,15 @@ export default function SyncedLyrics({
     }
   }
 
+  const activeLineId = activeIndex >= 0 ? (lines[activeIndex]?.id || `line-${activeIndex}`) : null;
+
   useEffect(() => {
-    if (activeRef.current && containerRef.current) {
-      const c = containerRef.current;
-      const el = activeRef.current;
-      const cRect = c.getBoundingClientRect();
-      const elRect = el.getBoundingClientRect();
-      const offsetWithin = elRect.top - cRect.top;
-      const target = c.scrollTop + offsetWithin - cRect.height / 2 + elRect.height / 2;
-      c.scrollTo({ top: target, behavior: 'smooth' });
+    if (!activeLineId || !containerRef.current) return;
+    const el = containerRef.current.querySelector(`[data-line-id="${activeLineId}"]`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [activeIndex]);
+  }, [activeLineId]);
 
   const handleKaraokeResult = (lineId, result) => {
     setKaraokeResults((prev) => ({ ...prev, [lineId]: result }));
@@ -105,7 +102,7 @@ export default function SyncedLyrics({
   }
 
   return (
-    <div ref={containerRef} className="h-full overflow-y-auto px-4 py-6 space-y-3 no-scrollbar">
+    <div ref={containerRef} className="h-full overflow-y-auto px-4 py-[20vh] space-y-3 no-scrollbar">
       {lines.map((line, idx) => {
         const active = idx === activeIndex;
         const isInstrumental = !line.spanish_text || line.spanish_text.trim().length < 2;
@@ -125,7 +122,7 @@ export default function SyncedLyrics({
         return (
           <div
             key={lineKey}
-            ref={active ? activeRef : null}
+            data-line-id={lineKey}
             onClick={() => mode === 'synced' && onLineSeek?.(line.start_seconds - offset)}
             className={`rounded-2xl px-4 py-3 transition-all duration-300 relative ${
               active
