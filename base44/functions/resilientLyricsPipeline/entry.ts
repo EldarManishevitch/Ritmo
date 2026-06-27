@@ -150,9 +150,9 @@ Deno.serve(async (req) => {
 
     if (!rawText) {
       console.log('Stage 1: All providers failed — falling back to AI-generated lyrics');
-      // AI fallback: generate lyrics from the song itself, so the user never hits the failed screen
+      // AI fallback: generate the original Spanish lyrics from the song itself, so the user never hits the failed screen
       const aiResponse = await base44.integrations.Core.InvokeLLM({
-        prompt: `Write the full lyrics of "${song.title}" by ${song.artist}. If you don't know the exact lyrics, make your best effort based on the song's themes and style. Include verses, chorus, and bridge. Real lyrics are strongly preferred.`,
+        prompt: `Write ONLY the original Spanish lyrics of "${song.title}" by ${song.artist} — exactly as sung in the song, in Spanish. List the lines one per line (each ~40-80 chars). Do NOT include English, do NOT describe the song, do NOT add section labels like (Intro), (Verse), (Chorus) — just the raw Spanish lyrics. If you don't know the exact lyrics, make your best effort in Spanish based on the song's style.`,
         model: 'gemini_3_flash',
       });
       if (aiResponse && aiResponse.length > 50) {
