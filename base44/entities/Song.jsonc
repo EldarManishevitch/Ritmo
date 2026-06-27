@@ -55,6 +55,8 @@
         "fetching_lyrics",
         "translating",
         "ready",
+        "ready_synced",
+        "ready_unsynced",
         "failed",
         "static"
       ],

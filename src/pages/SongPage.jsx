@@ -16,7 +16,8 @@ const STATUS_LABELS = {
   fetching_lyrics: 'Fetching lyrics…',
   translating: 'Translating lines…',
   ready: 'Lyrics ready',
-  static: 'Lyrics ready (unsynced)',
+  ready_synced: 'Lyrics ready (synced)',
+  ready_unsynced: 'Lyrics ready (unsynced)',
   failed: 'Failed to load lyrics',
 };
 
@@ -25,8 +26,10 @@ const STATUS_COLORS = {
   fetching_lyrics: 'bg-orange-100 text-orange-700 border-orange-200',
   translating: 'bg-purple-100 text-purple-700 border-purple-200',
   ready: 'bg-green-100 text-green-700 border-green-200',
+  ready_synced: 'bg-green-100 text-green-700 border-green-200',
+  ready_unsynced: 'bg-green-100 text-green-700 border-green-200',
   static: 'bg-green-100 text-green-700 border-green-200',
-  failed: 'bg-red-100 text-red-700 border-red-200',
+  failed: 'bg-red-100 text-red-700 border-border-200',
 };
 
 const STATUS_ICONS = {
@@ -34,7 +37,8 @@ const STATUS_ICONS = {
   fetching_lyrics: '📝',
   translating: '🌐',
   ready: '✅',
-  static: '✅',
+  ready_synced: '✅',
+  ready_unsynced: '✅',
   failed: '❌',
 };
 
@@ -63,7 +67,7 @@ export default function SongPage() {
   const playerContainerId = 'yt-player';
 
   const inProgress = song ? ['pending', 'fetching_lyrics', 'translating'].includes(song.sync_status) : false;
-  const mode = song?.sync_status === 'static' ? 'static' : 'synced';
+  const mode = song?.sync_status === 'static' || song?.sync_status === 'ready_unsynced' ? 'static' : 'synced';
 
   // Compute progressive UI states based on available data
   const hasOriginalLyrics = lines.length > 0 && lines.some((l) => l.spanish_text);
