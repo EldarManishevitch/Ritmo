@@ -6,6 +6,7 @@ import DailyWordCard from '@/components/song/DailyWordCard';
 import AddSongSection from '@/components/song/AddSongSection';
 import SongGridCard from '@/components/song/SongGridCard';
 import PullToRefresh from '@/components/PullToRefresh';
+import MilestoneCelebration from '@/components/achievements/MilestoneCelebration';
 import { songCefr } from '@/lib/cefr';
 
 const LEVEL_ORDER = ['A1', 'A2', 'B1', 'B2'];
@@ -66,6 +67,7 @@ export default function Dashboard() {
   return (
     <PullToRefresh onRefresh={loadSongs}>
     <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-24">
+      <MilestoneCelebration />
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
