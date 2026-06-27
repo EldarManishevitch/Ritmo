@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BookOpen, Volume2, Bookmark, Check } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { generateDailyWord } from '@/lib/aiHelpers';
+import PronunciationCheck from '@/components/song/PronunciationCheck';
 
 export default function DailyWordCard() {
   const [word, setWord] = useState(null);
@@ -61,6 +62,7 @@ export default function DailyWordCard() {
         >
           <Volume2 className="h-4 w-4 text-primary" />
         </button>
+        <PronunciationCheck targetText={word.spanish_phrase} />
         <button
           onClick={save}
           disabled={saved}

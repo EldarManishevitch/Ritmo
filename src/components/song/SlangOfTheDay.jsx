@@ -4,6 +4,7 @@ import { Music, Play, Loader2, Volume2, Bookmark, Check } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { youtubeSearch, detectGenre } from '@/lib/aiHelpers';
 import { generateLyrics } from '@/lib/lyricsPipeline';
+import PronunciationCheck from '@/components/song/PronunciationCheck';
 
 export default function SlangOfTheDay() {
   const navigate = useNavigate();
@@ -128,6 +129,7 @@ export default function SlangOfTheDay() {
         >
           <Volume2 className="h-4 w-4 text-primary" />
         </button>
+        <PronunciationCheck targetText={slang.term} />
       </div>
       <div className="space-y-2.5 mb-4">
         <DefRow label="LITERAL" value={slang.literal} />
