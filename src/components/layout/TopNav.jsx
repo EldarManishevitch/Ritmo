@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Sparkles, BookOpen, RotateCcw, MessageCircle, Mic, Settings, Flame, LogOut, Music2, Trophy } from 'lucide-react';
+import { Sparkles, BookOpen, RotateCcw, MessageCircle, Mic, Settings, Flame, LogOut, Music2, User } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { getProgress, levelForXp } from '@/lib/progress';
 
@@ -8,9 +8,9 @@ const tabs = [
   { path: '/dashboard', icon: Sparkles, label: 'Discover' },
   { path: '/vocab', icon: BookOpen, label: 'Vocab' },
   { path: '/review', icon: RotateCcw, label: 'Review' },
-  { path: '/leaderboard', icon: Trophy, label: 'Rank' },
   { path: '/conversations', icon: MessageCircle, label: 'Talk' },
   { path: '/roleplay', icon: Mic, label: 'Roleplay' },
+  { path: '/leaderboard', icon: User, label: 'Profile' },
   { path: '/settings', icon: Settings, label: 'Settings' },
 ];
 
