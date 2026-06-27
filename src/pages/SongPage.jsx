@@ -43,7 +43,18 @@ export default function SongPage() {
   const [flags, setFlags] = useState([]);
   const [section, setSection] = useState('full');
   const [showEnglish, setShowEnglish] = useState(true);
+  const [autoRetryTriggered, setAutoRetryTriggered] = useState(false);
   const playerContainerId = 'yt-player';
+
+  const inProgress = song ? ['pending', 'fetching_lyrics', 'translating'].includes(song.sync_status) : false;
+  const mode = song?.sync_status === 'static' ? 'static' : 'synced';
+
+  // Compute progressive UI states based on available data
+  const hasOriginalLyrics = lines.length > 0 && lines.some((l) => l.spanish_text);
+  const hasTranslations = lines.some((l) => l.english_translation);
+  const hasSyncTimestamps = lines.some((l) => (l.start_seconds || 0) > 0);
+  const translationDisabled = !hasTranslations && inProgress;
+  const syncDisabled = !hasSyncTimestamps;
 
   const loadSong = async () => {
     const s = await base44.entities.Song.get(id);
@@ -69,12 +80,18 @@ export default function SongPage() {
 
   useEffect(() => {
     if (!song) return;
-    const inProgress = ['pending', 'fetching_lyrics', 'translating'].includes(song.sync_status);
 
     // Always load current lines (supports progressive live-rendering)
     base44.entities.LyricLine.filter({ song_id: id }, 'line_index', 500)
       .then(setLines)
       .catch(() => {});
+
+    // Auto-retry: if status is 'failed' and we haven't retried yet, trigger immediately
+    if (song.sync_status === 'failed' && !autoRetryTriggered) {
+      setAutoRetryTriggered(true);
+      base44.functions.invoke('resyncLyrics', { songId: id }).catch(() => {});
+      return;
+    }
 
     if (!inProgress) return;
 
@@ -106,7 +123,7 @@ export default function SongPage() {
       clearInterval(interval);
       unsubscribe();
     };
-  }, [song?.sync_status, id]);
+  }, [song?.sync_status, id, autoRetryTriggered]);
 
   const { ready, currentTime, seekTo, pause } = useYouTubePlayer(
     song?.youtube_id || '',
@@ -171,8 +188,6 @@ export default function SongPage() {
     );
   }
 
-  const inProgress = ['pending', 'fetching_lyrics', 'translating'].includes(song.sync_status);
-  const mode = song.sync_status === 'static' ? 'static' : 'synced';
   const thumbnail = song.album_art_url || `https://i.ytimg.com/vi/${song.youtube_id}/mqdefault.jpg`;
 
   return (
@@ -307,14 +322,20 @@ export default function SongPage() {
                   <span className="text-sm font-semibold text-foreground">
                     {SECTIONS.find((s) => s.id === section)?.label}
                   </span>
-                  <label className="flex items-center gap-2 cursor-pointer">
+                  <label className={`flex items-center gap-2 ${translationDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
                     <span className="text-xs text-muted-foreground">English</span>
                     <button
-                      onClick={() => setShowEnglish(!showEnglish)}
+                      onClick={() => !translationDisabled && setShowEnglish(!showEnglish)}
+                      disabled={translationDisabled}
                       className={`relative w-9 h-5 rounded-full transition-colors ${showEnglish ? 'bg-primary' : 'bg-muted'}`}
                     >
                       <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${showEnglish ? 'translate-x-4' : ''}`} />
                     </button>
+                    {translationDisabled && (
+                      <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                        <Loader2 className="h-3 w-3 animate-spin" /> Translating lines...
+                      </span>
+                    )}
                   </label>
                 </div>
 

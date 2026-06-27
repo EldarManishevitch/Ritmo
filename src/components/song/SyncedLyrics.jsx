@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Volume2, Star, RotateCcw } from 'lucide-react';
+import { Volume2, Star, RotateCcw, Loader2 } from 'lucide-react';
 import { normalizeSpanish } from '@/lib/pronunciationScore';
 import PronunciationKaraoke from '@/components/song/PronunciationKaraoke';
 import GrammarInsight from '@/components/song/GrammarInsight';
@@ -13,6 +13,7 @@ export default function SyncedLyrics({
   onWordTap,
   onLineSeek,
   onPausePlayer,
+  syncDisabled = false,
 }) {
   const containerRef = useRef(null);
   const [karaokeResults, setKaraokeResults] = useState({});
@@ -35,6 +36,7 @@ export default function SyncedLyrics({
   }, [lines, mode]);
 
   const isSynced = syncStatus === 'synced';
+  const hasSyncTimestamps = lines.some((l) => (l.start_seconds || 0) > 0);
   const adjustedTime = currentTime + offset;
 
   let activeIndex = -1;
@@ -121,12 +123,14 @@ export default function SyncedLyrics({
 
   return (
     <div ref={containerRef} className="h-full overflow-y-auto px-4 py-6 space-y-3 no-scrollbar">
-      {/* Static fallback message */}
-      {syncStatus === 'static' && (
-        <div className="flex justify-center mb-2">
-          <span className="text-xs text-muted-foreground">
-            Static lyrics — sync unavailable for this track
-          </span>
+      {/* Inline sync banner: shown when lyrics exist but timestamps are pending */}
+      {!hasSyncTimestamps && lines.length > 0 && (
+        <div className="mb-3 rounded-lg bg-primary/10 border border-primary/20 px-3 py-2 flex items-start gap-2">
+          <Loader2 className="h-4 w-4 text-primary mt-0.5 animate-spin flex-shrink-0" />
+          <div className="text-xs">
+            <p className="font-semibold text-primary">Syncing lyrics to video...</p>
+            <p className="text-muted-foreground">You can read along manually while we calibrate.</p>
+          </div>
         </div>
       )}
 
@@ -150,14 +154,14 @@ export default function SyncedLyrics({
           <div
             key={lineKey}
             data-line-id={lineKey}
-            onClick={() => isSynced && onLineSeek?.(line.start_seconds - offset)}
+            onClick={() => hasSyncTimestamps && onLineSeek?.(line.start_seconds - offset)}
             className={`rounded-2xl px-4 py-3 transition-all duration-300 relative ${
               active
                 ? 'border-2 border-[#D96B43] bg-white font-bold text-[#2C2A29] scale-[1.02] shadow-md'
-                : isSynced
+                : hasSyncTimestamps
                 ? 'border-2 border-transparent opacity-70 hover:opacity-90'
                 : 'border-2 border-transparent opacity-100'
-            } ${isSynced ? 'cursor-pointer' : ''}`}
+            } ${hasSyncTimestamps ? 'cursor-pointer' : ''}`}
           >
             <p
               className={`font-medium leading-snug transition-all duration-300 ${
@@ -183,12 +187,18 @@ export default function SyncedLyrics({
 
             {/* Action tray: pronunciation mic + grammar insight + score badge */}
             <div className="flex items-center gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
-              <PronunciationKaraoke
-                lineId={lineKey}
-                targetText={line.spanish_text}
-                onPausePlayer={onPausePlayer}
-                onResult={handleKaraokeResult}
-              />
+              {hasSyncTimestamps ? (
+                <PronunciationKaraoke
+                  lineId={lineKey}
+                  targetText={line.spanish_text}
+                  onPausePlayer={onPausePlayer}
+                  onResult={handleKaraokeResult}
+                />
+              ) : (
+                <button disabled className="h-8 w-8 rounded-full bg-muted flex items-center justify-center cursor-not-allowed opacity-50">
+                  <Volume2 className="h-4 w-4 text-muted-foreground" />
+                </button>
+              )}
               <GrammarInsight line={line} />
               {karaokeResult && (
                 <div className="flex items-center gap-1.5 ml-auto">
