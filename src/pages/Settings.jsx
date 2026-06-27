@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Mail, User as UserIcon, Loader2, Trash2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import PushNotificationsCard from '@/components/settings/PushNotificationsCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -98,6 +99,9 @@ export default function Settings() {
           </Button>
         </div>
       </div>
+
+      {/* Push notifications */}
+      <PushNotificationsCard />
 
       {/* About */}
       <div className="rounded-2xl bg-card border border-border p-5 mb-4">
