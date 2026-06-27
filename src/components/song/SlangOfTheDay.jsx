@@ -28,7 +28,8 @@ export default function SlangOfTheDay() {
         return;
       }
       // Not in DB — search YouTube, create, and kick off lyrics pipeline
-      const r = await youtubeSearch({ query });
+      const videos = await youtubeSearch({ query });
+      const r = Array.isArray(videos) ? videos[0] : videos;
       if (!r?.youtube_id) throw new Error('No video found');
       const song = await base44.entities.Song.create({
         title: r.title || slang.source_song,

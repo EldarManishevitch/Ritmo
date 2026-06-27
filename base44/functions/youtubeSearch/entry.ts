@@ -26,10 +26,11 @@ Deno.serve(async (req) => {
       thumbnail_url: `https://i.ytimg.com/vi/${it.id.videoId}/hqdefault.jpg`,
     }));
 
-    // Drop "Official Video" titles (case-insensitive) to favor audio/lyric versions for time-syncing
     const filteredVideos = videos.filter((video) => !video.title.toLowerCase().includes('official video'));
-    const item = filteredVideos.length > 0 ? filteredVideos[0] : videos[0];
-    return Response.json(item);
+    // Drop "Official Video" titles (case-insensitive) to favor audio/lyric versions for time-syncing.
+    // Keep them only if filtering would empty the list.
+    const finalVideos = filteredVideos.length > 0 ? filteredVideos : videos;
+    return Response.json(finalVideos.slice(0, 5));
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

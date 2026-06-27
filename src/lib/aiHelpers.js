@@ -19,7 +19,7 @@ export async function translateWord({ word, context }) {
   });
 }
 
-/** Find the official YouTube video for a song query. */
+/** Search YouTube for a song query. Returns an array of up to 5 video results. */
 export async function youtubeSearch({ query }) {
   const res = await base44.functions.invoke('youtubeSearch', { query });
   return res.data;
