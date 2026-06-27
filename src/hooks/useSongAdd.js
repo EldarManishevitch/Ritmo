@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { youtubeSearch, detectGenre } from '@/lib/aiHelpers';
+import { youtubeSearch, detectGenre, isSpanishSong } from '@/lib/aiHelpers';
 import { generateLyrics } from '@/lib/lyricsPipeline';
 
 /**
@@ -38,6 +38,13 @@ export function useSongAdd() {
     setAdding(true);
     setError('');
     try {
+      // Only save Spanish-language songs.
+      const spanish = await isSpanishSong({ title: video.title, artist: video.artist });
+      if (!spanish) {
+        setError("That song isn't in Spanish — only Spanish songs can be added.");
+        setAdding(false);
+        return;
+      }
       // Create the song immediately so we can navigate without waiting for the pipeline.
       const song = await base44.entities.Song.create({
         title: video.title,

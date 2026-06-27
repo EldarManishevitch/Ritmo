@@ -90,6 +90,23 @@ export async function detectGenre({ title, artist }) {
   }
 }
 
+/** Check whether a song is Spanish-language before saving it. */
+export async function isSpanishSong({ title, artist }) {
+  try {
+    const res = await base44.integrations.Core.InvokeLLM({
+      prompt: `Is the song "${title}" by "${artist || ''}" a Spanish-language song? Consider the title, artist, and the artist's known genre/language. Answer with a boolean "is_spanish" and a short reason.`,
+      response_json_schema: {
+        type: 'object',
+        properties: { is_spanish: { type: 'boolean' }, reason: { type: 'string' } },
+        required: ['is_spanish'],
+      },
+    });
+    return res?.is_spanish === true;
+  } catch {
+    return true;
+  }
+}
+
 /** Generate the next assistant turn in a roleplay conversation. */
 export async function generateRoleplay({ roleplayType, scenario, history }) {
   return base44.integrations.Core.InvokeLLM({
