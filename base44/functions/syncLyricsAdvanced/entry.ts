@@ -5,7 +5,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
  * Reads synced LRC (or plain) from LRCLIB, fuzzy-matches lines,
  * and caps end_seconds to `start + (wordCount × 0.45 + 0.8)` to
  * preserve true instrumental gaps.
- * Self-healing: ×2 auto-retry → graceful ready_unsynced fallback.
+ * Self-healing: ×2 auto-retry → Stage 3b Whisper forced alignment fallback.
  */
 
 async function bytesFromLine(text) {
@@ -104,8 +104,27 @@ async function syncWithRetry(base44, songId, attempt = 1) {
   } catch (e) {
     console.log(`Stage 3 attempt ${attempt} failed: ${e.message}`);
     if (attempt < 2) return syncWithRetry(base44, songId, attempt + 1);
+
+    // Both LRC attempts failed — launch Stage 3b (Whisper forced alignment) as last resort
+    const song = await base44.asServiceRole.entities.Song.get(songId);
+    if (song && song.youtube_id) {
+      console.log('Stage 3: LRC exhausted, launching Stage 3b Whisper alignment');
+      try {
+        const res = await base44.functions.invoke('whisperAlignment', { songId });
+        if (res && res.data && res.data.success) {
+          await base44.asServiceRole.entities.Song.update(songId, { sync_status: 'ready_synced' });
+          console.log('Stage 3b Whisper alignment succeeded');
+          return true;
+        }
+      } catch (wErr) {
+        console.warn(`Stage 3b Whisper alignment also failed: ${wErr.message}`);
+      }
+    } else {
+      console.log('Stage 3b skipped — no youtube_id available');
+    }
+
     await base44.asServiceRole.entities.Song.update(songId, { sync_status: 'ready_unsynced' });
-    console.log('Stage 3: both attempts failed → ready_unsynced');
+    console.log('Stage 3: all alignment methods exhausted → ready_unsynced');
     return false;
   }
 }
