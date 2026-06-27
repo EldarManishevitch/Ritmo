@@ -13,12 +13,30 @@ import { generateLyrics, ensureLyricsLoaded } from '@/lib/lyricsPipeline';
 import { songCefr } from '@/lib/cefr';
 
 const STATUS_LABELS = {
-  pending: 'Preparing…',
+  pending: 'Preparing song…',
   fetching_lyrics: 'Fetching lyrics…',
   translating: 'Translating lines…',
-  ready: 'Ready',
-  static: 'Ready (unsynced)',
-  failed: 'Failed to load',
+  ready: 'Lyrics ready',
+  static: 'Lyrics ready (unsynced)',
+  failed: 'Failed to load lyrics',
+};
+
+const STATUS_COLORS = {
+  pending: 'bg-blue-100 text-blue-700 border-blue-200',
+  fetching_lyrics: 'bg-orange-100 text-orange-700 border-orange-200',
+  translating: 'bg-purple-100 text-purple-700 border-purple-200',
+  ready: 'bg-green-100 text-green-700 border-green-200',
+  static: 'bg-green-100 text-green-700 border-green-200',
+  failed: 'bg-red-100 text-red-700 border-red-200',
+};
+
+const STATUS_ICONS = {
+  pending: '⏳',
+  fetching_lyrics: '📝',
+  translating: '🌐',
+  ready: '✅',
+  static: '✅',
+  failed: '❌',
 };
 
 const SECTIONS = [
@@ -60,6 +78,7 @@ export default function SongPage() {
     const s = await base44.entities.Song.get(id);
     setSong(s);
     setOffsetInput(String(s.sync_offset_seconds || 0));
+    console.log('Song loaded:', s.title, '| Status:', s.sync_status, '| Lines:', lines.length);
     return s;
   };
 
@@ -97,8 +116,11 @@ export default function SongPage() {
 
     // Always load current lines (supports progressive live-rendering)
     base44.entities.LyricLine.filter({ song_id: id }, 'line_index', 500)
-      .then(setLines)
-      .catch(() => {});
+      .then((loadedLines) => {
+        console.log('LyricLine loaded:', loadedLines?.length || 0, 'lines');
+        setLines(loadedLines || []);
+      })
+      .catch((err) => console.error('Failed to load lines:', err));
 
     // Auto-retry: if status is 'failed' and we haven't retried yet, trigger immediately
     if (song.sync_status === 'failed' && !autoRetryTriggered) {
@@ -220,9 +242,21 @@ export default function SongPage() {
         <button onClick={() => navigate('/dashboard')} className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <button onClick={() => setShowOffset(!showOffset)} className="p-2 -mr-2 rounded-lg hover:bg-muted transition-colors">
-          <SlidersHorizontal className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => {
+              setSong({ ...song, sync_status: 'fetching_lyrics' });
+              generateLyrics({ songId: id }).catch(() => {}).finally(() => loadSong());
+            }} 
+            className="p-2 rounded-lg hover:bg-muted transition-colors"
+            title="Refresh lyrics"
+          >
+            <RefreshCw className="h-5 w-5" />
+          </button>
+          <button onClick={() => setShowOffset(!showOffset)} className="p-2 -mr-2 rounded-lg hover:bg-muted transition-colors">
+            <SlidersHorizontal className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
       {/* Offset control */}
@@ -303,6 +337,13 @@ export default function SongPage() {
         </div>
       ) : (
         <>
+          {/* Lyrics status indicator */}
+          {!inProgress && song.sync_status && (
+            <div className={`px-4 py-2 flex items-center justify-center gap-2 text-xs font-medium border-b ${STATUS_COLORS[song.sync_status]}`}>
+              <span>{STATUS_ICONS[song.sync_status]}</span>
+              <span>{STATUS_LABELS[song.sync_status]}</span>
+            </div>
+          )}
           <GenerationProgressPill status={song.sync_status} visible={inProgress} />
           <div className="flex-1 flex flex-col lg:flex-row min-h-0">
           {/* Left column: video + quiz button */}

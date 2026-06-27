@@ -19,6 +19,9 @@ export default function SyncedLyrics({
   const [karaokeResults, setKaraokeResults] = useState({});
   // Three-state UI: lyrics render immediately; a background check resolves to synced/static
   const [syncStatus, setSyncStatus] = useState('checking');
+  
+  // Calculate data availability from lines
+  const hasTranslations = lines.some((l) => l.english_translation);
 
   // Background sync checker: resolve once lyrics are present and timestamps can be verified
   useEffect(() => {
@@ -125,11 +128,22 @@ export default function SyncedLyrics({
     <div ref={containerRef} className="h-full overflow-y-auto px-4 py-6 space-y-3 no-scrollbar">
       {/* Inline sync banner: shown when lyrics exist but timestamps are pending */}
       {!hasSyncTimestamps && lines.length > 0 && (
-        <div className="mb-3 rounded-lg bg-primary/10 border border-primary/20 px-3 py-2 flex items-start gap-2">
-          <Loader2 className="h-4 w-4 text-primary mt-0.5 animate-spin flex-shrink-0" />
+        <div className="mb-3 rounded-lg bg-orange-50 border border-orange-200 px-3 py-2 flex items-start gap-2">
+          <Loader2 className="h-4 w-4 text-orange-600 mt-0.5 animate-spin flex-shrink-0" />
           <div className="text-xs">
-            <p className="font-semibold text-primary">Syncing lyrics to video...</p>
-            <p className="text-muted-foreground">You can read along manually while we calibrate.</p>
+            <p className="font-semibold text-orange-700">⏱️ Syncing lyrics to video...</p>
+            <p className="text-orange-600/80 mt-0.5">Lyrics loaded! We're calibrating timestamps to the video. You can read along manually meanwhile.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Translation in-progress banner */}
+      {!hasTranslations && lines.length > 0 && (
+        <div className="mb-3 rounded-lg bg-purple-50 border border-purple-200 px-3 py-2 flex items-start gap-2">
+          <Loader2 className="h-4 w-4 text-purple-600 mt-0.5 animate-spin flex-shrink-0" />
+          <div className="text-xs">
+            <p className="font-semibold text-purple-700">🌐 Translating lyrics...</p>
+            <p className="text-purple-600/80 mt-0.5">English translations are being generated. Original Spanish lyrics are ready below.</p>
           </div>
         </div>
       )}
