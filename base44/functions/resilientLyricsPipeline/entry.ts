@@ -38,8 +38,8 @@ async function createLines(base44, rawLines) {
   for (let i = 0; i < rawLines.length; i += chunkSize) chunks.push(rawLines.slice(i, i + chunkSize));
 
   const all = await Promise.all(chunks.map(async (rawBlock) => {
-    const prompt = `You are a Spanish-to-English lyric translator. For each of the lines below:
-- Keep the original Spanish text exactly as-is (split into short lyrical phrases that fit as individual song captions, each no more than ~60 characters).
+    const prompt = `You are a ${srcLang}-to-English lyric translator. For each of the lines below:
+- Keep the original ${srcLang} text exactly as-is (split into short lyrical phrases that fit as individual song captions, each no more than ~60 characters).
 - Provide a natural English translation.
 - Provide a pronunciation guide: English letters, hyphenated by syllable, CAPS on the stressed syllable (e.g. "ba-CI-a").
 - Mark is_chorus true for repeated hook/chorus lines.
@@ -136,8 +136,10 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { songId } = await req.json();
+    const { songId, sourceLanguage } = await req.json();
     if (!songId) return Response.json({ error: 'songId required' }, { status: 400 });
+
+    const srcLang = sourceLanguage || 'Spanish';
 
     const song = await base44.entities.Song.get(songId);
     if (!song) return Response.json({ error: 'Song not found' }, { status: 404 });
@@ -158,6 +160,11 @@ Deno.serve(async (req) => {
 
     // Stage 2: single AI call for split + translation + pronunciation
     await base44.entities.Song.update(songId, { sync_status: 'translating' });
+    // Save the song's language for dashboard filtering
+    if (srcLang && srcLang !== 'Spanish') {
+    await base44.entities.Song.update(songId, { language: srcLang }).catch(() => {});
+    }
+
     const lines = await createLines(base44, rawLines);
 
     // Save with 0 timestamps (static mode — matches template; lyrics display instantly)

@@ -64,6 +64,11 @@
       "type": "number",
       "default": 0,
       "description": "Global calibration offset for music videos"
+    },
+    "language": {
+      "type": "string",
+      "default": "Spanish",
+      "description": "The language this song teaches (e.g. Spanish, French)"
     }
   },
   "required": [

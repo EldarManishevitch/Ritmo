@@ -10,6 +10,8 @@ import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import PageTransition from '@/components/PageTransition';
 import AppShell from '@/components/layout/AppShell';
+import { LanguageProvider } from '@/lib/LanguageContext';
+import LanguageGateway from '@/pages/LanguageGateway';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -56,10 +58,13 @@ const AuthenticatedApp = () => {
   }
 
   // Render the main app
+  const hasLanguage = !!localStorage.getItem('selected_learning_language');
+
   return (
+    <LanguageProvider>
     <Routes>
-      {/* Public */}
-      <Route path="/" element={<Landing />} />
+      {/* Gateway — language selector as the root */}
+      <Route path="/" element={<LanguageGateway />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -74,9 +79,9 @@ const AuthenticatedApp = () => {
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
 
-      {/* Authenticated app */}
+      {/* Authenticated app — language must be set before entering */}
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
-        <Route element={<AppShell />}>
+        <Route element={hasLanguage ? <AppShell /> : <Navigate to="/" replace />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/conversations" element={<Conversations />} />
           <Route path="/roleplay" element={<Roleplay />} />
@@ -85,11 +90,12 @@ const AuthenticatedApp = () => {
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
-        <Route path="/song/:id" element={<PageTransition><SongPage /></PageTransition>} />
+        <Route path="/song/:id" element={hasLanguage ? <PageTransition><SongPage /></PageTransition> : <Navigate to="/" replace />} />
       </Route>
 
       <Route path="*" element={<PageNotFound />} />
     </Routes>
+    </LanguageProvider>
   );
 };
 

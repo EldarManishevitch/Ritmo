@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Volume2, BookmarkPlus, BookmarkCheck, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { useLanguage } from '@/lib/LanguageContext';
+import { LOCALE_MAP } from '@/components/song/PronunciationKaraoke';
 import { translateWord } from '@/lib/aiHelpers';
 
 export default function WordLookup({ word, context, songId }) {
@@ -9,6 +11,7 @@ export default function WordLookup({ word, context, songId }) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const { lang: activeLang } = useLanguage();
 
   useEffect(() => {
     if (!word) { setInfo(null); setSaved(false); return; }
@@ -16,7 +19,7 @@ export default function WordLookup({ word, context, songId }) {
     setInfo(null);
     setSaved(false);
     setLoading(true);
-    translateWord({ word, context })
+    translateWord({ word, context, language: activeLang })
       .then((r) => { if (!cancelled) setInfo(r); })
       .catch(() => { if (!cancelled) setInfo({ english_meaning: 'Unavailable', pronunciation: word, part_of_speech: '', example_spanish: '', example_english: '' }); })
       .finally(() => { if (!cancelled) setLoading(false); });
@@ -25,7 +28,7 @@ export default function WordLookup({ word, context, songId }) {
 
   const handleSpeak = () => {
     const u = new SpeechSynthesisUtterance(word);
-    u.lang = 'es-ES';
+    u.lang = LOCALE_MAP[activeLang] || 'es-ES';
     u.rate = 0.8;
     speechSynthesis.speak(u);
   };
