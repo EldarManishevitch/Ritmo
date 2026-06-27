@@ -32,59 +32,49 @@ function withTimeout(promise, ms, label = 'op') {
 
 // ---------- AI translate + pronounce, 3-model race per chunk ----------
 const TRANSLATION_MODELS = ['gemini_3_flash', 'gpt_5_mini', 'claude_sonnet_4_6'];
+const TRANSLATE_CHUNK = 8;
 
-async function translateLines(spanishTexts) {
-  const CHUNK = 8;
-  const chunks = [];
-  for (let i = 0; i < spanishTexts.length; i += CHUNK) chunks.push(spanishTexts.slice(i, i + CHUNK));
-
-  const prompt = (chunk) =>
-    `For these Spanish lyric lines, return a natural English translation and a pronunciation guide for each, in order. Pronunciation guide: English letters, hyphenated by syllable, CAPS on the stressed syllable (e.g. "ba-CI-a"). Mark is_chorus true if the line is part of a repeated chorus.\nLines:\n${JSON.stringify(chunk)}`;
-  const schema = {
-    type: 'object',
-    properties: {
-      lines: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            english_translation: { type: 'string' },
-            pronunciation: { type: 'string' },
-            is_chorus: { type: 'boolean' },
-          },
+const TRANSLATE_PROMPT = (lines) =>
+  `For these Spanish lyric lines, return a natural English translation and a pronunciation guide for each, in order. Pronunciation guide: English letters, hyphenated by syllable, CAPS on the stressed syllable (e.g. "ba-CI-a"). Mark is_chorus true if the line is part of a repeated chorus.\nLines:\n${JSON.stringify(lines)}`;
+const TRANSLATE_SCHEMA = {
+  type: 'object',
+  properties: {
+    lines: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          english_translation: { type: 'string' },
+          pronunciation: { type: 'string' },
+          is_chorus: { type: 'boolean' },
         },
       },
     },
-    required: ['lines'],
-  };
+  },
+  required: ['lines'],
+};
 
-  // Race 3 models per chunk — first valid response (≥80% lines) wins, rest discarded.
-  const results = await Promise.all(
-    chunks.map((chunk) => {
-      const minLines = Math.ceil(chunk.length * 0.8);
-      return Promise.any(
-        TRANSLATION_MODELS.map((model) =>
-          withTimeout(
-            base44.integrations.Core.InvokeLLM({ prompt: prompt(chunk), model, response_json_schema: schema }),
-            45000,
-            `translate ${model}`
-          )
-            .then((r) => {
-              if (!r?.lines || r.lines.length < minLines) {
-                throw new Error(`${model} returned ${r?.lines?.length || 0}/${chunk.length} lines`);
-              }
-              console.log(`translation race: ${model} won (${r.lines.length} lines)`);
-              return r.lines;
-            })
-        )
-      ).catch(() => {
-        console.log('translation race: all models failed for chunk');
-        return null;
-      });
-    })
-  );
-
-  return results.flatMap((c) => c || []);
+// Translate one chunk of lines, racing 3 models — first valid response (≥80% lines) wins.
+async function translateChunk(spanishTexts) {
+  const minLines = Math.ceil(spanishTexts.length * 0.8);
+  return Promise.any(
+    TRANSLATION_MODELS.map((model) =>
+      withTimeout(
+        base44.integrations.Core.InvokeLLM({ prompt: TRANSLATE_PROMPT(spanishTexts), model, response_json_schema: TRANSLATE_SCHEMA }),
+        45000,
+        `translate ${model}`
+      ).then((r) => {
+        if (!r?.lines || r.lines.length < minLines) {
+          throw new Error(`${model} returned ${r?.lines?.length || 0}/${spanishTexts.length} lines`);
+        }
+        console.log(`translation race: ${model} won (${r.lines.length} lines)`);
+        return r.lines;
+      })
+    )
+  ).catch(() => {
+    console.log('translation race: all models failed for chunk');
+    return spanishTexts.map(() => ({ english_translation: '', pronunciation: '', is_chorus: false }));
+  });
 }
 
 /**
@@ -145,8 +135,6 @@ export async function generateLyrics({ songId, title, artist, youtubeId }) {
     throw new Error('No lyrics found');
   }
 
-  await base44.entities.Song.update(id, { sync_status: 'translating' });
-
   const rawLines = syncedLines
     ? syncedLines.map((l) => ({ spanish_text: l.text, start_seconds: l.start, end_seconds: l.end }))
     : staticText
@@ -154,26 +142,47 @@ export async function generateLyrics({ songId, title, artist, youtubeId }) {
         .map((t) => ({ spanish_text: t.trim(), start_seconds: 0, end_seconds: 0 }))
         .filter((l) => l.spanish_text);
 
-  const translations = await translateLines(rawLines.map((l) => l.spanish_text));
-
-  // Replace existing lines
+  // Phase 1: create LyricLine records with Spanish text + timestamps immediately,
+  // so the user sees the lyrics right away (UI is realtime-subscribed). Translation
+  // runs afterwards in the background and streams in without blocking the UI.
   await base44.entities.LyricLine.deleteMany({ song_id: id });
+  await base44.entities.LyricLine.bulkCreate(
+    rawLines.map((l, idx) => ({
+      song_id: id,
+      line_index: idx,
+      spanish_text: l.spanish_text,
+      pronunciation: '',
+      english_translation: '',
+      start_seconds: l.start_seconds,
+      end_seconds: l.end_seconds,
+      is_chorus: false,
+    }))
+  );
+  await base44.entities.Song.update(id, { sync_status: 'translating' });
 
-  const records = rawLines.map((l, idx) => ({
-    song_id: id,
-    line_index: idx,
-    spanish_text: l.spanish_text,
-    pronunciation: translations[idx]?.pronunciation || '',
-    english_translation: translations[idx]?.english_translation || '',
-    start_seconds: l.start_seconds,
-    end_seconds: l.end_seconds,
-    is_chorus: translations[idx]?.is_chorus || false,
-  }));
-
-  await base44.entities.LyricLine.bulkCreate(records);
+  // Phase 2 (background): translate chunk-by-chunk in parallel, updating each
+  // chunk's records progressively so English translations stream in live.
+  const created = await base44.entities.LyricLine.filter({ song_id: id }, 'line_index', 500);
+  const chunks = [];
+  for (let i = 0; i < rawLines.length; i += TRANSLATE_CHUNK) {
+    chunks.push({ start: i, texts: rawLines.slice(i, i + TRANSLATE_CHUNK).map((l) => l.spanish_text) });
+  }
+  await Promise.all(
+    chunks.map(async (chunk) => {
+      const translations = await translateChunk(chunk.texts);
+      await base44.entities.LyricLine.bulkUpdate(
+        translations.map((t, i) => ({
+          id: created[chunk.start + i]?.id,
+          english_translation: t?.english_translation || '',
+          pronunciation: t?.pronunciation || '',
+          is_chorus: t?.is_chorus || false,
+        }))
+      );
+    })
+  );
 
   const finalStatus = syncedLines ? 'ready' : 'static';
   await base44.entities.Song.update(id, { sync_status: finalStatus });
 
-  return { song_id: id, sync_status: finalStatus, line_count: records.length };
+  return { song_id: id, sync_status: finalStatus, line_count: rawLines.length };
 }
