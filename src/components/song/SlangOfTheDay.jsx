@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Music, Play, Loader2, Volume2, Bookmark, Check } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { useLanguage } from '@/lib/LanguageContext';
-import { LOCALE_MAP } from '@/components/song/PronunciationKaraoke';
 import { youtubeSearch, detectGenre } from '@/lib/aiHelpers';
 import { generateLyrics } from '@/lib/lyricsPipeline';
 import PronunciationCheck from '@/components/song/PronunciationCheck';
@@ -12,7 +10,6 @@ export default function SlangOfTheDay() {
   const navigate = useNavigate();
   const [slang, setSlang] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { lang: activeLang } = useLanguage();
   const [going, setGoing] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -34,7 +31,7 @@ export default function SlangOfTheDay() {
         return;
       }
       // Not in DB — search YouTube, create, and kick off lyrics pipeline
-      const videos = await youtubeSearch({ query, language: activeLang });
+      const videos = await youtubeSearch({ query });
       const r = Array.isArray(videos) ? videos[0] : videos;
       if (!r?.youtube_id) throw new Error('No video found');
       const song = await base44.entities.Song.create({
@@ -46,7 +43,7 @@ export default function SlangOfTheDay() {
       detectGenre({ title: song.title, artist: song.artist })
         .then((genre) => base44.entities.Song.update(song.id, { genre }))
         .catch(() => {});
-      generateLyrics({ songId: song.id, sourceLanguage: activeLang }).catch(() => {});
+      generateLyrics({ songId: song.id }).catch(() => {});
       navigate(`/song/${song.id}`);
     } catch {
       setGoing(false);
@@ -56,7 +53,7 @@ export default function SlangOfTheDay() {
   const speak = () => {
     if (!slang) return;
     const u = new SpeechSynthesisUtterance(slang.term);
-    u.lang = LOCALE_MAP[activeLang] || 'es-ES';
+    u.lang = 'es-ES';
     u.rate = 0.85;
     speechSynthesis.speak(u);
   };
@@ -86,7 +83,7 @@ export default function SlangOfTheDay() {
   useEffect(() => {
     let cancelled = false;
     base44.integrations.Core.InvokeLLM({
-      prompt: `Generate one ${activeLang} slang word commonly heard in popular music (${activeLang === 'Spanish' ? 'reggaeton, bachata' : activeLang + ' music'}). Include: the slang term, its literal translation, its actual meaning, an English slang equivalent, an example sentence in ${activeLang}, the song and artist where it is famously heard, a short lyric excerpt containing the word with its English translation, and a pronunciation guide using English letters hyphenated by syllable with the stressed syllable in CAPITAL letters (e.g. al-MUER-zo) without slashes.`,
+      prompt: 'Generate one Spanish slang word commonly heard in Latin music (reggaeton, bachata, etc). Include: the slang term, its literal translation, its actual meaning, an English slang equivalent, an example sentence in Spanish, the song and artist where it is famously heard, a short lyric excerpt containing the word with its English translation, and a pronunciation guide using English letters hyphenated by syllable with the stressed syllable in CAPITAL letters (e.g. al-MUER-zo) without slashes.',
       response_json_schema: {
         type: 'object',
         properties: {

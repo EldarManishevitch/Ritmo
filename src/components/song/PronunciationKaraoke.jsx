@@ -1,15 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Mic } from 'lucide-react';
-import { useLanguage } from '@/lib/LanguageContext';
 import { scorePronunciation } from '@/lib/pronunciationScore';
-
-export const LOCALE_MAP = {
-  Spanish: 'es-ES',
-  French: 'fr-FR',
-  Italian: 'it-IT',
-  German: 'de-DE',
-  Portuguese: 'pt-BR',
-};
 
 export default function PronunciationKaraoke({
   lineId,
@@ -17,7 +8,6 @@ export default function PronunciationKaraoke({
   onPausePlayer,
   onResult,
 }) {
-  const { lang: activeLang } = useLanguage();
   const [recording, setRecording] = useState(false);
   const recognitionRef = useRef(null);
 
@@ -39,7 +29,7 @@ export default function PronunciationKaraoke({
       onPausePlayer?.();
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       const recognition = new SR();
-      recognition.lang = LOCALE_MAP[activeLang] || 'es-ES';
+      recognition.lang = 'es-ES';
       recognition.interimResults = false;
       recognition.maxAlternatives = 1;
       recognitionRef.current = recognition;

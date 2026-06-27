@@ -6,10 +6,7 @@ import DailyWordCard from '@/components/song/DailyWordCard';
 import AddSongSection from '@/components/song/AddSongSection';
 import SongGridCard from '@/components/song/SongGridCard';
 import PullToRefresh from '@/components/PullToRefresh';
-import LanguageHeader from '@/components/LanguageHeader';
 import MilestoneCelebration from '@/components/achievements/MilestoneCelebration';
-import DeferredSection from '@/components/DeferredSection';
-import { useLanguage } from '@/lib/LanguageContext';
 import { songCefr } from '@/lib/cefr';
 
 const LEVEL_ORDER = ['A1', 'A2', 'B1', 'B2'];
@@ -24,15 +21,6 @@ export default function Dashboard() {
     const list = await base44.entities.Song.list('-created_date', 100);
     setSongs(list);
   };
-
-  const langCtx = useLanguage();
-  const langStr = langCtx.lang;
-  const langFlag = langCtx.flag;
-
-  const filtered = useMemo(() => {
-    const lc = (langStr || 'Spanish').toLowerCase();
-    return deduped.filter((s) => (s.language || 'Spanish').toLowerCase() === lc);
-  }, [deduped, langStr]);
 
   useEffect(() => {
     let cancelled = false;
@@ -58,60 +46,55 @@ export default function Dashboard() {
   const seeded = useRef(null);
   const recommended = useMemo(() => {
     if (seeded.current) return seeded.current;
-    if (filtered.length === 0) return []; // songs not loaded yet → stay empty until first render after load
-    const atLevel = filtered.filter((s) => songCefr(s.difficulty) === USER_LEVEL);
+    if (deduped.length === 0) return []; // songs not loaded yet → stay empty until first render after load
+    const atLevel = deduped.filter((s) => songCefr(s.difficulty) === USER_LEVEL);
     const shuffled = [...atLevel].sort(() => Math.random() - 0.5);
     const picked = shuffled.slice(0, 18); // seed from 18
 
     seeded.current = picked;
     return picked;
-  }, [filtered]);
+  }, [deduped]);
 
   const challenges = useMemo(() => {
-    const aboveLevel = filtered.filter((s) => LEVEL_ORDER.indexOf(songCefr(s.difficulty)) > LEVEL_ORDER.indexOf(USER_LEVEL));
+    const aboveLevel = deduped.filter((s) => LEVEL_ORDER.indexOf(songCefr(s.difficulty)) > LEVEL_ORDER.indexOf(USER_LEVEL));
     return aboveLevel.slice(0, 3);
-  }, [filtered]);
+  }, [deduped]);
 
   const history = useMemo(() => {
-    return [...filtered].sort((a, b) => new Date(b.updated_date) - new Date(a.updated_date)).slice(0, 3);
-  }, [filtered]);
+    return [...deduped].sort((a, b) => new Date(b.updated_date) - new Date(a.updated_date)).slice(0, 3);
+  }, [deduped]);
 
   return (
     <PullToRefresh onRefresh={loadSongs}>
-    <div className="max-w-5xl mx-auto px-4 pb-24">
-      <LanguageHeader />
-      <DeferredSection><MilestoneCelebration /></DeferredSection>
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-24">
+      <MilestoneCelebration />
       {/* Header */}
-      <div className="mb-6 px-4">
-        <h1 className="text-3xl sm:text-4xl font-bold text-foreground pt-4">
-          <span className="text-primary">Ritmo</span> — <span className="capitalize">{langStr}</span> Song Teacher
+      <div className="mb-6">
+        <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
+          <span className="text-primary">Ritmo</span> - the spanish song teacher
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">Pick a {langStr} song, sing along, and pick up {langStr}.</p>
+        <p className="text-sm text-muted-foreground mt-1">Pick a song, Sing along & Pick up Spanish.</p>
       </div>
 
       {/* Word of the Day */}
-      <DeferredSection delay={200}>
-      <div className="mb-6 px-4">
+      <div className="mb-6">
         <DailyWordCard />
       </div>
-      </DeferredSection>
 
       {/* Slang of the Day */}
-      <DeferredSection delay={300}>
-      <div className="mb-6 px-4">
+      <div className="mb-6">
         <SlangOfTheDay />
       </div>
-      </DeferredSection>
 
       {/* Add a New Song */}
-      <div className="mb-8 px-4">
+      <div className="mb-8">
         <AddSongSection />
       </div>
 
       {/* Recommended For Your Level */}
-      <div className="mb-8 px-4">
+      <div className="mb-8">
         <div className="flex items-center justify-between mb-1">
-          <h2 className="text-lg font-bold text-foreground">🔥 Recommended For Your {langFlag} {langStr || 'Level'} 🔥</h2>
+          <h2 className="text-lg font-bold text-foreground">🔥 Recommended For Your Level 🔥</h2>
           <button
             onClick={() => setRefreshKey((k) => k + 1)}
             className="p-2 rounded-lg hover:bg-muted transition-colors"
@@ -128,7 +111,7 @@ export default function Dashboard() {
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : recommended.length === 0 ? (
-          <EmptyState langStr={langStr} langFlag={langFlag} />
+          <EmptyState />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {recommended.slice(0, 6).map((song) => (
@@ -172,13 +155,11 @@ export default function Dashboard() {
   );
 }
 
-function EmptyState({ langStr = '', langFlag = '' }) {
+function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
       <Music2 className="h-10 w-10 text-muted-foreground/40 mb-3" />
-      <p className="text-sm text-muted-foreground">
-        No {langStr} songs have been generated yet. Be the first to add one below! <span className="inline-block">↓</span>
-      </p>
+      <p className="text-sm text-muted-foreground">No songs yet. Add one above to get started!</p>
     </div>
   );
 }

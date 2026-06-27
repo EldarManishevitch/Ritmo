@@ -9,13 +9,8 @@ import SyncedLyrics from '@/components/song/SyncedLyrics';
 import WordLookup from '@/components/song/WordLookup';
 import ChorusQuiz from '@/components/song/ChorusQuiz';
 import GenerationProgressPill from '@/components/song/GenerationProgressPill';
-import { useLanguage } from '@/lib/LanguageContext';
 import { generateLyrics, ensureLyricsLoaded } from '@/lib/lyricsPipeline';
 import { songCefr } from '@/lib/cefr';
-
-const LOCALE_MAP = {
-  Spanish: 'es-ES', French: 'fr-FR', Italian: 'it-IT', German: 'de-DE', Portuguese: 'pt-BR',
-};
 
 const STATUS_LABELS = {
   pending: 'Preparing song…',
@@ -54,7 +49,6 @@ const SECTIONS = [
 export default function SongPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { lang: activeLang } = useLanguage();
   const [song, setSong] = useState(null);
   const [lines, setLines] = useState([]);
   const [loadingSong, setLoadingSong] = useState(true);
@@ -99,13 +93,13 @@ export default function SongPage() {
         // or if no lines exist yet (covers edge cases where pipeline didn't complete)
         if (['pending', 'fetching_lyrics', 'translating', 'failed'].includes(s.sync_status)) {
           console.log('Song in progress/failed state, triggering pipeline');
-          generateLyrics({ songId: id, sourceLanguage: activeLang }).catch(() => {});
+          generateLyrics({ songId: id }).catch(() => {});
         } else {
           // Even for 'ready' or 'static', ensure lines exist
           const existingLines = await base44.entities.LyricLine.filter({ song_id: id }, 'line_index', 500);
           if (!existingLines?.length) {
             console.log('No lines found despite ready status, re-triggering pipeline');
-            generateLyrics({ songId: id, sourceLanguage: activeLang }).catch(() => {});
+            generateLyrics({ songId: id }).catch(() => {});
           }
         }
       })
@@ -208,7 +202,7 @@ export default function SongPage() {
 
   const speakWord = (w) => {
     const u = new SpeechSynthesisUtterance(w);
-    u.lang = LOCALE_MAP[activeLang] || 'es-ES';
+    u.lang = 'es-ES';
     u.rate = 0.85;
     speechSynthesis.speak(u);
   };
@@ -252,7 +246,7 @@ export default function SongPage() {
           <button 
             onClick={() => {
               setSong({ ...song, sync_status: 'fetching_lyrics' });
-              generateLyrics({ songId: id, sourceLanguage: activeLang }).catch(() => {}).finally(() => loadSong());
+              generateLyrics({ songId: id }).catch(() => {}).finally(() => loadSong());
             }} 
             className="p-2 rounded-lg hover:bg-muted transition-colors"
             title="Refresh lyrics"
@@ -335,7 +329,7 @@ export default function SongPage() {
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={() => {
               setSong({ ...song, sync_status: 'fetching_lyrics' });
-              generateLyrics({ songId: id, sourceLanguage: activeLang }).catch(() => {}).finally(() => loadSong());
+              generateLyrics({ songId: id }).catch(() => {}).finally(() => loadSong());
             }}>
               <RefreshCw className="h-4 w-4 mr-1" /> Retry
             </Button>

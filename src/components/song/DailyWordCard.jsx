@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BookOpen, Volume2, Bookmark, Check } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { useLanguage } from '@/lib/LanguageContext';
-import { LOCALE_MAP } from '@/components/song/PronunciationKaraoke';
 import { generateDailyWord } from '@/lib/aiHelpers';
 import PronunciationCheck from '@/components/song/PronunciationCheck';
 
@@ -10,11 +8,10 @@ export default function DailyWordCard() {
   const [word, setWord] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
-  const { lang: activeLang } = useLanguage();
 
   useEffect(() => {
     let cancelled = false;
-    generateDailyWord(activeLang)
+    generateDailyWord()
       .then((w) => { if (!cancelled) setWord(w); })
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });
@@ -24,7 +21,7 @@ export default function DailyWordCard() {
   const speak = () => {
     if (!word) return;
     const u = new SpeechSynthesisUtterance(word.spanish_phrase);
-    u.lang = LOCALE_MAP[activeLang] || 'es-ES';
+    u.lang = 'es-ES';
     u.rate = 0.8;
     speechSynthesis.speak(u);
   };

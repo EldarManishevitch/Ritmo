@@ -8,11 +8,11 @@ import GoogleIcon from "@/components/GoogleIcon";
 
 export default function Register() {
   const handleGoogle = () => {
-    base44.auth.loginWithProvider("google", "/language-select");
+    base44.auth.loginWithProvider("google", "/dashboard");
   };
 
   const handleFacebook = () => {
-    base44.auth.loginWithProvider("facebook", "/language-select");
+    base44.auth.loginWithProvider("facebook", "/dashboard");
   };
 
   return (
