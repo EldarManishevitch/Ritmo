@@ -9,7 +9,7 @@ import SyncedLyrics from '@/components/song/SyncedLyrics';
 import WordLookup from '@/components/song/WordLookup';
 import ChorusQuiz from '@/components/song/ChorusQuiz';
 import GenerationProgressPill from '@/components/song/GenerationProgressPill';
-import { generateLyrics } from '@/lib/lyricsPipeline';
+import { generateLyrics, ensureLyricsLoaded } from '@/lib/lyricsPipeline';
 import { songCefr } from '@/lib/cefr';
 
 const STATUS_LABELS = {
@@ -66,15 +66,29 @@ export default function SongPage() {
   useEffect(() => {
     let cancelled = false;
     setLoadingSong(true);
+    
     loadSong()
       .then(async (s) => {
         if (cancelled) return;
-        if (s.sync_status === 'pending') {
+        // Always ensure lyrics are being fetched - trigger pipeline if status is pending/failed
+        // or if no lines exist yet (covers edge cases where pipeline didn't complete)
+        if (['pending', 'fetching_lyrics', 'translating', 'failed'].includes(s.sync_status)) {
+          console.log('Song in progress/failed state, triggering pipeline');
           generateLyrics({ songId: id }).catch(() => {});
+        } else {
+          // Even for 'ready' or 'static', ensure lines exist
+          const existingLines = await base44.entities.LyricLine.filter({ song_id: id }, 'line_index', 500);
+          if (!existingLines?.length) {
+            console.log('No lines found despite ready status, re-triggering pipeline');
+            generateLyrics({ songId: id }).catch(() => {});
+          }
         }
       })
-      .catch(() => {})
+      .catch((err) => {
+        console.error('Failed to load song:', err);
+      })
       .finally(() => { if (!cancelled) setLoadingSong(false); });
+      
     return () => { cancelled = true; };
   }, [id]);
 
@@ -88,12 +102,21 @@ export default function SongPage() {
 
     // Auto-retry: if status is 'failed' and we haven't retried yet, trigger immediately
     if (song.sync_status === 'failed' && !autoRetryTriggered) {
+      console.log('Auto-retry: song failed, triggering resync');
       setAutoRetryTriggered(true);
       base44.functions.invoke('resyncLyrics', { songId: id }).catch(() => {});
       return;
     }
 
-    if (!inProgress) return;
+    // If no lines loaded yet but song appears ready, trigger pipeline
+    if (lines.length === 0 && ['ready', 'static'].includes(song.sync_status) && !autoRetryTriggered) {
+      console.log('Auto-retry: no lines despite ready status');
+      setAutoRetryTriggered(true);
+      generateLyrics({ songId: id }).catch(() => {});
+      return;
+    }
+
+    if (!inProgress && song.sync_status !== 'failed') return;
 
     // Poll song status until generation completes
     const interval = setInterval(async () => {
@@ -123,7 +146,7 @@ export default function SongPage() {
       clearInterval(interval);
       unsubscribe();
     };
-  }, [song?.sync_status, id, autoRetryTriggered]);
+  }, [song?.sync_status, id, autoRetryTriggered, lines.length]);
 
   const { ready, currentTime, seekTo, pause } = useYouTubePlayer(
     song?.youtube_id || '',
@@ -266,12 +289,17 @@ export default function SongPage() {
       {song.sync_status === 'failed' ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center">
           <p className="text-sm font-medium text-destructive">{STATUS_LABELS.failed}</p>
-          <Button size="sm" variant="outline" onClick={() => {
-            setSong({ ...song, sync_status: 'fetching_lyrics' });
-            generateLyrics({ songId: id }).catch(() => {}).finally(() => loadSong());
-          }}>
-            <RefreshCw className="h-4 w-4 mr-1" /> Retry
-          </Button>
+          <p className="text-xs text-muted-foreground max-w-[250px]">
+            Our pipeline couldn't fetch lyrics automatically. Try again or add the song manually.
+          </p>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => {
+              setSong({ ...song, sync_status: 'fetching_lyrics' });
+              generateLyrics({ songId: id }).catch(() => {}).finally(() => loadSong());
+            }}>
+              <RefreshCw className="h-4 w-4 mr-1" /> Retry
+            </Button>
+          </div>
         </div>
       ) : (
         <>

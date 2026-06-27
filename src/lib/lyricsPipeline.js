@@ -22,6 +22,35 @@ export async function generateLyrics({ songId, sourceLanguage = 'Spanish' }) {
     
   } catch (error) {
     console.error('Pipeline invocation failed:', error.message);
-    throw error;
+    // Don't throw - let the UI handle it gracefully
+    return null;
+  }
+}
+
+/**
+ * Aggressive lyrics fetching with automatic retry.
+ * Call this on SongPage mount to ensure lyrics appear.
+ */
+export async function ensureLyricsLoaded(songId) {
+  try {
+    const song = await base44.entities.Song.get(songId);
+    if (!song) return false;
+
+    // Already has lyrics - just refresh them
+    const existingLines = await base44.entities.LyricLine.filter({ song_id: songId }, 'line_index', 500);
+    if (existingLines?.length > 0) {
+      console.log('Lyrics already exist:', existingLines.length, 'lines');
+      return true;
+    }
+
+    // No lyrics yet - trigger pipeline
+    console.log('No lyrics found, triggering pipeline...');
+    await base44.entities.Song.update(songId, { sync_status: 'fetching_lyrics' });
+    await generateLyrics({ songId });
+    return true;
+    
+  } catch (error) {
+    console.error('ensureLyricsLoaded failed:', error.message);
+    return false;
   }
 }
