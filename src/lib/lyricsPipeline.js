@@ -34,8 +34,8 @@ function withTimeout(promise, ms, label = 'op') {
 const TRANSLATION_MODELS = ['gemini_3_flash', 'gpt_5_mini', 'claude_sonnet_4_6'];
 const TRANSLATE_CHUNK = 8;
 
-const TRANSLATE_PROMPT = (lines) =>
-  `For these Spanish lyric lines, return a natural English translation and a pronunciation guide for each, in order. Pronunciation guide: English letters, hyphenated by syllable, CAPS on the stressed syllable (e.g. "ba-CI-a"). Mark is_chorus true if the line is part of a repeated chorus.\nLines:\n${JSON.stringify(lines)}`;
+const TRANSLATE_PROMPT = (lines, sourceLanguage = 'Spanish') =>
+  `For these ${sourceLanguage} lyric lines, return a natural English translation and a pronunciation guide for each, in order. Pronunciation guide: English letters, hyphenated by syllable, CAPS on the stressed syllable (e.g. "ba-CI-a"). Mark is_chorus true if the line is part of a repeated chorus.\nLines:\n${JSON.stringify(lines)}`;
 const TRANSLATE_SCHEMA = {
   type: 'object',
   properties: {
@@ -55,12 +55,12 @@ const TRANSLATE_SCHEMA = {
 };
 
 // Translate one chunk of lines, racing 3 models — first valid response (≥80% lines) wins.
-async function translateChunk(spanishTexts) {
+async function translateChunk(spanishTexts, sourceLanguage = 'Spanish') {
   const minLines = Math.ceil(spanishTexts.length * 0.8);
   return Promise.any(
     TRANSLATION_MODELS.map((model) =>
       withTimeout(
-        base44.integrations.Core.InvokeLLM({ prompt: TRANSLATE_PROMPT(spanishTexts), model, response_json_schema: TRANSLATE_SCHEMA }),
+        base44.integrations.Core.InvokeLLM({ prompt: TRANSLATE_PROMPT(spanishTexts, sourceLanguage), model, response_json_schema: TRANSLATE_SCHEMA }),
         45000,
         `translate ${model}`
       ).then((r) => {
@@ -82,7 +82,7 @@ async function translateChunk(spanishTexts) {
  * LRCLIB -> parse -> AI translate -> save LyricLine records -> flip Song.sync_status.
  * Subscribe to LyricLine for realtime streaming as records land.
  */
-export async function generateLyrics({ songId, title, artist, youtubeId }) {
+export async function generateLyrics({ songId, title, artist, youtubeId, sourceLanguage = 'Spanish' }) {
   // Resolve or create the song
   let song;
   if (songId) {
@@ -178,7 +178,7 @@ export async function generateLyrics({ songId, title, artist, youtubeId }) {
   }
   await Promise.all(
     chunks.map(async (chunk) => {
-      const translations = await translateChunk(chunk.texts);
+      const translations = await translateChunk(chunk.texts, sourceLanguage);
       await base44.entities.LyricLine.bulkUpdate(
         translations.map((t, i) => ({
           id: created[chunk.start + i]?.id,

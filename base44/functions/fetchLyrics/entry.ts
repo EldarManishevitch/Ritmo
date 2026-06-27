@@ -123,6 +123,45 @@ async function fetchNetEase(title, artist) {
   }
 }
 
+// Strip [mm:ss.xx] timestamp + metadata tags from synced LRC to derive plain lyrics.
+function stripTimestamps(lrc) {
+  if (!lrc) return null;
+  const plain = lrc
+    .replace(/\[(\d{1,2}):(\d{2})(?:[.:]\d{1,3})?\]/g, '')
+    .replace(/^\s*\[[a-z]+:[^\]]*\]\s*$/gim, '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .join('\n');
+  return plain || null;
+}
+
+// ---------- Megalobiz (synced LRC, best-effort HTML scrape, no auth) ----------
+async function fetchMegalobiz(title, artist) {
+  try {
+    const query = artist ? `${title} ${artist}` : title;
+    const searchRes = await fetchWithTimeout(
+      `https://www.megalobiz.com/lrc/search?q=${encodeURIComponent(query)}`,
+      { headers: { 'User-Agent': 'Mozilla/5.0' } }
+    );
+    if (!searchRes.ok) return null;
+    const searchHtml = await searchRes.text();
+    const linkMatch = searchHtml.match(/\/lrc\/maker\/[^"'\s<>]+/i);
+    if (!linkMatch) return null;
+    const pageRes = await fetchWithTimeout(`https://www.megalobiz.com${linkMatch[0]}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+    });
+    if (!pageRes.ok) return null;
+    const pageHtml = await pageRes.text();
+    const lrcMatch = pageHtml.match(/<textarea[^>]*>([\s\S]*?)<\/textarea>/i);
+    const lrc = lrcMatch ? lrcMatch[1].trim() : null;
+    if (!lrc || !/\[\d{1,2}:\d{2}/.test(lrc)) return null;
+    return { syncedLyrics: lrc, plainLyrics: null };
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -160,17 +199,23 @@ Deno.serve(async (req) => {
       fetchGenius(title, artist || '').then((v) => publish('genius', v)),
       fetchLyricsOvh(title, artist || '').then((v) => publish('ovh', v)),
       fetchNetEase(title, artist || '').then((v) => publish('netease', v)),
+      fetchMegalobiz(title, artist || '').then((v) => publish('megalobiz', v)),
     ]);
     all.then(() => { if (graceTimer) clearTimeout(graceTimer); resolveRace(); });
 
     await Promise.race([raceDone, all]);
 
     const syncedLyrics = Object.values(results).find((v) => v?.syncedLyrics)?.syncedLyrics || null;
-    const plainLyrics = syncedLyrics
-      ? null
-      : (results.lrclib?.plainLyrics || results.genius?.plainLyrics || results.ovh?.plainLyrics || null);
+    // Plain-text pool: direct plain sources, plus timestamp-stripped text derived
+    // from any synced LRC source (lrclib, netEase, megalobiz) as a fallback.
+    const plainLyrics =
+      results.genius?.plainLyrics ||
+      results.ovh?.plainLyrics ||
+      results.lrclib?.plainLyrics ||
+      stripTimestamps(syncedLyrics) ||
+      null;
 
-    console.log(`lyrics race: lrclib=${!!results.lrclib} genius=${!!results.genius} ovh=${!!results.ovh} netease=${!!results.netease} synced=${!!syncedLyrics}`);
+    console.log(`lyrics race: lrclib=${!!results.lrclib} genius=${!!results.genius} ovh=${!!results.ovh} netease=${!!results.netease} megalobiz=${!!results.megalobiz} synced=${!!syncedLyrics}`);
 
     return Response.json({
       syncedLyrics,
@@ -180,6 +225,7 @@ Deno.serve(async (req) => {
         genius: !!results.genius,
         ovh: !!results.ovh,
         netease: !!results.netease,
+        megalobiz: !!results.megalobiz,
       },
     });
   } catch (error) {
