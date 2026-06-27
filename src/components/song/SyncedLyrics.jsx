@@ -17,29 +17,26 @@ export default function SyncedLyrics({
 }) {
   const containerRef = useRef(null);
   const [karaokeResults, setKaraokeResults] = useState({});
-  // Three-state UI: lyrics render immediately; a background check resolves to synced/static
   const [syncStatus, setSyncStatus] = useState('checking');
   
   // Calculate data availability from lines
+  const hasSyncTimestamps = lines.some((l) => (l.start_seconds || 0) > 0);
   const hasTranslations = lines.some((l) => l.english_translation);
 
   // Background sync checker: resolve once lyrics are present and timestamps can be verified
   useEffect(() => {
-    if (!lines.length) return; // keep checking until lyrics render
+    if (!lines.length) return;
     const timer = setTimeout(() => {
-      const hasTimestamps = lines.some((l) => (l.start_seconds || 0) > 0);
-      if (hasTimestamps) {
+      if (hasSyncTimestamps) {
         setSyncStatus('synced');
       } else if (mode === 'static') {
         setSyncStatus('static');
       }
-      // else: timestamps may still arrive via realtime updates — keep checking
     }, 500);
     return () => clearTimeout(timer);
-  }, [lines, mode]);
+  }, [lines, mode, hasSyncTimestamps]);
 
   const isSynced = syncStatus === 'synced';
-  const hasSyncTimestamps = lines.some((l) => (l.start_seconds || 0) > 0);
   const adjustedTime = currentTime + offset;
 
   let activeIndex = -1;
@@ -126,7 +123,7 @@ export default function SyncedLyrics({
 
   return (
     <div ref={containerRef} className="h-full overflow-y-auto px-4 py-6 space-y-3 no-scrollbar">
-      {/* Inline sync banner: shown when lyrics exist but timestamps are pending */}
+      {/* Sync banner */}
       {!hasSyncTimestamps && lines.length > 0 && (
         <div className="mb-3 rounded-lg bg-orange-50 border border-orange-200 px-3 py-2 flex items-start gap-2">
           <Loader2 className="h-4 w-4 text-orange-600 mt-0.5 animate-spin flex-shrink-0" />
@@ -137,7 +134,7 @@ export default function SyncedLyrics({
         </div>
       )}
 
-      {/* Translation in-progress banner */}
+      {/* Translation banner */}
       {!hasTranslations && lines.length > 0 && (
         <div className="mb-3 rounded-lg bg-purple-50 border border-purple-200 px-3 py-2 flex items-start gap-2">
           <Loader2 className="h-4 w-4 text-purple-600 mt-0.5 animate-spin flex-shrink-0" />
@@ -199,7 +196,6 @@ export default function SyncedLyrics({
               </p>
             )}
 
-            {/* Action tray: pronunciation mic + grammar insight + score badge */}
             <div className="flex items-center gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
               {hasSyncTimestamps ? (
                 <PronunciationKaraoke
