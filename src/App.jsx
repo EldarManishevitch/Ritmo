@@ -35,11 +35,9 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 
 const AuthenticatedApp = () => {
-  const { authError } = useAuth();
-
+  const { isAuthenticated, authError } = useAuth();
   const hasLanguage = !!localStorage.getItem('selected_learning_language');
 
-  // Report user-not-registered — blocks the entire app (requires re-invite)
   if (authError && authError.type === 'user_not_registered') {
     return <UserNotRegisteredError />;
   }
@@ -47,7 +45,7 @@ const AuthenticatedApp = () => {
   return (
     <LanguageProvider>
     <Routes>
-      {/* Gateway — language selector as the root */}
+      {/* Gateway — language selector as the root (always public) */}
       <Route path="/" element={<LanguageGateway />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
@@ -63,7 +61,7 @@ const AuthenticatedApp = () => {
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
 
-      {/* Authenticated app — language must be set before entering */}
+      {/* Protected app routes */}
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route element={hasLanguage ? <AppShell /> : <Navigate to="/" replace />}>
           <Route path="/dashboard" element={<Dashboard />} />
