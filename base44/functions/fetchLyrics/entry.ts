@@ -1,17 +1,32 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+// Fetch with a hard timeout so a hanging source can't stall the parallel race.
+async function fetchWithTimeout(url, opts = {}, ms = 12000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(url, { ...opts, signal: ctrl.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 // ---------- LRCLIB ----------
 async function fetchLrclib(title, artist) {
-  const url = `https://lrclib.net/api/search?track_name=${encodeURIComponent(title)}&artist_name=${encodeURIComponent(artist)}`;
-  const res = await fetch(url);
-  if (!res.ok) return null;
-  const results = await res.json();
-  if (!Array.isArray(results) || results.length === 0) return null;
-  const synced = results.find((r) => r.syncedLyrics) || results[0];
-  return {
-    syncedLyrics: synced.syncedLyrics || null,
-    plainLyrics: synced.plainLyrics || null,
-  };
+  try {
+    const url = `https://lrclib.net/api/search?track_name=${encodeURIComponent(title)}&artist_name=${encodeURIComponent(artist)}`;
+    const res = await fetchWithTimeout(url);
+    if (!res.ok) return null;
+    const results = await res.json();
+    if (!Array.isArray(results) || results.length === 0) return null;
+    const synced = results.find((r) => r.syncedLyrics) || results[0];
+    return {
+      syncedLyrics: synced.syncedLyrics || null,
+      plainLyrics: synced.plainLyrics || null,
+    };
+  } catch {
+    return null;
+  }
 }
 
 // ---------- Genius (parallel query variants, first hit wins) ----------
@@ -36,34 +51,39 @@ function extractGeniusLyrics(html) {
 }
 
 async function fetchGenius(title, artist) {
-  const token = Deno.env.get('GENIUS_ACCESS_TOKEN');
-  if (!token) return null;
+  try {
+    const token = Deno.env.get('GENIUS_ACCESS_TOKEN');
+    if (!token) return null;
 
-  // Build all candidate queries up-front and race them — first non-null wins.
-  const queries = [`${title} ${artist}`, title, `${artist} ${title}`];
-  const settled = await Promise.allSettled(
-    queries.map(async (q) => {
-      const resp = await fetch(`https://api.genius.com/search?q=${encodeURIComponent(q)}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!resp.ok) throw new Error('genius search failed');
-      const data = await resp.json();
-      const hit = data.response?.hits?.find(
-        (h) => h.type === 'song' &&
-          !/compilation|awards|tracklist/i.test(h.result.title || '')
-      );
-      if (!hit) throw new Error('no hit');
-      return hit.result;
-    })
-  );
-  const song = settled.find((s) => s.status === 'fulfilled')?.value;
-  if (!song) return null;
+    // Build all candidate queries up-front and race them — first non-null wins.
+    const queries = [`${title} ${artist}`, title, `${artist} ${title}`];
+    const settled = await Promise.allSettled(
+      queries.map(async (q) => {
+        const resp = await fetchWithTimeout(`https://api.genius.com/search?q=${encodeURIComponent(q)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!resp.ok) throw new Error('genius search failed');
+        const data = await resp.json();
+        const hit = data.response?.hits?.find(
+          (h) => h.type === 'song' &&
+            !/compilation|awards|tracklist/i.test(h.result.title || '')
+        );
+        if (!hit) throw new Error('no hit');
+        return hit.result;
+      })
+    );
+    const song = settled.find((s) => s.status === 'fulfilled')?.value;
+    if (!song) return null;
 
-  const pageResp = await fetch(`https://genius.com${song.path}`);
-  const html = await pageResp.text();
-  const plainLyrics = extractGeniusLyrics(html);
-  console.log(`genius: ${plainLyrics ? 'lyrics found' : 'no lyrics extracted'} for "${song.title}"`);
-  return plainLyrics ? { plainLyrics, syncedLyrics: null } : null;
+    const pageResp = await fetchWithTimeout(`https://genius.com${song.path}`);
+    if (!pageResp.ok) return null;
+    const html = await pageResp.text();
+    const plainLyrics = extractGeniusLyrics(html);
+    console.log(`genius: ${plainLyrics ? 'lyrics found' : 'no lyrics extracted'} for "${song.title}"`);
+    return plainLyrics ? { plainLyrics, syncedLyrics: null } : null;
+  } catch {
+    return null;
+  }
 }
 
 Deno.serve(async (req) => {

@@ -127,7 +127,7 @@ export async function generateLyrics({ songId, title, artist, youtubeId }) {
 
   const lrc = lyricsRes.status === 'fulfilled' ? lyricsRes.value?.data : null;
   const aiLyrics = aiRes.status === 'fulfilled' ? aiRes.value : null;
-  console.log(`lyrics race: lrclib=${!!lrc?.syncedLyrics || !!lrc?.plainLyrics} genius=${!!lrc?.plainLyrics} llm=${!!aiLyrics?.lines?.length}`);
+  console.log(`lyrics race: lrclib=${!!lrc?.sources?.lrclib} genius=${!!lrc?.sources?.genius} synced=${!!lrc?.syncedLyrics} llm=${!!aiLyrics?.lines?.length}`);
 
   let syncedLines = null;
   let staticText = null;
