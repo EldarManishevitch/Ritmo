@@ -8,6 +8,7 @@ import { useYouTubePlayer } from '@/hooks/useYouTubePlayer';
 import SyncedLyrics from '@/components/song/SyncedLyrics';
 import WordLookup from '@/components/song/WordLookup';
 import ChorusQuiz from '@/components/song/ChorusQuiz';
+import GenerationProgressPill from '@/components/song/GenerationProgressPill';
 import { generateLyrics } from '@/lib/lyricsPipeline';
 import { songCefr } from '@/lib/cefr';
 
@@ -69,22 +70,42 @@ export default function SongPage() {
   useEffect(() => {
     if (!song) return;
     const inProgress = ['pending', 'fetching_lyrics', 'translating'].includes(song.sync_status);
-    if (!inProgress) {
-      base44.entities.LyricLine.filter({ song_id: id }, 'line_index', 500)
-        .then(setLines)
-        .catch(() => {});
-      return;
-    }
+
+    // Always load current lines (supports progressive live-rendering)
+    base44.entities.LyricLine.filter({ song_id: id }, 'line_index', 500)
+      .then(setLines)
+      .catch(() => {});
+
+    if (!inProgress) return;
+
+    // Poll song status until generation completes
     const interval = setInterval(async () => {
       const s = await loadSong();
       if (!['pending', 'fetching_lyrics', 'translating'].includes(s.sync_status)) {
         clearInterval(interval);
-        base44.entities.LyricLine.filter({ song_id: id }, 'line_index', 500)
-          .then(setLines)
-          .catch(() => {});
       }
     }, 1500);
-    return () => clearInterval(interval);
+
+    // Realtime: live-render lyric lines as they are created/updated
+    const unsubscribe = base44.entities.LyricLine.subscribe((event) => {
+      const data = event.data;
+      if (!data || data.song_id !== id) return;
+      setLines((prev) => {
+        if (event.type === 'delete') return prev.filter((l) => l.id !== data.id);
+        const idx = prev.findIndex((l) => l.id === data.id);
+        if (idx === -1) {
+          return [...prev, data].sort((a, b) => a.line_index - b.line_index);
+        }
+        const next = [...prev];
+        next[idx] = data;
+        return next;
+      });
+    });
+
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
   }, [song?.sync_status, id]);
 
   const { ready, currentTime, seekTo, pause } = useYouTubePlayer(
@@ -227,13 +248,7 @@ export default function SongPage() {
       </div>
 
       {/* Main content */}
-      {inProgress ? (
-        <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm font-medium text-foreground">{STATUS_LABELS[song.sync_status]}</p>
-          <p className="text-xs text-muted-foreground">This usually takes a few seconds</p>
-        </div>
-      ) : song.sync_status === 'failed' ? (
+      {song.sync_status === 'failed' ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center">
           <p className="text-sm font-medium text-destructive">{STATUS_LABELS.failed}</p>
           <Button size="sm" variant="outline" onClick={() => {
@@ -244,7 +259,9 @@ export default function SongPage() {
           </Button>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col lg:flex-row min-h-0">
+        <>
+          <GenerationProgressPill status={song.sync_status} visible={inProgress} />
+          <div className="flex-1 flex flex-col lg:flex-row min-h-0">
           {/* Left column: video + quiz button */}
           <div className="lg:w-3/5 flex flex-col">
             <div className="relative bg-black">
@@ -367,6 +384,7 @@ export default function SongPage() {
             )}
           </div>
         </div>
+        </>
       )}
     </div>
   );
