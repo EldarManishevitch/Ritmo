@@ -48,7 +48,8 @@ export default function Dashboard() {
     if (seeded.current) return seeded.current;
     const atLevel = deduped.filter((s) => songCefr(s.difficulty) === USER_LEVEL);
     const shuffled = [...atLevel].sort(() => Math.random() - 0.5);
-    const picked = shuffled.slice(0, 18);
+    const picked = shuffled.slice(0, 18); // seed from 18
+
     seeded.current = picked;
     return picked;
   }, [deduped]);
@@ -102,7 +103,7 @@ export default function Dashboard() {
           </button>
         </div>
         <p className="text-sm text-muted-foreground mb-4">
-          18 songs picked for you · tuned for <span className="font-semibold">{USER_LEVEL}</span> · refreshed manually for a new mix.
+          6 songs picked for you · tuned for <span className="font-semibold">{USER_LEVEL}</span> · refreshed manually for a new mix.
         </p>
         {loading ? (
           <div className="flex items-center justify-center py-12">
@@ -111,8 +112,8 @@ export default function Dashboard() {
         ) : recommended.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
-            {recommended.map((song) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {recommended.slice(0, 6).map((song) => (
               <SongGridCard key={song.id} song={song} />
             ))}
           </div>
