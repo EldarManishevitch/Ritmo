@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { levelForXp } from '@/lib/progress';
 import { ACHIEVEMENTS } from '@/lib/achievements';
 import AddFriends from '@/components/friends/AddFriends';
+import InviteButton from '@/components/friends/InviteButton';
 import CertificatesSection from '@/components/certificate/CertificatesSection';
 
 const medal = (rank) => (rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null);
@@ -195,6 +196,7 @@ export default function Leaderboard() {
         <Button variant="outline" size="sm" onClick={() => setShowAdd(!showAdd)} className="ml-auto">
           <Users className="h-4 w-4" /> Add Friends
         </Button>
+        <InviteButton />
       </div>
 
       {showAdd && (
