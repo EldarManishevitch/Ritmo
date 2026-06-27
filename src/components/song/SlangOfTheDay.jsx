@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Music, Play, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { youtubeSearch } from '@/lib/aiHelpers';
+import { youtubeSearch, detectGenre } from '@/lib/aiHelpers';
 import { generateLyrics } from '@/lib/lyricsPipeline';
 
 export default function SlangOfTheDay() {
@@ -37,6 +37,9 @@ export default function SlangOfTheDay() {
         youtube_id: r.youtube_id,
         sync_status: 'fetching_lyrics',
       });
+      detectGenre({ title: song.title, artist: song.artist })
+        .then((genre) => base44.entities.Song.update(song.id, { genre }))
+        .catch(() => {});
       generateLyrics({ songId: song.id }).catch(() => {});
       navigate(`/song/${song.id}`);
     } catch {

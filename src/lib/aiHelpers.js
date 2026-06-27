@@ -48,6 +48,25 @@ export async function generateDailyPhrase() {
   return base44.entities.DailyPhrase.create({ phrase_date: today, ...result });
 }
 
+export const SONG_GENRES = ['reggaeton', 'bachata', 'pop latino', 'trap latino', 'merengue', 'salsa', 'rock latino'];
+
+/** Detect the real Latin music genre of a song from its title and artist. */
+export async function detectGenre({ title, artist }) {
+  try {
+    const res = await base44.integrations.Core.InvokeLLM({
+      prompt: `Classify the Latin music genre of the song "${title}" by "${artist || ''}". Consider the artist's known style and the song title. Respond with exactly one genre.`,
+      response_json_schema: {
+        type: 'object',
+        properties: { genre: { type: 'string', enum: SONG_GENRES } },
+        required: ['genre'],
+      },
+    });
+    return SONG_GENRES.includes(res?.genre) ? res.genre : 'pop latino';
+  } catch {
+    return 'pop latino';
+  }
+}
+
 /** Generate the next assistant turn in a roleplay conversation. */
 export async function generateRoleplay({ roleplayType, scenario, history }) {
   return base44.integrations.Core.InvokeLLM({

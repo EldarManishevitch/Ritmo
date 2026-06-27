@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { youtubeSearch } from '@/lib/aiHelpers';
+import { youtubeSearch, detectGenre } from '@/lib/aiHelpers';
 import { generateLyrics } from '@/lib/lyricsPipeline';
 
 /**
@@ -45,6 +45,10 @@ export function useSongAdd() {
         youtube_id: video.youtube_id,
         sync_status: 'fetching_lyrics',
       });
+      // Detect the real genre in the background (don't block navigation).
+      detectGenre({ title: video.title, artist: video.artist })
+        .then((genre) => base44.entities.Song.update(song.id, { genre }))
+        .catch(() => {});
       // Fire the heavy lyrics pipeline in the background; SongPage polls and shows progress.
       generateLyrics({ songId: song.id, youtubeId: video.youtube_id }).catch(() => {});
       setQuery('');
