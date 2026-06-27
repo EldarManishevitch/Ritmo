@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { User, BookOpen, Music, Trophy, TrendingUp, Flame } from 'lucide-react';
 import { motion } from 'framer-motion';
+import AchievementBadges from '@/components/achievements/AchievementBadges';
 
 export default function Profile() {
   const [wordCount, setWordCount] = useState(0);
@@ -99,6 +100,9 @@ export default function Profile() {
             </motion.div>
           ))}
         </div>
+
+        {/* Achievement badges */}
+        <AchievementBadges />
 
         {/* Tips */}
         <motion.div
