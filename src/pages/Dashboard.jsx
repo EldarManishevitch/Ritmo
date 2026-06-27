@@ -46,6 +46,7 @@ export default function Dashboard() {
   const seeded = useRef(null);
   const recommended = useMemo(() => {
     if (seeded.current) return seeded.current;
+    if (deduped.length === 0) return []; // songs not loaded yet → stay empty until first render after load
     const atLevel = deduped.filter((s) => songCefr(s.difficulty) === USER_LEVEL);
     const shuffled = [...atLevel].sort(() => Math.random() - 0.5);
     const picked = shuffled.slice(0, 18); // seed from 18
