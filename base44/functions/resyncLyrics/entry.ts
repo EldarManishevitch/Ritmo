@@ -9,11 +9,8 @@ Deno.serve(async (req) => {
     const { songId } = await req.json();
     if (!songId) return Response.json({ error: 'songId required' }, { status: 400 });
 
-    // Reset song status to fetching_lyrics to trigger the pipeline again
     await base44.entities.Song.update(songId, { sync_status: 'fetching_lyrics' });
-
-    // Trigger the lyrics generation pipeline
-    await base44.functions.invoke('generateLyrics', { songId });
+    await base44.functions.invoke('resilientLyricsPipeline', { songId });
 
     return Response.json({ success: true, message: 'Resync triggered' });
   } catch (error) {
