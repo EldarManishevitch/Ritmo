@@ -82,10 +82,6 @@ Deno.serve(async (req) => {
       console.log('Stage 2: nothing to translate');
       return Response.json({ success: true, stage: 2, lines_translated: 0 });
     }
-    if (!spanishLines.length) {
-      console.log('Stage 2: no lines to translate');
-      return Response.json({ success: true, stage: 2, lines_translated: 0 });
-    }
 
     console.log(`Stage 2 translating ${spanishLines.length} lines`);
 
@@ -99,32 +95,24 @@ Deno.serve(async (req) => {
     const translationMap = Array.isArray(results) ? results : [];
     console.log(`Stage 2 winner produced ${translationMap.length} translations`);
 
-    // Bulk-update each line with fresh translation data
+    // Bulk-update all lines at once instead of one-by-one
+    const updates = [];
     for (let i = 0; i < spanishLines.length; i++) {
       const matched = translationMap.find(t => t.line_index === i);
       if (matched && spanishLines[i].trim()) {
-        try {
-          await base44.asServiceRole.entities.LyricLine.update(lineIds[i], {
-            english_translation: matched.english_translation || '',
-            pronunciation: matched.pronunciation || '',
-            is_chorus: !!matched.is_chorus,
-          });
-        } catch {
-          // Isolated — never impacts the original lines
-        }
+        updates.push({
+          id: lineIds[i],
+          english_translation: matched.english_translation || '',
+          pronunciation: matched.pronunciation || '',
+          is_chorus: !!matched.is_chorus,
+        });
       }
     }
-
-    // If ALL translations came back, mark ready
-    const readyCount = translationMap.filter(t => spanishLines[t.line_index] && (t.english_translation || '').trim()).length;
-    if (readyCount >= spanishLines.length * 0.7) {
-      const s = await base44.asServiceRole.entities.Song.get(songId);
-      if (s?.sync_status === 'pending') {
-        await base44.asServiceRole.entities.Song.update(songId, { sync_status: 'translating' });
-      }
+    if (updates.length > 0) {
+      await base44.asServiceRole.entities.LyricLine.bulkUpdate(updates);
     }
 
-    console.log(`Stage 2 translated ${readyCount}/${spanishLines.length} lines`);
+    const readyCount = updates.length;
     return Response.json({ success: true, stage: 2, lines_translated: readyCount });
   } catch (error) {
     console.error('Stage 2 error:', error.message);

@@ -1,8 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 /**
- * Stage 1 Orchestrator: Race all text providers, save winner instantly,
- * then fire-and-forget Stage 2 (translation) and Stage 3 (sync/retry×2).
+ * Full Pipeline: Race all text providers, save Spanish lines instantly,
+ * then translate (bulk) and sync (×2 retry) in one execution.
  */
 
 const QUICK_TIMEOUT = 2500;
@@ -146,6 +146,8 @@ Deno.serve(async (req) => {
     console.log(`Stage 1 saved ${rawLines.length} raw lines`);
 
     // Stage 2: translate all lines in one call (independent — never affects original lines)
+    // Set status to translating immediately so the frontend shows "Translating lines…"
+    // instead of reverting to "pending". Spanish lines are already visible in the Realtime feed.
     await base44.entities.Song.update(songId, { sync_status: 'translating' });
     await base44.functions.invoke('translateLyrics', { songId }).catch(async () => {
       console.log('Stage 2 skipped — continuing with raw lines');

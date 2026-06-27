@@ -88,11 +88,8 @@ export default function SongPage() {
         setOffsetInput(String(s.sync_offset_seconds || 0));
         setPendingSong(false);
 
-        // Trigger pipeline if song needs lyrics
-        if (['pending', 'fetching_lyrics', 'translating', 'failed'].includes(s.sync_status)) {
-          console.log('Song in progress/failed state, triggering pipeline');
-          generateLyrics({ songId: id }).catch(() => {});
-        }
+        // Never auto-re-trigger the pipeline here — it runs end-to-end in one execution.
+        // The Realtime subscription handles progressive UI updates as lines appear.
       })
       .catch(() => { setPendingSong(false); });
 
@@ -107,8 +104,8 @@ export default function SongPage() {
   // Realtime: single subscription handles all live updates
   // (both Song row and LyricLine changes, eliminating the old polling loop)
   useEffect(() => {
-    // Rerun if song was loaded but no lines arrived yet — triggers pipeline
-    if (!pendingSong && song && lines.length === 0 && ['ready', 'static'].includes(song.sync_status)) {
+    // Rerun if song was loaded but no lines arrived yet — triggers pipeline once
+    if (!pendingSong && song && lines.length === 0 && !['pending', 'fetching_lyrics', 'translating'].includes(song.sync_status)) {
       console.log('No lines despite ready status, re-triggering');
       generateLyrics({ songId: id }).catch(() => {});
     }
@@ -137,17 +134,9 @@ export default function SongPage() {
       setSong((prev) => ({ ...(prev || event.data), ...event.data }));
     });
 
-    // Keep triggering pipeline while status is in-progress but no lines arrived
-    const retryTicker = setInterval(() => {
-      if (inProgress && lines.length === 0) {
-        generateLyrics({ songId: id }).catch(() => {});
-      }
-    }, 3000);
-
     return () => {
       unsubscribeLine();
       unsubscribeSong();
-      clearInterval(retryTicker);
     };
   }, [id, pendingSong]);
 
