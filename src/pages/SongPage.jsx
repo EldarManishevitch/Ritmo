@@ -236,7 +236,7 @@ export default function SongPage() {
   const thumbnail = song.album_art_url || `https://i.ytimg.com/vi/${song.youtube_id}/mqdefault.jpg`;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Top bar */}
       <div className="safe-area-top flex items-center justify-between px-4 py-3 border-b border-border">
         <button onClick={() => navigate('/dashboard')} className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors">
@@ -321,7 +321,7 @@ export default function SongPage() {
 
       {/* Main content */}
       {song.sync_status === 'failed' ? (
-        <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center">
+        <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center gap-3 px-6 text-center">
           <p className="text-sm font-medium text-destructive">{STATUS_LABELS.failed}</p>
           <p className="text-xs text-muted-foreground max-w-[250px]">
             Our pipeline couldn't fetch lyrics automatically. Try again or add the song manually.
@@ -346,8 +346,8 @@ export default function SongPage() {
           )}
           <GenerationProgressPill status={song.sync_status} visible={inProgress} />
           <div className="flex-1 flex flex-col lg:flex-row min-h-0">
-          {/* Left column: video + quiz button */}
-          <div className="lg:w-3/5 flex flex-col">
+          {/* Left column: video + quiz button - stays in place */}
+          <div className="lg:w-3/5 flex flex-col shrink-0">
             <div className="relative bg-black">
               <div id={playerContainerId} className="w-full aspect-video" />
               {!ready && (
@@ -366,8 +366,8 @@ export default function SongPage() {
             </div>
           </div>
 
-          {/* Right column: lyrics/vocab/quiz */}
-          <div className="lg:w-2/5 flex-1 flex flex-col min-h-0">
+          {/* Right column: lyrics/vocab/quiz - lyrics box scrolls independently */}
+          <div className="lg:w-2/5 flex-1 flex flex-col min-h-0 overflow-hidden">
             {tab === 'lyrics' && (
               <>
                 {/* Section filter pills */}
@@ -421,16 +421,18 @@ export default function SongPage() {
                   </div>
                 )}
 
-                <SyncedLyrics
-                  lines={filteredLines}
-                  currentTime={currentTime}
-                  offset={song.sync_offset_seconds || 0}
-                  mode={mode}
-                  showEnglish={showEnglish}
-                  onWordTap={handleWordTap}
-                  onLineSeek={(t) => seekTo(t)}
-                  onPausePlayer={pause}
-                />
+                <div className="flex-1 overflow-y-auto min-h-0 no-scrollbar">
+                  <SyncedLyrics
+                    lines={filteredLines}
+                    currentTime={currentTime}
+                    offset={song.sync_offset_seconds || 0}
+                    mode={mode}
+                    showEnglish={showEnglish}
+                    onWordTap={handleWordTap}
+                    onLineSeek={(t) => seekTo(t)}
+                    onPausePlayer={pause}
+                  />
+                </div>
               </>
             )}
 
