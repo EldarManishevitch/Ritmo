@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Volume2, Trash2, Loader2 } from 'lucide-react';
 import PullToRefresh from '@/components/PullToRefresh';
+import { displayLevel, daysToMastery, LEVEL_META, MASTERY_DATE_COUNT } from '@/lib/wordKnowledge';
 
 export default function Vocab() {
   const [vocab, setVocab] = useState([]);
@@ -34,9 +35,15 @@ export default function Vocab() {
   };
 
   const toggleMastered = async (item) => {
+    const nowMastered = displayLevel(item) !== 'mastered';
     try {
-      await base44.entities.SavedWord.update(item.id, { mastered: !item.mastered });
-      setVocab((v) => v.map((x) => x.id === item.id ? { ...x, mastered: !x.mastered } : x));
+      await base44.entities.SavedWord.update(item.id, {
+        mastered: nowMastered,
+        knowledge_level: nowMastered ? 'mastered' : (item.success_dates?.length ? 'known' : 'new'),
+      });
+      setVocab((v) => v.map((x) => x.id === item.id
+        ? { ...x, mastered: nowMastered, knowledge_level: nowMastered ? 'mastered' : (x.success_dates?.length ? 'known' : 'new') }
+        : x));
     } catch { /* noop */ }
   };
 
@@ -62,14 +69,23 @@ export default function Vocab() {
                   {v.pronunciation_hint && (
                     <p className="text-xs text-primary mt-1">🔊 {v.pronunciation_hint}</p>
                   )}
-                  {v.mastered && <Badge variant="default" className="mt-1">Mastered</Badge>}
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${LEVEL_META[displayLevel(v)].badgeClass}`}>
+                      {LEVEL_META[displayLevel(v)].label}
+                    </span>
+                    {displayLevel(v) === 'known' && (
+                      <span className="text-xs text-muted-foreground">
+                        {MASTERY_DATE_COUNT - daysToMastery(v)}/{MASTERY_DATE_COUNT} days to mastery
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-col gap-1 flex-shrink-0">
                   <Button size="sm" variant="ghost" onClick={() => speak(v.word)} aria-label={`Hear ${v.word}`}>
                     <Volume2 className="h-4 w-4" />
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => toggleMastered(v)}>
-                    {v.mastered ? '↩' : '✓'}
+                    {displayLevel(v) === 'mastered' ? '↩' : '✓'}
                   </Button>
                   <Button size="sm" variant="ghost" className="text-destructive" onClick={() => remove(v.id)} aria-label={`Remove ${v.word}`}>
                     <Trash2 className="h-4 w-4" />

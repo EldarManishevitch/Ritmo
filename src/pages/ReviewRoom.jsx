@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BookOpen, Loader2, CheckCircle2, RotateCw, Volume2, Flame } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
+import { recordWordSuccess, displayLevel, daysToMastery, LEVEL_META, MASTERY_DATE_COUNT } from '@/lib/wordKnowledge';
 
 export default function ReviewRoom() {
   const [words, setWords] = useState([]);
@@ -32,18 +33,24 @@ export default function ReviewRoom() {
     speechSynthesis.speak(u);
   };
 
-  const markMastered = async () => {
-    if (!current) return;
-    await base44.entities.SavedWord.update(current.id, { mastered: true });
-    const next = words.filter((_, i) => i !== index);
-    setWords(next);
-    setFlipped(false);
-    if (index >= next.length) setIndex(Math.max(0, next.length - 1));
-  };
-
   const next = () => {
     setFlipped(false);
     setIndex((i) => (i + 1) % Math.max(words.length, 1));
+  };
+
+  // Correct recall: record one dated success. Word leaves the deck only once mastered.
+  const gotIt = async () => {
+    if (!current) return;
+    const updated = await recordWordSuccess(current);
+    if (updated.knowledge_level === 'mastered') {
+      const remaining = words.filter((_, i) => i !== index);
+      setWords(remaining);
+      setFlipped(false);
+      if (index >= remaining.length) setIndex(Math.max(0, remaining.length - 1));
+    } else {
+      setWords((ws) => ws.map((w, i) => (i === index ? updated : w)));
+      next();
+    }
   };
 
   if (loading) {
@@ -113,16 +120,24 @@ export default function ReviewRoom() {
                 {current.is_slang && (
                   <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">slang</span>
                 )}
-                <p className="text-xs text-muted-foreground/60 mt-6">Tap to flip back</p>
+                <div className="mt-4 flex flex-col items-center gap-1.5">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${LEVEL_META[displayLevel(current)].badgeClass}`}>
+                    {LEVEL_META[displayLevel(current)].label}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {MASTERY_DATE_COUNT - daysToMastery(current)}/{MASTERY_DATE_COUNT} days to mastery
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground/60 mt-4">Tap to flip back</p>
               </>
             )}
           </div>
           <div className="flex gap-3">
             <Button variant="outline" className="flex-1" onClick={next}>
-              <RotateCw className="h-4 w-4 mr-1" /> Next
+              <RotateCw className="h-4 w-4 mr-1" /> Still learning
             </Button>
-            <Button className="flex-1" onClick={markMastered}>
-              <CheckCircle2 className="h-4 w-4 mr-1" /> Mastered
+            <Button className="flex-1" onClick={gotIt}>
+              <CheckCircle2 className="h-4 w-4 mr-1" /> Got it
             </Button>
           </div>
         </>

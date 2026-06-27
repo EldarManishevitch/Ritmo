@@ -24,6 +24,24 @@
     "mastered": {
       "type": "boolean",
       "default": false
+    },
+    "knowledge_level": {
+      "type": "string",
+      "enum": [
+        "new",
+        "known",
+        "mastered"
+      ],
+      "default": "new",
+      "description": "Knowledge level: new (no successful tries), known (1+ successful try), mastered (21 successful tries on different dates)"
+    },
+    "success_dates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Distinct YYYY-MM-DD dates on which the word was answered correctly"
     }
   },
   "required": [
