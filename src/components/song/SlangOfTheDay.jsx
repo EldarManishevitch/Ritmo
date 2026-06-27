@@ -132,9 +132,18 @@ export default function SlangOfTheDay() {
         <PronunciationCheck targetText={slang.term} />
       </div>
       <div className="space-y-2.5 mb-4">
-        <DefRow label="LITERAL" value={slang.literal} />
+        {/* Dual box: literal + english slang side by side */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-xl bg-muted/50 border border-border p-3">
+            <span className="text-[10px] font-semibold text-muted-foreground/60 tracking-wide block mb-1">LITERAL</span>
+            <p className="text-sm text-foreground">{slang.literal}</p>
+          </div>
+          <div className="rounded-xl bg-muted/50 border border-border p-3">
+            <span className="text-[10px] font-semibold text-muted-foreground/60 tracking-wide block mb-1">ENGLISH SLANG</span>
+            <p className="text-sm text-foreground">{slang.english_slang}</p>
+          </div>
+        </div>
         <DefRow label="MEANING" value={slang.meaning} />
-        <DefRow label="ENGLISH SLANG" value={slang.english_slang} />
         <DefRow label="EXAMPLE" value={slang.example} />
       </div>
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
