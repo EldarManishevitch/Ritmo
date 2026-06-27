@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Loader2, RefreshCw, Music2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import SlangOfTheDay from '@/components/song/SlangOfTheDay';
@@ -42,18 +42,16 @@ export default function Dashboard() {
     });
   }, [songs]);
 
-  // Stable bank of up to 18 songs at the user's level
-  const bank = useMemo(() => {
+  // Stable bank of 18 songs at the user's level — seeded once, never updated with recent searches
+  const seeded = useRef(null);
+  const recommended = useMemo(() => {
+    if (seeded.current) return seeded.current;
     const atLevel = deduped.filter((s) => songCefr(s.difficulty) === USER_LEVEL);
     const shuffled = [...atLevel].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 18);
+    const picked = shuffled.slice(0, 18);
+    seeded.current = picked;
+    return picked;
   }, [deduped]);
-
-  // 6 non-duplicate songs drawn from the bank, re-selected on refresh
-  const recommended = useMemo(() => {
-    const shuffled = [...bank].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 6);
-  }, [bank, refreshKey]);
 
   const challenges = useMemo(() => {
     const aboveLevel = deduped.filter((s) => LEVEL_ORDER.indexOf(songCefr(s.difficulty)) > LEVEL_ORDER.indexOf(USER_LEVEL));
@@ -104,7 +102,7 @@ export default function Dashboard() {
           </button>
         </div>
         <p className="text-sm text-muted-foreground mb-4">
-          {recommended.length} songs picked for you · tuned for <span className="font-semibold">{USER_LEVEL}</span> · refresh for a new mix.
+          18 songs picked for you · tuned for <span className="font-semibold">{USER_LEVEL}</span> · refreshed manually for a new mix.
         </p>
         {loading ? (
           <div className="flex items-center justify-center py-12">
@@ -113,7 +111,7 @@ export default function Dashboard() {
         ) : recommended.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
             {recommended.map((song) => (
               <SongGridCard key={song.id} song={song} />
             ))}
