@@ -3,11 +3,13 @@ import { base44 } from '@/api/base44Client';
 /** Tap-to-define a single word from a lyric line. */
 export async function translateWord({ word, context }) {
   return base44.integrations.Core.InvokeLLM({
-    prompt: `A Spanish learner tapped the word "${word}" in this lyric line:\n"${context || ''}"\n\nReturn the English meaning, a pronunciation guide (English letters, hyphenated by syllable, CAPS on the stressed syllable, e.g. "ba-CI-a"), the part of speech, an example Spanish sentence using the word, its English translation, and whether it is slang.`,
+    prompt: `A Spanish learner tapped the word "${word}" in this lyric line:\n"${context || ''}"\n\nReturn: a literal word-for-word translation, the natural English meaning, a pronunciation guide (English letters, hyphenated by syllable, CAPS on the stressed syllable, e.g. "ba-CI-a"), the part of speech, the equivalent English slang (what English speakers would actually say), an example Spanish sentence using the word, its English translation, and whether it is slang in Spanish.`,
     response_json_schema: {
       type: 'object',
       properties: {
-        english_meaning: { type: 'string' },
+        literal: { type: 'string', description: 'Word-for-word translation' },
+        english_meaning: { type: 'string', description: 'Natural English meaning' },
+        english_slang: { type: 'string', description: 'What English speakers would actually say' },
         pronunciation: { type: 'string' },
         part_of_speech: { type: 'string' },
         example_spanish: { type: 'string' },

@@ -76,16 +76,16 @@ export default function WordLookup({ word, context, songId }) {
                 </button>
               </div>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              {info.part_of_speech && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary font-medium">
-                  {info.part_of_speech}
-                </span>
-              )}
-              <span className="text-sm font-semibold text-foreground">{info.english_meaning}</span>
-              {info.is_slang && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">slang</span>
-              )}
+            {/* Dual box: literal vs english slang */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-xl bg-muted/50 border border-border p-3">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">Literal</p>
+                <p className="text-sm font-semibold text-foreground">{info.literal || info.english_meaning}</p>
+              </div>
+              <div className="rounded-xl bg-muted/50 border border-border p-3">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">English Slang</p>
+                <p className="text-sm font-semibold text-foreground">{info.english_slang || info.english_meaning}</p>
+              </div>
             </div>
             {info.example_spanish && (
               <div className="bg-muted/50 rounded-xl p-3 space-y-1">
