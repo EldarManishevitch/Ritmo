@@ -96,27 +96,36 @@ export async function generateLyrics({ songId, title, artist, youtubeId }) {
   const id = song.id;
   await base44.entities.Song.update(id, { sync_status: 'fetching_lyrics' });
 
-  // Race 3 lyric sources in parallel: LRCLIB + Genius (backend) + LLM web search
-  const [lyricsRes, aiRes] = await Promise.allSettled([
-    withTimeout(base44.functions.invoke('fetchLyrics', { title: song.title, artist: song.artist }), 30000, 'fetchLyrics'),
-    withTimeout(
-      base44.integrations.Core.InvokeLLM({
-        prompt: `Return the full Spanish lyrics for the song "${song.title}" by "${song.artist}". Only the lyrics, one line per line, no metadata or section labels.`,
-        add_context_from_internet: true,
-        model: 'gemini_3_flash',
-        response_json_schema: {
-          type: 'object',
-          properties: { lines: { type: 'array', items: { type: 'string' } } },
-          required: ['lines'],
-        },
-      }),
-      30000,
-      'llm lyrics'
-    ),
-  ]);
+  // Fetch original-language lyrics from the backend (races 4 sources and
+  // resolves as soon as synced or plain lyrics are available). The user sees
+  // the lyrics right away; the LLM web search is only a fallback if the backend
+  // finds nothing, so it never blocks the lyrics from showing.
+  let lrc = null;
+  try {
+    const res = await withTimeout(base44.functions.invoke('fetchLyrics', { title: song.title, artist: song.artist }), 30000, 'fetchLyrics');
+    lrc = res?.data;
+  } catch { lrc = null; }
 
-  const lrc = lyricsRes.status === 'fulfilled' ? lyricsRes.value?.data : null;
-  const aiLyrics = aiRes.status === 'fulfilled' ? aiRes.value : null;
+  let aiLyrics = null;
+  if (!lrc?.syncedLyrics && !lrc?.plainLyrics) {
+    try {
+      aiLyrics = await withTimeout(
+        base44.integrations.Core.InvokeLLM({
+          prompt: `Return the full Spanish lyrics for the song "${song.title}" by "${song.artist}". Only the lyrics, one line per line, no metadata or section labels.`,
+          add_context_from_internet: true,
+          model: 'gemini_3_flash',
+          response_json_schema: {
+            type: 'object',
+            properties: { lines: { type: 'array', items: { type: 'string' } } },
+            required: ['lines'],
+          },
+        }),
+        30000,
+        'llm lyrics'
+      );
+    } catch { aiLyrics = null; }
+  }
+
   console.log(`lyrics race: lrclib=${!!lrc?.sources?.lrclib} genius=${!!lrc?.sources?.genius} synced=${!!lrc?.syncedLyrics} llm=${!!aiLyrics?.lines?.length}`);
 
   let syncedLines = null;

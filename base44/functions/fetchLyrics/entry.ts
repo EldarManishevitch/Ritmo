@@ -134,15 +134,24 @@ Deno.serve(async (req) => {
     if (!title) return Response.json({ error: 'Title required' }, { status: 400 });
 
     // Race all 4 sources concurrently. Each is isolated — a failure or timeout
-    // can't stall the others. Return the moment a synced result lands (best
-    // outcome); if none produce synced lyrics, fall back to plain text once all
-    // sources have settled.
+    // can't stall the others. Resolve the moment a synced result lands; if only
+    // plain text arrives, give synced a short grace window (2s) then resolve so
+    // the user sees the original-language lyrics fast instead of waiting on
+    // slow sources.
     const results = {};
-    let resolveSynced;
-    const syncedFound = new Promise((r) => { resolveSynced = r; });
+    let resolveRace;
+    const raceDone = new Promise((r) => { resolveRace = r; });
+    let graceTimer = null;
+    const haveSynced = () => Object.values(results).some((v) => v?.syncedLyrics);
+
     const publish = (name, v) => {
       results[name] = v;
-      if (v?.syncedLyrics) resolveSynced();
+      if (v?.syncedLyrics) {
+        if (graceTimer) clearTimeout(graceTimer);
+        resolveRace();
+      } else if (v?.plainLyrics && !graceTimer && !haveSynced()) {
+        graceTimer = setTimeout(resolveRace, 2000);
+      }
       return v;
     };
 
@@ -152,9 +161,9 @@ Deno.serve(async (req) => {
       fetchLyricsOvh(title, artist || '').then((v) => publish('ovh', v)),
       fetchNetEase(title, artist || '').then((v) => publish('netease', v)),
     ]);
-    all.then(() => resolveSynced()); // unblock if no source ever yields synced
+    all.then(() => { if (graceTimer) clearTimeout(graceTimer); resolveRace(); });
 
-    await Promise.race([syncedFound, all]);
+    await Promise.race([raceDone, all]);
 
     const syncedLyrics = Object.values(results).find((v) => v?.syncedLyrics)?.syncedLyrics || null;
     const plainLyrics = syncedLyrics
