@@ -12,9 +12,9 @@ const PREVIEW = {
   startSeconds: 41,
   durationMs: 10000,
   lines: [
-    'Tití me preguntó si tengo muchas novias',
-    'Le dije que sí',
-  ],
+  'Tití me preguntó si tengo muchas novias',
+  'Le dije que sí']
+
 };
 
 const GLOSSARY = {
@@ -29,7 +29,7 @@ const GLOSSARY = {
   'le': { pron: 'leh', en: 'to her / to him' },
   'dije': { pron: 'DEE-heh', en: 'I said / I told' },
   'que': { pron: 'keh', en: 'that' },
-  'sí': { pron: 'see', en: 'yes' },
+  'sí': { pron: 'see', en: 'yes' }
 };
 
 const cleanWord = (w) => w.toLowerCase().replace(/[¿¡!?.,;:"'()]/g, '').trim();
@@ -66,7 +66,7 @@ export default function Landing() {
     document.title = 'Ritmo — Learn Spanish through Bad Bunny & Latin music';
     return () => {
       if (stopTimer.current) window.clearTimeout(stopTimer.current);
-      try { playerRef.current?.destroy?.(); } catch { /* ignore */ }
+      try {playerRef.current?.destroy?.();} catch {/* ignore */}
       playerRef.current = null;
     };
   }, []);
@@ -84,8 +84,8 @@ export default function Landing() {
             onReady: () => {
               setPlayerReady(true);
               resolve();
-            },
-          },
+            }
+          }
         });
       });
     });
@@ -100,7 +100,7 @@ export default function Landing() {
       setPlaying(true);
       if (stopTimer.current) window.clearTimeout(stopTimer.current);
       stopTimer.current = window.setTimeout(() => {
-        try { playerRef.current?.pauseVideo(); } catch { /* ignore */ }
+        try {playerRef.current?.pauseVideo();} catch {/* ignore */}
         setPlaying(false);
         setSigninOpen(true);
       }, PREVIEW.durationMs);
@@ -143,7 +143,7 @@ export default function Landing() {
 
       {/* Hero */}
       <section className="max-w-5xl mx-auto px-4 pt-12 pb-8 text-center">
-        <span className="inline-block text-xs font-semibold uppercase tracking-wide text-primary bg-primary/10 px-3 py-1 rounded-full mb-4">
+        <span className="inline-block text-xs font-semibold uppercase tracking-wide text-primary bg-primary/10 px-3 py-1 rounded-full mb-4 hidden">
           Try it free — no signup
         </span>
         <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 leading-tight">
@@ -157,28 +157,28 @@ export default function Landing() {
         <div className="relative max-w-md mx-auto rounded-2xl overflow-hidden bg-card border border-border shadow-lg">
           <div className="aspect-video relative">
             <div ref={containerRef} className="absolute inset-0" />
-            {!playing && (
-              <img
-                src={`https://i.ytimg.com/vi/${PREVIEW.youtubeId}/hqdefault.jpg`}
-                alt={PREVIEW.title}
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            )}
-            {!playing && (
-              <button
-                onClick={play}
-                className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors"
-              >
+            {!playing &&
+            <img
+              src={`https://i.ytimg.com/vi/${PREVIEW.youtubeId}/hqdefault.jpg`}
+              alt={PREVIEW.title}
+              className="absolute inset-0 w-full h-full object-cover" />
+
+            }
+            {!playing &&
+            <button
+              onClick={play}
+              className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors">
+              
                 <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-lg">
                   <Play className="h-8 w-8 text-white ml-1" fill="white" />
                 </div>
               </button>
-            )}
-            {playing && (
-              <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
+            }
+            {playing &&
+            <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-white animate-pulse" /> Live · 10s
               </div>
-            )}
+            }
           </div>
           <div className="p-3 flex items-center justify-between">
             <div className="text-left">
@@ -195,29 +195,29 @@ export default function Landing() {
         <div className="rounded-2xl bg-card border border-border p-6">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-4">Tap any word</p>
           <div className="space-y-3 mb-6">
-            {PREVIEW.lines.map((line, li) => (
-              <p key={li} className="text-xl text-foreground leading-relaxed">
+            {PREVIEW.lines.map((line, li) =>
+            <p key={li} className="text-xl text-foreground leading-relaxed">
                 {line.split(/\s+/).map((w, wi) => {
-                  const c = cleanWord(w);
-                  const has = Boolean(GLOSSARY[c]);
-                  return (
-                    <span
-                      key={wi}
-                      onClick={() => has && setSelectedWord(c)}
-                      className={`inline-block mr-1 px-1.5 py-0.5 rounded-md transition-all cursor-pointer ${
-                        has ? 'hover:bg-primary/15 hover:text-primary' : 'opacity-70 cursor-default'
-                      } ${selectedWord === c ? 'bg-primary text-white' : ''}`}
-                    >
+                const c = cleanWord(w);
+                const has = Boolean(GLOSSARY[c]);
+                return (
+                  <span
+                    key={wi}
+                    onClick={() => has && setSelectedWord(c)}
+                    className={`inline-block mr-1 px-1.5 py-0.5 rounded-md transition-all cursor-pointer ${
+                    has ? 'hover:bg-primary/15 hover:text-primary' : 'opacity-70 cursor-default'} ${
+                    selectedWord === c ? 'bg-primary text-white' : ''}`}>
+                    
                       {w}
-                    </span>
-                  );
-                })}
+                    </span>);
+
+              })}
               </p>
-            ))}
+            )}
           </div>
 
-          {selectedWord && GLOSSARY[selectedWord] ? (
-            <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
+          {selectedWord && GLOSSARY[selectedWord] ?
+          <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-bold text-foreground">{selectedWord}</h3>
                 <button onClick={() => speak(selectedWord)} className="p-2 rounded-lg hover:bg-primary/10 text-primary">
@@ -226,12 +226,12 @@ export default function Landing() {
               </div>
               <p className="text-sm text-foreground"><strong>Sounds like:</strong> {GLOSSARY[selectedWord].pron}</p>
               <p className="text-sm text-muted-foreground mt-1"><strong>English:</strong> {GLOSSARY[selectedWord].en}</p>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">
+            </div> :
+
+          <p className="text-sm text-muted-foreground text-center py-4">
               Click on a highlighted word above to see how it sounds and what it means.
             </p>
-          )}
+          }
         </div>
       </section>
 
@@ -250,10 +250,10 @@ export default function Landing() {
       <section className="max-w-5xl mx-auto px-4 py-12">
         <div className="grid md:grid-cols-3 gap-4">
           {[
-            { icon: Sparkles, title: 'Synced Lyrics', desc: 'Real-time highlighted lyrics that scroll with the music. Tap any word for instant translation.' },
-            { icon: Languages, title: 'Tap-to-Translate', desc: 'Every word is tappable. Get pronunciation, English meaning, and save it to your vocab deck.' },
-            { icon: Zap, title: 'AI Roleplay', desc: 'Practice real conversations in Spanish — restaurant, market, directions — with instant feedback.' },
-          ].map((f) => {
+          { icon: Sparkles, title: 'Synced Lyrics', desc: 'Real-time highlighted lyrics that scroll with the music. Tap any word for instant translation.' },
+          { icon: Languages, title: 'Tap-to-Translate', desc: 'Every word is tappable. Get pronunciation, English meaning, and save it to your vocab deck.' },
+          { icon: Zap, title: 'AI Roleplay', desc: 'Practice real conversations in Spanish — restaurant, market, directions — with instant feedback.' }].
+          map((f) => {
             const Icon = f.icon;
             return (
               <div key={f.title} className="rounded-2xl bg-card border border-border p-6">
@@ -262,8 +262,8 @@ export default function Landing() {
                 </div>
                 <h3 className="font-bold text-foreground mb-2">{f.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-              </div>
-            );
+              </div>);
+
           })}
         </div>
       </section>
@@ -324,6 +324,6 @@ export default function Landing() {
           <p className="text-xs text-muted-foreground text-center">No spam. No credit card. Free forever for learners.</p>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>);
+
 }
