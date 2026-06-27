@@ -5,6 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { youtubeSearch, detectGenre } from '@/lib/aiHelpers';
 import { generateLyrics } from '@/lib/lyricsPipeline';
 import PronunciationCheck from '@/components/song/PronunciationCheck';
+import CollapsibleCard from '@/components/song/CollapsibleCard';
 
 export default function SlangOfTheDay() {
   const navigate = useNavigate();
@@ -113,68 +114,73 @@ export default function SlangOfTheDay() {
   if (!slang) return null;
 
   return (
-    <div className="rounded-2xl bg-card border border-border p-5 shadow-sm">
-      <span className="inline-block text-xs font-semibold text-white bg-[#2d3e4e] px-2.5 py-1 rounded-md mb-3">
-        Slang of the Day
-      </span>
-      <h3 className="text-2xl font-bold text-foreground mb-1">{slang.term}</h3>
-      <div className="flex items-center gap-3 mb-4">
-        {slang.pronunciation && (
-          <p className="text-sm italic text-muted-foreground">/{slang.pronunciation}/</p>
-        )}
-        <button
-          onClick={speak}
-          className="h-8 w-8 rounded-full bg-primary/15 flex items-center justify-center hover:bg-primary/25 transition-colors active:scale-95"
-          title="Listen to pronunciation"
-        >
-          <Volume2 className="h-4 w-4 text-primary" />
-        </button>
-        <PronunciationCheck targetText={slang.term} />
-      </div>
-      <div className="space-y-2.5 mb-4">
-        {/* Dual box: literal + english slang side by side */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-xl bg-muted/50 border border-border p-3">
-            <span className="text-[10px] font-semibold text-muted-foreground/60 tracking-wide block mb-1">LITERAL</span>
-            <p className="text-sm text-foreground">{slang.literal}</p>
+    <CollapsibleCard
+      header={
+        <span className="inline-block text-xs font-semibold text-white bg-[#2d3e4e] px-2.5 py-1 rounded-md">
+          Slang of the Day
+        </span>
+      }
+    >
+      <div className="px-5 pb-4">
+        <h3 className="text-2xl font-bold text-foreground mb-1">{slang.term}</h3>
+        <div className="flex items-center gap-3 mb-4">
+          {slang.pronunciation && (
+            <p className="text-sm italic text-muted-foreground">/{slang.pronunciation}/</p>
+          )}
+          <button
+            onClick={speak}
+            className="h-8 w-8 rounded-full bg-primary/15 flex items-center justify-center hover:bg-primary/25 transition-colors active:scale-95"
+            title="Listen to pronunciation"
+          >
+            <Volume2 className="h-4 w-4 text-primary" />
+          </button>
+          <PronunciationCheck targetText={slang.term} />
+        </div>
+        <div className="space-y-2.5 mb-4">
+          {/* Dual box: literal + english slang side by side */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-xl bg-muted/50 border border-border p-3">
+              <span className="text-[10px] font-semibold text-muted-foreground/60 tracking-wide block mb-1">LITERAL</span>
+              <p className="text-sm text-foreground">{slang.literal}</p>
+            </div>
+            <div className="rounded-xl bg-muted/50 border border-border p-3">
+              <span className="text-[10px] font-semibold text-muted-foreground/60 tracking-wide block mb-1">ENGLISH SLANG</span>
+              <p className="text-sm text-foreground">{slang.english_slang}</p>
+            </div>
           </div>
-          <div className="rounded-xl bg-muted/50 border border-border p-3">
-            <span className="text-[10px] font-semibold text-muted-foreground/60 tracking-wide block mb-1">ENGLISH SLANG</span>
-            <p className="text-sm text-foreground">{slang.english_slang}</p>
+          <DefRow label="MEANING" value={slang.meaning} />
+          <DefRow label="EXAMPLE" value={slang.example} />
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
+          <Music className="h-3.5 w-3.5" />
+          <span className="font-medium">AS HEARD IN</span>
+          <span className="text-foreground flex-1 min-w-0 truncate">{slang.source_song} · {slang.source_artist}</span>
+        </div>
+        <div className="flex items-start gap-3">
+          <button
+            onClick={handlePlay}
+            disabled={going}
+            className="flex-shrink-0 flex items-center justify-center h-9 w-9 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors disabled:opacity-60 mt-0.5"
+            title="Open this song"
+          >
+            {going ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4 fill-white" />}
+          </button>
+          <div className="min-w-0">
+            <p className="text-sm italic text-[#a5603c] mb-1">"{slang.excerpt}"</p>
+            <p className="text-sm text-muted-foreground">{slang.excerpt_translation}</p>
           </div>
         </div>
-        <DefRow label="MEANING" value={slang.meaning} />
-        <DefRow label="EXAMPLE" value={slang.example} />
-      </div>
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
-        <Music className="h-3.5 w-3.5" />
-        <span className="font-medium">AS HEARD IN</span>
-        <span className="text-foreground flex-1 min-w-0 truncate">{slang.source_song} · {slang.source_artist}</span>
-      </div>
-      <div className="flex items-start gap-3">
-        <button
-          onClick={handlePlay}
-          disabled={going}
-          className="flex-shrink-0 flex items-center justify-center h-9 w-9 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors disabled:opacity-60 mt-0.5"
-          title="Open this song"
-        >
-          {going ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4 fill-white" />}
-        </button>
-        <div className="min-w-0">
-          <p className="text-sm italic text-[#a5603c] mb-1">"{slang.excerpt}"</p>
-          <p className="text-sm text-muted-foreground">{slang.excerpt_translation}</p>
-        </div>
-      </div>
 
-      <button
-        onClick={handleSave}
-        disabled={saving || saved}
-        className={`w-full mt-4 flex items-center justify-center gap-2 h-10 rounded-xl text-sm font-medium transition-colors ${saved ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15'}`}
-      >
-        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : saved ? <Check className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
-        {saved ? 'Saved to vocabulary' : 'Save to vocabulary'}
-      </button>
-    </div>
+        <button
+          onClick={handleSave}
+          disabled={saving || saved}
+          className={`w-full mt-4 flex items-center justify-center gap-2 h-10 rounded-xl text-sm font-medium transition-colors ${saved ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15'}`}
+        >
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : saved ? <Check className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+          {saved ? 'Saved to vocabulary' : 'Save to vocabulary'}
+        </button>
+      </div>
+    </CollapsibleCard>
   );
 }
 
