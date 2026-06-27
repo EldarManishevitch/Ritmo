@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Music, Play, Loader2 } from 'lucide-react';
+import { Music, Play, Loader2, Volume2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { youtubeSearch, detectGenre } from '@/lib/aiHelpers';
 import { generateLyrics } from '@/lib/lyricsPipeline';
@@ -47,6 +47,14 @@ export default function SlangOfTheDay() {
     }
   };
 
+  const speak = () => {
+    if (!slang) return;
+    const u = new SpeechSynthesisUtterance(slang.term);
+    u.lang = 'es-ES';
+    u.rate = 0.85;
+    speechSynthesis.speak(u);
+  };
+
   useEffect(() => {
     let cancelled = false;
     base44.integrations.Core.InvokeLLM({
@@ -85,9 +93,18 @@ export default function SlangOfTheDay() {
         Slang of the Day
       </span>
       <h3 className="text-2xl font-bold text-foreground mb-1">{slang.term}</h3>
-      {slang.pronunciation && (
-        <p className="text-sm italic text-muted-foreground mb-4">/{slang.pronunciation}/</p>
-      )}
+      <div className="flex items-center gap-3 mb-4">
+        {slang.pronunciation && (
+          <p className="text-sm italic text-muted-foreground">/{slang.pronunciation}/</p>
+        )}
+        <button
+          onClick={speak}
+          className="h-8 w-8 rounded-full bg-primary/15 flex items-center justify-center hover:bg-primary/25 transition-colors active:scale-95"
+          title="Listen to pronunciation"
+        >
+          <Volume2 className="h-4 w-4 text-primary" />
+        </button>
+      </div>
       <div className="space-y-2.5 mb-4">
         <DefRow label="LITERAL" value={slang.literal} />
         <DefRow label="MEANING" value={slang.meaning} />
