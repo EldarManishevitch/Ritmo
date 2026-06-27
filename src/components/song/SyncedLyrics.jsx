@@ -9,7 +9,7 @@ export default function SyncedLyrics({
   currentTime = 0,
   offset = 0,
   mode = 'synced',
-  showEnglish = true,
+  displayMode = 'both',
   onWordTap,
   onLineSeek,
   onPausePlayer,
@@ -161,20 +161,22 @@ export default function SyncedLyrics({
                 : 'border-2 border-transparent opacity-100'
             } ${hasSyncTimestamps ? 'cursor-pointer' : ''}`}
           >
-            <p
-              className={`font-medium leading-snug transition-all duration-300 ${
-                active ? 'text-[#2C2A29] text-lg font-bold' : 'text-foreground text-base'
-              }`}
-            >
-              {renderWords(line.spanish_text, line.spanish_text, karaokeResult)}
-            </p>
-            {showEnglish && (
+            {(displayMode === 'spanish' || displayMode === 'both') && (
+              <p
+                className={`font-medium leading-snug transition-all duration-300 ${
+                  active ? 'text-[#2C2A29] text-lg font-bold' : 'text-foreground text-base'
+                }`}
+              >
+                {renderWords(line.spanish_text, line.spanish_text, karaokeResult)}
+              </p>
+            )}
+            {(displayMode === 'english' || displayMode === 'both') && (
               line.english_translation ? (
                 <p className={`text-sm mt-1 transition-opacity duration-300 ${active ? 'text-[#2C2A29]/80' : 'text-muted-foreground'}`}>
                   {line.english_translation}
                 </p>
               ) : (
-                <div className="h-4 w-2/3 bg-muted animate-pulse rounded mt-1" />
+                displayMode !== 'spanish' && <div className="h-4 w-2/3 bg-muted animate-pulse rounded mt-1" />
               )
             )}
             {active && line.pronunciation && (

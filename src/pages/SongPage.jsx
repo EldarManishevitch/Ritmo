@@ -63,7 +63,7 @@ export default function SongPage() {
   const [vocab, setVocab] = useState([]);
   const [flags, setFlags] = useState([]);
   const [section, setSection] = useState('full');
-  const [showEnglish, setShowEnglish] = useState(true);
+  const [displayMode, setDisplayMode] = useState('both');
   const playerContainerId = 'yt-player';
 
   const inProgress = song ? ['pending', 'fetching_lyrics', 'translating'].includes(song.sync_status) : false;
@@ -358,26 +358,31 @@ export default function SongPage() {
                   ))}
                 </div>
 
-                {/* Lyrics header with English toggle */}
+                {/* Lyrics header with language toggle */}
                 <div className="px-4 py-2 flex items-center justify-between border-b border-border">
                   <span className="text-sm font-semibold text-foreground">
                     {SECTIONS.find((s) => s.id === section)?.label}
                   </span>
-                  <label className={`flex items-center gap-2 ${translationDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
-                    <span className="text-xs text-muted-foreground">English</span>
-                    <button
-                      onClick={() => !translationDisabled && setShowEnglish(!showEnglish)}
-                      disabled={translationDisabled}
-                      className={`relative w-9 h-5 rounded-full transition-colors ${showEnglish ? 'bg-primary' : 'bg-muted'}`}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${showEnglish ? 'translate-x-4' : ''}`} />
-                    </button>
-                    {translationDisabled && (
-                      <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                        <Loader2 className="h-3 w-3 animate-spin" /> Translating lines...
-                      </span>
-                    )}
-                  </label>
+                  <div className="flex rounded-full bg-muted p-0.5">
+                    {[
+                      { id: 'spanish', label: 'ES' },
+                      { id: 'both', label: 'ES/EN' },
+                      { id: 'english', label: 'EN' },
+                    ].map((opt) => (
+                      <button
+                        key={opt.id}
+                        onClick={() => setDisplayMode(opt.id)}
+                        disabled={translationDisabled && opt.id !== 'spanish'}
+                        className={`text-xs font-medium px-3 py-1 rounded-full transition-colors ${
+                          displayMode === opt.id
+                            ? 'bg-primary text-white'
+                            : 'text-muted-foreground hover:text-foreground'
+                        } ${(translationDisabled && opt.id !== 'spanish') ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Word lookup panel */}
@@ -399,7 +404,7 @@ export default function SongPage() {
                     currentTime={currentTime}
                     offset={song.sync_offset_seconds || 0}
                     mode={mode}
-                    showEnglish={showEnglish}
+                    displayMode={displayMode}
                     onWordTap={handleWordTap}
                     onLineSeek={(t) => seekTo(t)}
                     onPausePlayer={pause}
