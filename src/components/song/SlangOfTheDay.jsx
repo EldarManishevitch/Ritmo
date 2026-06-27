@@ -50,7 +50,7 @@ export default function SlangOfTheDay() {
   useEffect(() => {
     let cancelled = false;
     base44.integrations.Core.InvokeLLM({
-      prompt: 'Generate one Spanish slang word commonly heard in Latin music (reggaeton, bachata, etc). Include: the slang term, its literal translation, its actual meaning, an English slang equivalent, an example sentence in Spanish, the song and artist where it is famously heard, and a short lyric excerpt containing the word with its English translation.',
+      prompt: 'Generate one Spanish slang word commonly heard in Latin music (reggaeton, bachata, etc). Include: the slang term, its literal translation, its actual meaning, an English slang equivalent, an example sentence in Spanish, the song and artist where it is famously heard, a short lyric excerpt containing the word with its English translation, and a pronunciation guide using English letters hyphenated by syllable with the stressed syllable in CAPITAL letters (e.g. al-MUER-zo) without slashes.',
       response_json_schema: {
         type: 'object',
         properties: {
@@ -63,8 +63,9 @@ export default function SlangOfTheDay() {
           source_artist: { type: 'string' },
           excerpt: { type: 'string' },
           excerpt_translation: { type: 'string' },
+          pronunciation: { type: 'string' },
         },
-        required: ['term', 'literal', 'meaning', 'english_slang', 'example', 'source_song', 'source_artist', 'excerpt', 'excerpt_translation'],
+        required: ['term', 'literal', 'meaning', 'english_slang', 'example', 'source_song', 'source_artist', 'excerpt', 'excerpt_translation', 'pronunciation'],
       },
     })
       .then((s) => { if (!cancelled) setSlang(s); })
@@ -83,7 +84,10 @@ export default function SlangOfTheDay() {
       <span className="inline-block text-xs font-semibold text-white bg-[#2d3e4e] px-2.5 py-1 rounded-md mb-3">
         Slang of the Day
       </span>
-      <h3 className="text-2xl font-bold text-foreground mb-4">{slang.term}</h3>
+      <h3 className="text-2xl font-bold text-foreground mb-1">{slang.term}</h3>
+      {slang.pronunciation && (
+        <p className="text-sm italic text-muted-foreground mb-4">/{slang.pronunciation}/</p>
+      )}
       <div className="space-y-2.5 mb-4">
         <DefRow label="LITERAL" value={slang.literal} />
         <DefRow label="MEANING" value={slang.meaning} />
