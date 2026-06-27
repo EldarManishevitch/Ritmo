@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Sparkles, BookOpen, RotateCcw, MessageCircle, Mic, Settings, Flame, LogOut, Music2, User } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { getProgress, levelForXp } from '@/lib/progress';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 const tabs = [
   { path: '/dashboard', icon: Sparkles, label: 'Discover' },
@@ -70,6 +71,8 @@ export default function TopNav() {
               </div>
             </>
           )}
+          <LanguageSwitcher />
+
           <button
             onClick={() => base44.auth.logout()}
             className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
