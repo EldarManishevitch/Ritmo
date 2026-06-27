@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Loader2, RefreshCw, Music2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import SlangOfTheDay from '@/components/song/SlangOfTheDay';
+import DailyWordCard from '@/components/song/DailyWordCard';
 import AddSongSection from '@/components/song/AddSongSection';
 import SongGridCard from '@/components/song/SongGridCard';
 import PullToRefresh from '@/components/PullToRefresh';
@@ -71,6 +72,11 @@ export default function Dashboard() {
           <span className="text-primary">Ritmo</span> - the spanish song teacher
         </h1>
         <p className="text-sm text-muted-foreground mt-1">Pick a song, Sing along & Pick up Spanish.</p>
+      </div>
+
+      {/* Word of the Day */}
+      <div className="mb-6">
+        <DailyWordCard />
       </div>
 
       {/* Slang of the Day */}

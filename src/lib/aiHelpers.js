@@ -48,6 +48,29 @@ export async function generateDailyPhrase() {
   return base44.entities.DailyPhrase.create({ phrase_date: today, ...result });
 }
 
+/** Get (or create) today's daily vocabulary word. Idempotent per day. */
+export async function generateDailyWord() {
+  const today = new Date().toISOString().slice(0, 10);
+  const existing = await base44.entities.DailyPhrase.filter({ phrase_date: today });
+  if (existing.length) return existing[0];
+
+  const result = await base44.integrations.Core.InvokeLLM({
+    prompt: 'Generate one useful everyday Spanish vocabulary word for a learner (a single word, not a phrase). Return the word, a concise English meaning, a pronunciation guide (English letters, hyphenated by syllable, CAPS on the stressed syllable, e.g. "ba-CI-a"), and the difficulty. Avoid obvious starter words like "hola", "gracias", "sí". Vary the difficulty day to day.',
+    response_json_schema: {
+      type: 'object',
+      properties: {
+        spanish_phrase: { type: 'string' },
+        english_translation: { type: 'string' },
+        pronunciation: { type: 'string' },
+        difficulty: { type: 'string', enum: ['beginner', 'intermediate', 'advanced'] },
+      },
+      required: ['spanish_phrase', 'english_translation', 'pronunciation', 'difficulty'],
+    },
+  });
+
+  return base44.entities.DailyPhrase.create({ phrase_date: today, ...result });
+}
+
 export const SONG_GENRES = ['reggaeton', 'bachata', 'pop latino', 'trap latino', 'merengue', 'salsa', 'rock latino'];
 
 /** Detect the real Latin music genre of a song from its title and artist. */
