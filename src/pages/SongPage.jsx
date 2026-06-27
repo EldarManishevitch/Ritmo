@@ -61,7 +61,6 @@ export default function SongPage() {
   const [flags, setFlags] = useState([]);
   const [section, setSection] = useState('full');
   const [showEnglish, setShowEnglish] = useState(true);
-  const [autoRetryTriggered, setAutoRetryTriggered] = useState(false);
   const playerContainerId = 'yt-player';
 
   const inProgress = song ? ['pending', 'fetching_lyrics', 'translating'].includes(song.sync_status) : false;
@@ -122,18 +121,16 @@ export default function SongPage() {
       })
       .catch((err) => console.error('Failed to load lines:', err));
 
-    // Auto-retry: if status is 'failed' and we haven't retried yet, trigger immediately
-    if (song.sync_status === 'failed' && !autoRetryTriggered) {
-      console.log('Auto-retry: song failed, triggering resync');
-      setAutoRetryTriggered(true);
-      base44.functions.invoke('resyncLyrics', { songId: id }).catch(() => {});
+    // Always retry on failure — keep retrying until the pipeline succeeds, so the error screen never shows
+    if (song.sync_status === 'failed') {
+      console.log('Auto-retry: song failed, triggering pipeline');
+      generateLyrics({ songId: id }).catch(() => {});
       return;
     }
 
     // If no lines loaded yet but song appears ready, trigger pipeline
-    if (lines.length === 0 && ['ready', 'static'].includes(song.sync_status) && !autoRetryTriggered) {
+    if (lines.length === 0 && ['ready', 'static'].includes(song.sync_status)) {
       console.log('Auto-retry: no lines despite ready status');
-      setAutoRetryTriggered(true);
       generateLyrics({ songId: id }).catch(() => {});
       return;
     }
@@ -168,7 +165,7 @@ export default function SongPage() {
       clearInterval(interval);
       unsubscribe();
     };
-  }, [song?.sync_status, id, autoRetryTriggered, lines.length]);
+  }, [song?.sync_status, id, lines.length]);
 
   const { ready, currentTime, seekTo, pause } = useYouTubePlayer(
     song?.youtube_id || '',
