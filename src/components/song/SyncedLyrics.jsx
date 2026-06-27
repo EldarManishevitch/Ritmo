@@ -159,14 +159,12 @@ export default function SyncedLyrics({
 
             {/* Action tray: pronunciation mic (synced only) + grammar insight + score badge */}
             <div className="flex items-center gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
-              {mode === 'synced' && (
-                <PronunciationKaraoke
-                  lineId={lineKey}
-                  targetText={line.spanish_text}
-                  onPausePlayer={onPausePlayer}
-                  onResult={handleKaraokeResult}
-                />
-              )}
+              <PronunciationKaraoke
+                lineId={lineKey}
+                targetText={line.spanish_text}
+                onPausePlayer={onPausePlayer}
+                onResult={handleKaraokeResult}
+              />
               <GrammarInsight line={line} />
               {karaokeResult && (
                 <div className="flex items-center gap-1.5 ml-auto">
