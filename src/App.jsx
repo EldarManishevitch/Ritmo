@@ -8,10 +8,11 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import LanguageRouteGuard from '@/components/LanguageRouteGuard';
 import PageTransition from '@/components/PageTransition';
 import AppShell from '@/components/layout/AppShell';
 import { LanguageProvider } from '@/lib/LanguageContext';
-import LanguageGateway from '@/pages/LanguageGateway';
+import LanguageSelect from '@/pages/LanguageGateway';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -35,8 +36,7 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 
 const AuthenticatedApp = () => {
-  const { isAuthenticated, authError } = useAuth();
-  const hasLanguage = !!localStorage.getItem('selected_learning_language');
+  const { isAuthenticated, authError, authChecked } = useAuth();
 
   if (authError && authError.type === 'user_not_registered') {
     return <UserNotRegisteredError />;
@@ -45,14 +45,14 @@ const AuthenticatedApp = () => {
   return (
     <LanguageProvider>
     <Routes>
-      {/* Gateway — language selector as the root (always public) */}
-      <Route path="/" element={<LanguageGateway />} />
+      {/* Step 1: Public auth gate and auth pages */}
+      <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
 
-      {/* Public blog/SEO pages */}
+      {/* Public blog/SEO pages (auth optional, visible to all) */}
       <Route path="/how-to-learn-spanish-with-music" element={<HowToLearnSpanishWithMusic />} />
       <Route path="/reggaeton-slang-guide" element={<ReggaetonSlangGuide />} />
       <Route path="/dominican-slang-guide" element={<DominicanSlangGuide />} />
@@ -61,18 +61,23 @@ const AuthenticatedApp = () => {
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
 
-      {/* Protected app routes */}
+      {/* Step 2: Language selection (requires auth) */}
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
-        <Route element={hasLanguage ? <AppShell /> : <Navigate to="/" replace />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/conversations" element={<Conversations />} />
-          <Route path="/roleplay" element={<Roleplay />} />
-          <Route path="/review" element={<ReviewRoom />} />
-          <Route path="/vocab" element={<Vocab />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/settings" element={<Settings />} />
+        <Route path="/language-select" element={<LanguageSelect />} />
+
+        {/* Step 3: Main app (requires auth + language selection) */}
+        <Route element={<LanguageRouteGuard />}>
+          <Route element={<AppShell />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/conversations" element={<Conversations />} />
+            <Route path="/roleplay" element={<Roleplay />} />
+            <Route path="/review" element={<ReviewRoom />} />
+            <Route path="/vocab" element={<Vocab />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/settings" element={<Settings />} />
+          </Route>
+          <Route path="/song/:id" element={<PageTransition><SongPage /></PageTransition>} />
         </Route>
-        <Route path="/song/:id" element={hasLanguage ? <PageTransition><SongPage /></PageTransition> : <Navigate to="/" replace />} />
       </Route>
 
       <Route path="*" element={<PageNotFound />} />

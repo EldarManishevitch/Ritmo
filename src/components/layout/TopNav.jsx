@@ -74,7 +74,7 @@ export default function TopNav() {
           <LanguageSwitcher />
 
           <button
-            onClick={() => base44.auth.logout()}
+            onClick={() => { localStorage.removeItem('selected_learning_language'); base44.auth.logout(); }}
             className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
             title="Log out"
           >
