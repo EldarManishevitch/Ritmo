@@ -8,6 +8,7 @@ import SongGridCard from '@/components/song/SongGridCard';
 import PullToRefresh from '@/components/PullToRefresh';
 import LanguageHeader from '@/components/LanguageHeader';
 import MilestoneCelebration from '@/components/achievements/MilestoneCelebration';
+import DeferredSection from '@/components/DeferredSection';
 import { useLanguage } from '@/lib/LanguageContext';
 import { songCefr } from '@/lib/cefr';
 
@@ -77,7 +78,7 @@ export default function Dashboard() {
     <PullToRefresh onRefresh={loadSongs}>
     <div className="max-w-5xl mx-auto px-4 pb-24">
       <LanguageHeader />
-      <MilestoneCelebration />
+      <DeferredSection><MilestoneCelebration /></DeferredSection>
       {/* Header */}
       <div className="mb-6 px-4">
         <h1 className="text-3xl sm:text-4xl font-bold text-foreground pt-4">
@@ -87,14 +88,18 @@ export default function Dashboard() {
       </div>
 
       {/* Word of the Day */}
+      <DeferredSection delay={200}>
       <div className="mb-6 px-4">
         <DailyWordCard />
       </div>
+      </DeferredSection>
 
       {/* Slang of the Day */}
+      <DeferredSection delay={300}>
       <div className="mb-6 px-4">
         <SlangOfTheDay />
       </div>
+      </DeferredSection>
 
       {/* Add a New Song */}
       <div className="mb-8 px-4">

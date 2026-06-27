@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Globe } from 'lucide-react';
 import { useLanguage, LANGUAGES } from '@/lib/LanguageContext';
 
 export default function LanguageSwitcher() {
+  const navigate = useNavigate();
   const { lang, flag } = useLanguage();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -14,6 +16,12 @@ export default function LanguageSwitcher() {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
+
+  const handleSelect = (l) => {
+    localStorage.setItem('selected_learning_language', l.lang);
+    setOpen(false);
+    navigate('/');
+  };
 
   return (
     <div ref={ref} className="relative">
@@ -41,7 +49,7 @@ export default function LanguageSwitcher() {
             return (
               <button
                 key={l.lang}
-                onClick={() => { window.location.href = '/'; }}
+                onClick={() => handleSelect(l)}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
                   active ? 'bg-primary/10 text-primary font-semibold' : 'text-foreground hover:bg-muted'
                 }`}
