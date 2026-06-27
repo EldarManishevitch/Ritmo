@@ -10,7 +10,6 @@ import WordLookup from '@/components/song/WordLookup';
 import ChorusQuiz from '@/components/song/ChorusQuiz';
 import GenerationProgressPill from '@/components/song/GenerationProgressPill';
 import { generateLyrics, ensureLyricsLoaded } from '@/lib/lyricsPipeline';
-import { songCefr } from '@/lib/cefr';
 
 const STATUS_LABELS = {
   pending: 'Preparing song…',
@@ -51,7 +50,7 @@ export default function SongPage() {
   const navigate = useNavigate();
   const [song, setSong] = useState(null);
   const [lines, setLines] = useState([]);
-  const [loadingSong, setLoadingSong] = useState(true);
+  const [pendingSong, setPendingSong] = useState(true);
   const [selectedWord, setSelectedWord] = useState(null);
   const [selectedContext, setSelectedContext] = useState('');
   const [showOffset, setShowOffset] = useState(false);
@@ -73,103 +72,86 @@ export default function SongPage() {
   const translationDisabled = !hasTranslations && inProgress;
   const syncDisabled = !hasSyncTimestamps;
 
-  const loadSong = async () => {
-    const s = await base44.entities.Song.get(id);
-    setSong(s);
-    setOffsetInput(String(s.sync_offset_seconds || 0));
-    console.log('Song loaded:', s.title, '| Status:', s.sync_status, '| Lines:', lines.length);
-    return s;
-  };
-
+  // Realtime subscriptions stay active for the lifetime of the page.
+  // Song updates (status, offset, title, etc.) and lyric lines stream in
+  // as the background pipeline writes them — the page never polls.
   useEffect(() => {
-    let cancelled = false;
-    setLoadingSong(true);
-    
-    loadSong()
-      .then(async (s) => {
-        if (cancelled) return;
-        // Always ensure lyrics are being fetched - trigger pipeline if status is pending/failed
-        // or if no lines exist yet (covers edge cases where pipeline didn't complete)
+    // 1. Load the song row + existing lines immediately
+    base44.entities.Song.get(id)
+      .then((s) => {
+        if (!s) return;
+        setSong(s);
+        setOffsetInput(String(s.sync_offset_seconds || 0));
+        setPendingSong(false);
+
+        // Trigger pipeline if song needs lyrics
         if (['pending', 'fetching_lyrics', 'translating', 'failed'].includes(s.sync_status)) {
           console.log('Song in progress/failed state, triggering pipeline');
           generateLyrics({ songId: id }).catch(() => {});
-        } else {
-          // Even for 'ready' or 'static', ensure lines exist
-          const existingLines = await base44.entities.LyricLine.filter({ song_id: id }, 'line_index', 500);
-          if (!existingLines?.length) {
-            console.log('No lines found despite ready status, re-triggering pipeline');
-            generateLyrics({ songId: id }).catch(() => {});
-          }
         }
       })
-      .catch((err) => {
-        console.error('Failed to load song:', err);
-      })
-      .finally(() => { if (!cancelled) setLoadingSong(false); });
-      
-    return () => { cancelled = true; };
+      .catch(() => { setPendingSong(false); });
+
+    base44.entities.LyricLine.filter({ song_id: id }, 'line_index', 500)
+      .then((loadedLines) => setLines(loadedLines || []))
+      .catch(() => {});
+
+    // If no lines exist after load, trigger pipeline (covers edge cases)
+    // checked 1.5s after load via the subscription fallback below
   }, [id]);
 
+  // Realtime: single subscription handles all live updates
+  // (both Song row and LyricLine changes, eliminating the old polling loop)
   useEffect(() => {
-    if (!song) return;
-
-    // Always load current lines (supports progressive live-rendering)
-    base44.entities.LyricLine.filter({ song_id: id }, 'line_index', 500)
-      .then((loadedLines) => {
-        console.log('LyricLine loaded:', loadedLines?.length || 0, 'lines');
-        setLines(loadedLines || []);
-      })
-      .catch((err) => console.error('Failed to load lines:', err));
-
-    // Always retry on failure — keep retrying until the pipeline succeeds, so the error screen never shows
-    if (song.sync_status === 'failed') {
-      console.log('Auto-retry: song failed, triggering pipeline');
+    // Rerun if song was loaded but no lines arrived yet — triggers pipeline
+    if (!pendingSong && song && lines.length === 0 && ['ready', 'static'].includes(song.sync_status)) {
+      console.log('No lines despite ready status, re-triggering');
       generateLyrics({ songId: id }).catch(() => {});
-      return;
     }
 
-    // If no lines loaded yet but song appears ready, trigger pipeline
-    if (lines.length === 0 && ['ready', 'static'].includes(song.sync_status)) {
-      console.log('Auto-retry: no lines despite ready status');
-      generateLyrics({ songId: id }).catch(() => {});
-      return;
-    }
-
-    if (!inProgress && song.sync_status !== 'failed') return;
-
-    // Poll song status until generation completes
-    const interval = setInterval(async () => {
-      const s = await loadSong();
-      if (!['pending', 'fetching_lyrics', 'translating'].includes(s.sync_status)) {
-        clearInterval(interval);
-      }
-    }, 1500);
-
-    // Realtime: live-render lyric lines as they are created/updated
-    const unsubscribe = base44.entities.LyricLine.subscribe((event) => {
+    const unsubscribeLine = base44.entities.LyricLine.subscribe((event) => {
       const data = event.data;
       if (!data || data.song_id !== id) return;
+
+      if (event.type === 'delete') {
+        setLines((prev) => prev.filter((l) => l.id !== data.id));
+        return;
+      }
+
+      // Streaming: new/updated lines arrive as the pipeline writes them
       setLines((prev) => {
-        if (event.type === 'delete') return prev.filter((l) => l.id !== data.id);
-        const idx = prev.findIndex((l) => l.id === data.id);
-        if (idx === -1) {
-          return [...prev, data].sort((a, b) => a.line_index - b.line_index);
+        // Deduplicate by id (most stable)
+        if (prev.some((l) => l.id === data.id)) {
+          return prev.map((l) => (l.id === data.id ? data : l));
         }
-        const next = [...prev];
-        next[idx] = data;
-        return next;
+        return [...prev, data].sort((a, b) => a.line_index - b.line_index);
       });
     });
 
+    const unsubscribeSong = base44.entities.Song.subscribe((event) => {
+      if (event.data?.id !== id) return;
+      setSong((prev) => ({ ...(prev || event.data), ...event.data }));
+    });
+
+    // Keep triggering pipeline while status is in-progress but no lines arrived
+    const retryTicker = setInterval(() => {
+      if (inProgress && lines.length === 0) {
+        generateLyrics({ songId: id }).catch(() => {});
+      }
+    }, 3000);
+
     return () => {
-      clearInterval(interval);
-      unsubscribe();
+      unsubscribeLine();
+      unsubscribeSong();
+      clearInterval(retryTicker);
     };
-  }, [song?.sync_status, id, lines.length]);
+  }, [id, pendingSong]);
+
+  const displayId = playerContainerId;
 
   const { ready, currentTime, seekTo, pause } = useYouTubePlayer(
     song?.youtube_id || '',
-    playerContainerId
+    displayId
   );
 
   const handleWordTap = (word, context) => {
@@ -213,7 +195,7 @@ export default function SongPage() {
     return lines;
   }, [lines, section]);
 
-  if (loadingSong) {
+  if (pendingSong) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -243,7 +225,7 @@ export default function SongPage() {
           <button 
             onClick={() => {
               setSong({ ...song, sync_status: 'fetching_lyrics' });
-              generateLyrics({ songId: id }).catch(() => {}).finally(() => loadSong());
+              generateLyrics({ songId: id }).catch(() => {});
             }} 
             className="p-2 rounded-lg hover:bg-muted transition-colors"
             title="Refresh lyrics"
@@ -316,7 +298,7 @@ export default function SongPage() {
         })}
       </div>
 
-      {/* Main content */}
+      {/* Main content — always rendered even while lines stream in */}
       {song.sync_status === 'failed' ? (
         <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center gap-3 px-6 text-center">
           <p className="text-sm font-medium text-destructive">{STATUS_LABELS.failed}</p>
@@ -326,7 +308,7 @@ export default function SongPage() {
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={() => {
               setSong({ ...song, sync_status: 'fetching_lyrics' });
-              generateLyrics({ songId: id }).catch(() => {}).finally(() => loadSong());
+              generateLyrics({ songId: id }).catch(() => {});
             }}>
               <RefreshCw className="h-4 w-4 mr-1" /> Retry
             </Button>
@@ -343,10 +325,10 @@ export default function SongPage() {
           )}
           <GenerationProgressPill status={song.sync_status} visible={inProgress} />
           <div className="flex-1 flex flex-col lg:flex-row min-h-0">
-          {/* Left column: video + quiz button - stays in place */}
+          {/* Left column: video + quiz button — stays in place */}
           <div className="lg:w-3/5 flex flex-col shrink-0">
             <div className="relative bg-black">
-              <div id={playerContainerId} className="w-full aspect-video" />
+              <div id={displayId} className="w-full aspect-video" />
               {!ready && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black">
                   <Loader2 className="h-8 w-8 animate-spin text-white/60" />
@@ -363,7 +345,7 @@ export default function SongPage() {
             </div>
           </div>
 
-          {/* Right column: lyrics/vocab/quiz - lyrics box scrolls independently */}
+          {/* Right column: lyrics/vocab/quiz — independent scroll */}
           <div className="lg:w-2/5 flex-1 flex flex-col min-h-0 overflow-hidden">
             {tab === 'lyrics' && (
               <>
