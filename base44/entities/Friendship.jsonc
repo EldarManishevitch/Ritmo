@@ -1,0 +1,57 @@
+{
+  "name": "Friendship",
+  "type": "object",
+  "properties": {
+    "friend_user_id": {
+      "type": "string",
+      "description": "User id of the friend (null until the invitee joins)"
+    },
+    "friend_email": {
+      "type": "string",
+      "description": "Email used to invite the friend"
+    },
+    "friend_name": {
+      "type": "string",
+      "description": "Display name of the friend"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted"
+      ],
+      "default": "pending"
+    }
+  },
+  "required": [
+    "friend_email",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

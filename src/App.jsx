@@ -23,6 +23,7 @@ import Roleplay from './pages/Roleplay';
 import ReviewRoom from './pages/ReviewRoom';
 import Settings from './pages/Settings';
 import Vocab from './pages/Vocab';
+import Leaderboard from './pages/Leaderboard';
 import HowToLearnSpanishWithMusic from './pages/HowToLearnSpanishWithMusic';
 import ReggaetonSlangGuide from './pages/ReggaetonSlangGuide';
 import DominicanSlangGuide from './pages/DominicanSlangGuide';
@@ -81,6 +82,7 @@ const AuthenticatedApp = () => {
           <Route path="/roleplay" element={<Roleplay />} />
           <Route path="/review" element={<ReviewRoom />} />
           <Route path="/vocab" element={<Vocab />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
         <Route path="/song/:id" element={<PageTransition><SongPage /></PageTransition>} />

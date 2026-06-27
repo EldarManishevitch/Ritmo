@@ -20,6 +20,19 @@
     "last_activity_date": {
       "type": "string",
       "description": "YYYY-MM-DD of the last completed quiz"
+    },
+    "songs_completed": {
+      "type": "number",
+      "default": 0,
+      "description": "Total quizzes/songs fully completed"
+    },
+    "achievements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Ids of unlocked achievements"
     }
   },
   "required": [],

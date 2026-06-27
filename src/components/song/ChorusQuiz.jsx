@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Trophy, Check, X, RotateCcw, Loader2 } from 'lucide-react';
 import { awardQuizCompletion } from '@/lib/progress';
+import { ACHIEVEMENTS } from '@/lib/achievements';
+import { useToast } from '@/components/ui/use-toast';
 
 const cleanWord = (w) => w.toLowerCase().replace(/[¿¡!?.,;:"'()]/g, '').trim();
 const shuffle = (a) => [...a].sort(() => Math.random() - 0.5);
@@ -14,6 +16,7 @@ export default function ChorusQuiz({ songId, lines, songTitle, songArtist }) {
   const [answer, setAnswer] = useState(null);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
+  const { toast } = useToast();
 
   const questions = useMemo(() => {
     void seed;
@@ -104,8 +107,16 @@ export default function ChorusQuiz({ songId, lines, songTitle, songArtist }) {
   const next = async () => {
     if (idx + 1 >= questions.length) {
       setDone(true);
-      // Award XP + streak ONLY after the full quiz is completed
-      awardQuizCompletion(score).catch(() => {});
+      // Award XP + streak + count the song + unlock achievements after the full quiz
+      try {
+        const result = await awardQuizCompletion(score, questions.length);
+        if (result?.newAchievements?.length) {
+          result.newAchievements.forEach((id) => {
+            const a = ACHIEVEMENTS.find((x) => x.id === id);
+            if (a) toast({ title: `${a.icon} ${a.label} unlocked!`, description: a.desc });
+          });
+        }
+      } catch { /* noop */ }
     } else {
       setIdx(idx + 1);
       setAnswer(null);
