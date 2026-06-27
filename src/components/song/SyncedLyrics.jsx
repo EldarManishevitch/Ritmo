@@ -120,7 +120,7 @@ export default function SyncedLyrics({
   }
 
   return (
-    <div ref={containerRef} className="h-full overflow-y-auto px-4 py-[20vh] space-y-3 no-scrollbar">
+    <div ref={containerRef} className="h-full overflow-y-auto px-4 py-6 space-y-3 no-scrollbar">
       {/* Static fallback message */}
       {syncStatus === 'static' && (
         <div className="flex justify-center mb-2">
