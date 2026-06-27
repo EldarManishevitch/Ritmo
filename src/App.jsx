@@ -35,30 +35,14 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { authError } = useAuth();
 
-  // Show loading spinner while checking app public settings or auth
-  if (isLoadingPublicSettings || isLoadingAuth) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  // Handle authentication errors
-  if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
-      navigateToLogin();
-      return null;
-    }
-  }
-
-  // Render the main app
   const hasLanguage = !!localStorage.getItem('selected_learning_language');
+
+  // Report user-not-registered — blocks the entire app (requires re-invite)
+  if (authError && authError.type === 'user_not_registered') {
+    return <UserNotRegisteredError />;
+  }
 
   return (
     <LanguageProvider>
