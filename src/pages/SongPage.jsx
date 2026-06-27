@@ -64,10 +64,12 @@ export default function SongPage() {
   const [flags, setFlags] = useState([]);
   const [section, setSection] = useState('full');
   const [displayMode, setDisplayMode] = useState('both');
+  const [autoSyncAttempted, setAutoSyncAttempted] = useState(false);
   const playerContainerId = 'yt-player';
 
   const inProgress = song ? ['pending', 'fetching_lyrics', 'translating'].includes(song.sync_status) : false;
   const mode = song?.sync_status === 'static' || song?.sync_status === 'ready_unsynced' ? 'static' : 'synced';
+  const isUnsynced = song && (song.sync_status === 'ready_unsynced' || song.sync_status === 'static');
 
   // Compute progressive UI states based on available data
   const hasOriginalLyrics = lines.length > 0 && lines.some((l) => l.spanish_text);
@@ -87,6 +89,7 @@ export default function SongPage() {
         setSong(s);
         setOffsetInput(String(s.sync_offset_seconds || 0));
         setPendingSong(false);
+        setAutoSyncAttempted(false);
 
         // Never auto-re-trigger the pipeline here — it runs end-to-end in one execution.
         // The Realtime subscription handles progressive UI updates as lines appear.
@@ -100,6 +103,19 @@ export default function SongPage() {
     // If no lines exist after load, trigger pipeline (covers edge cases)
     // checked 1.5s after load via the subscription fallback below
   }, [id]);
+
+  // Auto-resync on mount: for unsynced songs, try once with a 1.2s grace window
+  // so the status toggle has time to settle before re-syncing
+  useEffect(() => {
+    if (!pendingSong && isUnsynced && !autoSyncAttempted) {
+      const timer = setTimeout(() => {
+        setAutoSyncAttempted(true);
+        console.log('Auto-resync on mount for unsynced song');
+        generateLyrics({ songId: id }).catch(() => {});
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [id, pendingSong, isUnsynced, autoSyncAttempted]);
 
   // Realtime: single subscription handles all live updates
   // (both Song row and LyricLine changes, eliminating the old polling loop)
@@ -404,6 +420,7 @@ export default function SongPage() {
                     onWordTap={handleWordTap}
                     onLineSeek={(t) => seekTo(t)}
                     onPausePlayer={pause}
+                    onResync={() => generateLyrics({ songId: id })}
                   />
                 </div>
               </>

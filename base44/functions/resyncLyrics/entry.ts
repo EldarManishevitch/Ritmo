@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
     const { songId } = await req.json();
     if (!songId) return Response.json({ error: 'songId required' }, { status: 400 });
 
-    await base44.entities.Song.update(songId, { sync_status: 'fetching_lyrics' });
+    // Reuse the same providers + word-cap sync, preserving existing translations
     await base44.functions.invoke('resilientLyricsPipeline', { songId });
 
     return Response.json({ success: true, message: 'Resync triggered' });

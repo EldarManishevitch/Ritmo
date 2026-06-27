@@ -13,6 +13,7 @@ export default function SyncedLyrics({
   onWordTap,
   onLineSeek,
   onPausePlayer,
+  onResync,
   syncDisabled = false,
 }) {
   const containerRef = useRef(null);
@@ -110,6 +111,25 @@ export default function SyncedLyrics({
 
   return (
     <div ref={containerRef} className="h-full overflow-y-auto px-4 py-6 space-y-3 no-scrollbar">
+      {/* Static mode banner + manual resync */}
+      {mode === 'static' && lines.length > 0 && !hasSyncTimestamps && (
+        <div className="mb-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 flex items-start justify-between gap-2">
+          <div className="text-xs">
+            <p className="font-semibold text-amber-700">📄 Static lyrics</p>
+            <p className="text-amber-600/80 mt-0.5">No timestamps available — scroll manually. Clean audio timestamps couldn't be found.</p>
+          </div>
+          {onResync && (
+            <button
+              type="button"
+              onClick={() => onResync()}
+              className="flex-shrink-0 text-xs font-semibold text-amber-700 underline hover:no-underline mt-1"
+            >
+              Re-sync this song
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Sync banner */}
       {!hasSyncTimestamps && lines.length > 0 && (
         <div className="mb-3 rounded-lg bg-orange-50 border border-orange-200 px-3 py-2 flex items-start gap-2">
