@@ -216,10 +216,7 @@ export default function SongPage() {
         </button>
         <div className="flex items-center gap-2">
           <button 
-            onClick={() => {
-              setSong({ ...song, sync_status: 'fetching_lyrics' });
-              generateLyrics({ songId: id }).catch(() => {});
-            }} 
+            onClick={() => generateLyrics({ songId: id }).catch(() => {})} 
             className="p-2 rounded-lg hover:bg-muted transition-colors"
             title="Refresh lyrics"
           >
@@ -300,7 +297,6 @@ export default function SongPage() {
           </p>
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={() => {
-              setSong({ ...song, sync_status: 'fetching_lyrics' });
               generateLyrics({ songId: id }).catch(() => {});
             }}>
               <RefreshCw className="h-4 w-4 mr-1" /> Retry

@@ -108,11 +108,8 @@ Deno.serve(async (req) => {
     const song = await base44.entities.Song.get(songId);
     if (!song) return Response.json({ error: 'Song not found' }, { status: 404 });
 
-    // Delete any existing stale lines so the fresh race results arrive cleanly
-    await base44.entities.LyricLine.deleteMany({ song_id: songId });
-
     console.log('Stage 1 race:', song.title, 'by', song.artist);
-    await base44.entities.Song.update(songId, { sync_status: 'pending' });
+    await base44.entities.Song.update(songId, { sync_status: 'fetching_lyrics' });
 
     const rawLines = await raceForLyrics(base44, song.title, song.artist);
 
@@ -132,7 +129,9 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, stage: 1, line_count: 1, fallback: true });
     }
 
-    // Save Stage 1 lines instantly (English/pronunciation empty)
+    // Delete old lines first so subscribers get a clean signal,
+    // then instantly write the Stage 1 Spanish lines (no status reset to pending)
+    await base44.entities.LyricLine.deleteMany({ song_id: songId });
     await base44.entities.LyricLine.bulkCreate(rawLines.map((t, i) => ({
       song_id: songId,
       line_index: i,
