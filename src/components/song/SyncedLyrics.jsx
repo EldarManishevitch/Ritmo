@@ -17,27 +17,13 @@ export default function SyncedLyrics({
 }) {
   const containerRef = useRef(null);
   const [karaokeResults, setKaraokeResults] = useState({});
-  const [syncStatus, setSyncStatus] = useState('checking');
   
-  // Calculate data availability from lines — 0 is a valid placeholder timestamp
-  // (the template stores lyrics as static with 0 timestamps for instant display)
-  const hasSyncTimestamps = lines.some((l) => (l.start_seconds || 0) >= 0);
+  // Derived UI state directly from props — the backend (pipeline) marks ready when lyrics are
+  // fully translated and saved with zero-placeholder timestamps. Sync mode (seek/highlight) only
+  // activates when real >0 timestamps exist. This matches the template's static-first approach.
+  const hasSyncTimestamps = lines.some((l) => (l.start_seconds || 0) > 0);
   const hasTranslations = lines.some((l) => l.english_translation);
-
-  // Background sync checker: resolve once lyrics are present and timestamps can be verified
-  useEffect(() => {
-    if (!lines.length) return;
-    const timer = setTimeout(() => {
-      if (hasSyncTimestamps) {
-        setSyncStatus('synced');
-      } else if (mode === 'static') {
-        setSyncStatus('static');
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [lines, mode, hasSyncTimestamps]);
-
-  const isSynced = syncStatus === 'synced';
+  const isSynced = lines.length > 0 && mode !== 'static' && hasSyncTimestamps;
   const adjustedTime = currentTime + offset;
 
   let activeIndex = -1;
