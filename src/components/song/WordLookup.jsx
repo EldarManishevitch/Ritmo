@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Volume2, BookmarkPlus, BookmarkCheck, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { translateWord } from '@/lib/aiHelpers';
+import { translateWord, getCachedWordTranslation } from '@/lib/aiHelpers';
 
 export default function WordLookup({ word, context, songId }) {
   const [info, setInfo] = useState(null);
@@ -12,6 +12,9 @@ export default function WordLookup({ word, context, songId }) {
 
   useEffect(() => {
     if (!word) { setInfo(null); setSaved(false); return; }
+    // Instant render from the word-translation cache (no API call, no spinner)
+    const cached = getCachedWordTranslation(word);
+    if (cached) { setInfo(cached); setSaved(false); setLoading(false); return; }
     let cancelled = false;
     setInfo(null);
     setSaved(false);

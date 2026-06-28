@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Loader2, Check } from 'lucide-react';
 
 const STATUS_TEXT = {
@@ -7,43 +7,48 @@ const STATUS_TEXT = {
   translating: 'Translating lines…',
 };
 
-// Target progress per status (kept below 100 while still working)
-const STATUS_TARGET = {
-  pending: 15,
-  fetching_lyrics: 50,
-  translating: 85,
-  ready: 100,
-  static: 100,
-};
-
-export default function GenerationProgressPill({ status, visible }) {
-  const target = STATUS_TARGET[status] ?? 10;
+export default function GenerationProgressPill({
+  status,
+  visible,
+  songReady = false,
+  lineCount = 0,
+  translatedCount = 0,
+  estimatedTotal = 40,
+}) {
   const [progress, setProgress] = useState(0);
   const [show, setShow] = useState(false);
 
-  // Show as soon as generation is in progress
-  useEffect(() => {
-    if (visible) setShow(true);
-  }, [visible]);
+  // Compute the target progress from streaming signals
+  const target = useMemo(() => {
+    if (!visible) return 100;
+    let t = 15; // jump to 15% instantly on load
+    if (songReady) t = 35; // song record exists in DB
+    const lineFrac = estimatedTotal > 0 ? Math.min(1, lineCount / estimatedTotal) : 0;
+    t = Math.max(t, 35 + lineFrac * 45); // 35% → 80% as lines stream in
+    if (lineCount > 0 && translatedCount >= lineCount) t = Math.max(t, 95); // all translated
+    return Math.min(95, t);
+  }, [visible, songReady, lineCount, translatedCount, estimatedTotal]);
 
-  // Ease the bar toward its target; once done, rush to 100%
+  useEffect(() => { if (visible) setShow(true); }, [visible]);
+
+  // Ease toward the target
   useEffect(() => {
     if (!show) return;
     const interval = setInterval(() => {
       setProgress((p) => {
-        const t = visible ? target : 100;
-        if (p >= t) return p;
-        const remaining = t - p;
-        return p + Math.max(remaining * 0.18, 0.8);
+        const goal = visible ? target : 100;
+        if (p >= goal) return p;
+        const remaining = goal - p;
+        return p + Math.max(remaining * 0.2, 1);
       });
     }, 100);
     return () => clearInterval(interval);
   }, [show, visible, target]);
 
-  // After reaching 100% on completion, fade out
+  // After completion, hold 100% then fade out after a 1.5s quiet period
   useEffect(() => {
     if (!visible && progress >= 100) {
-      const t = setTimeout(() => setShow(false), 600);
+      const t = setTimeout(() => setShow(false), 1500);
       return () => clearTimeout(t);
     }
   }, [visible, progress]);
@@ -71,8 +76,8 @@ export default function GenerationProgressPill({ status, visible }) {
         </div>
         <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
           <div
-            className="h-full rounded-full bg-primary transition-all duration-200 ease-out"
-            style={{ width: `${pct}%` }}
+            className="h-full rounded-full bg-primary"
+            style={{ width: `${pct}%`, transition: 'width 600ms ease-out' }}
           />
         </div>
       </div>

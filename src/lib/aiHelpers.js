@@ -1,8 +1,19 @@
 import { base44 } from '@/api/base44Client';
 
-/** Tap-to-define a single word from a lyric line. */
+// Module-level word-translation cache: Map<lowercase-word, result>
+const wordCache = new Map();
+
+/** Return a cached translation instantly, or null. */
+export function getCachedWordTranslation(word) {
+  return wordCache.get((word || '').toLowerCase()) || null;
+}
+
+/** Tap-to-define a single word from a lyric line. Results are cached per word. */
 export async function translateWord({ word, context }) {
-  return base44.integrations.Core.InvokeLLM({
+  const key = (word || '').toLowerCase();
+  if (wordCache.has(key)) return wordCache.get(key);
+  const result = await base44.integrations.Core.InvokeLLM({
+    model: 'gemini_3_flash',
     prompt: `A Spanish learner tapped the word "${word}" in this lyric line:\n"${context || ''}"\n\nReturn: a literal word-for-word translation, the natural English meaning, a pronunciation guide (English letters, hyphenated by syllable, CAPS on the stressed syllable, e.g. "ba-CI-a"), the part of speech, the equivalent English slang (what English speakers would actually say), an example Spanish sentence using the word, its English translation, and whether it is slang in Spanish.`,
     response_json_schema: {
       type: 'object',
@@ -19,6 +30,48 @@ export async function translateWord({ word, context }) {
       required: ['english_meaning', 'pronunciation'],
     },
   });
+  wordCache.set(key, result);
+  return result;
+}
+
+/** Pre-warm the word cache by translating many words in one batched call. Fire-and-forget. */
+export async function prewarmWordTranslations(words) {
+  const missing = [...new Set((words || []).map((w) => (w || '').toLowerCase()).filter(Boolean))]
+    .filter((w) => !wordCache.has(w));
+  if (!missing.length) return;
+  try {
+    const result = await base44.integrations.Core.InvokeLLM({
+      model: 'gemini_3_flash',
+      prompt: `Translate each of these Spanish words for a learner. Return an array "items"; each item has the "word" and: literal (word-for-word), english_meaning (natural), english_slang (what English speakers say), pronunciation (English letters, hyphenated by syllable, CAPS on the stressed syllable), part_of_speech, example_spanish, example_english, is_slang (boolean).\nWords:\n${missing.map((w, i) => `${i}. ${w}`).join('\n')}`,
+      response_json_schema: {
+        type: 'object',
+        properties: {
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                word: { type: 'string' },
+                literal: { type: 'string' },
+                english_meaning: { type: 'string' },
+                english_slang: { type: 'string' },
+                pronunciation: { type: 'string' },
+                part_of_speech: { type: 'string' },
+                example_spanish: { type: 'string' },
+                example_english: { type: 'string' },
+                is_slang: { type: 'boolean' },
+              },
+              required: ['word', 'english_meaning', 'pronunciation'],
+            },
+          },
+        },
+        required: ['items'],
+      },
+    });
+    (result?.items || []).forEach((it) => {
+      if (it && it.word) wordCache.set(it.word.toLowerCase(), it);
+    });
+  } catch { /* fire-and-forget */ }
 }
 
 /** Search YouTube for a song query. Returns an array of up to 5 video results. */
@@ -34,6 +87,7 @@ export async function generateDailyPhrase() {
   if (existing.length) return existing[0];
 
   const result = await base44.integrations.Core.InvokeLLM({
+    model: 'claude_sonnet_4_6',
     prompt: 'Generate one useful everyday Spanish phrase for a learner. Include the Spanish phrase, a natural English translation, and a pronunciation guide (English letters, hyphenated by syllable, CAPS on the stressed syllable). Vary the difficulty.',
     response_json_schema: {
       type: 'object',
@@ -57,6 +111,7 @@ export async function generateDailyWord() {
   if (existing.length) return existing[0];
 
   const result = await base44.integrations.Core.InvokeLLM({
+    model: 'claude_sonnet_4_6',
     prompt: 'Generate one useful everyday Spanish vocabulary word for a learner (a single word, not a phrase). Return the word, a concise English meaning, a pronunciation guide (English letters, hyphenated by syllable, CAPS on the stressed syllable, e.g. "ba-CI-a"), and the difficulty. Avoid obvious starter words like "hola", "gracias", "sí". Vary the difficulty day to day.',
     response_json_schema: {
       type: 'object',
@@ -112,6 +167,7 @@ export async function isSpanishSong({ title, artist }) {
 /** Generate a full 5-turn roleplay scene in a real Latin setting, tuned to the user's CEFR level. */
 export async function generateRoleplayScene({ level }) {
   return base44.integrations.Core.InvokeLLM({
+    model: 'claude_sonnet_4_6',
     prompt: `Generate a 5-turn Spanish roleplay scene for a learner. CEFR level: ${level || 'A1'}. Location: pick a real Latin city and venue (e.g. a Havana mojito bar, a Cartagena beach, a Medellín reggaeton club, a colmado in Santo Domingo). The learner steps through the scene turn by turn: each step is one line the character says to them, followed by a suggested reply the learner can give. Keep language natural and at the right level. Return: scenario_title, character_name, location, and dialogue_steps (exactly 5 items) each with spanish_text (the character's line), pronunciation (English-letter phonetics hyphenated by syllable, CAPS on the stressed syllable), english_translation, and suggested_reply (a natural Spanish reply the learner could say).`,
     response_json_schema: {
       type: 'object',

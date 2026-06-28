@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { songCefr } from '@/lib/cefr';
+import { prefetchSong } from '@/lib/songCache';
 
 const FALLBACK_ART = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=70';
 
@@ -11,7 +12,7 @@ export default function SongGridCard({ song, levelUp = false }) {
   const cefr = songCefr(song.difficulty);
 
   return (
-    <Link to={`/song/${song.id}`} className="block group">
+    <Link to={`/song/${song.id}`} className="block group" onMouseEnter={() => prefetchSong(song.id)} onFocus={() => prefetchSong(song.id)}>
       <div className="rounded-xl bg-card border border-border overflow-hidden shadow-sm transition-shadow hover:shadow-md">
         <div className="relative aspect-video overflow-hidden">
           <img

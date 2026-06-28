@@ -49,19 +49,17 @@ const LINE_SCHEMA_LITE = {
 };
 
 async function translateBlock(base44, model, rawLines) {
-  const schema = model === 'gemini_3_flash' ? LINE_SCHEMA : LINE_SCHEMA_LITE;
   const textList = rawLines.map((t, i) => `${i}. "${t}"`).join('\n');
+  const prompt = `You are a Spanish-to-English lyric translator. Translate each line below accurately and naturally. The input number is the line index — do NOT include it in your output.
 
-  const prompt = `You are a Spanish-to-English lyric translator. Translate each line below accurately and naturally. For reference: the input number is the line index but do NOT include it in your output — only return the translated lines.
-
-${model === 'gemini_3_flash' ? `For each line, provide:
+For each line, provide:
 - english_translation: a natural, accurate English translation (preserve the tone/feeling)
 - pronunciation: phonetic guide in English letters, hyphenated by syllable, CAPS on the stressed syllable (e.g. "ba-CI-a" or "ko-MO es-TAS")
-- is_chorus: true if this is a repeated hook line` : `For each line, provide:
-- english_translation: a natural, accurate English translation`}
-${model === 'gemini_3_flash' ? `Full schema return:\n${textList}` : `Return translations.\n${textList}`}`;
+- is_chorus: true if this is a repeated hook line
 
-  const result = await base44.integrations.Core.InvokeLLM({ prompt, response_json_schema: schema, model });
+Full schema return:
+${textList}`;
+  const result = await base44.integrations.Core.InvokeLLM({ prompt, response_json_schema: LINE_SCHEMA, model });
   return result?.lines || [];
 }
 
@@ -92,10 +90,11 @@ Deno.serve(async (req) => {
     console.log(`Stage 2 translating ${spanishLines.length} lines`);
 
     // Race 3 AI models in parallel — gemini_3_flash does full pronunciation/chorus
+    // Race the highest-quality model (claude_opus_4_6) against a fast fallback
+    // (gemini_3_flash). First to finish wins — quality when opus is quick, speed otherwise.
     const results = await Promise.any([
+      translateBlock(base44, 'claude_opus_4_6', spanishLines),
       translateBlock(base44, 'gemini_3_flash', spanishLines),
-      translateBlock(base44, 'gemini_3_flash', spanishLines),
-      translateBlock(base44, 'gpt_5_mini', spanishLines),
     ]);
 
     const translationMap = Array.isArray(results) ? results : [];

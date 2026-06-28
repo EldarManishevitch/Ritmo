@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, RefreshCw, SlidersHorizontal, X, Music, BookOpen, Trophy, Volume2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -11,6 +11,8 @@ import ChorusQuiz from '@/components/song/ChorusQuiz';
 import GenerationProgressPill from '@/components/song/GenerationProgressPill';
 import { generateLyrics, ensureLyricsLoaded } from '@/lib/lyricsPipeline';
 import { recordSongView } from '@/lib/searchHistory';
+import { getCachedSong } from '@/lib/songCache';
+import { prewarmWordTranslations } from '@/lib/aiHelpers';
 
 const STATUS_LABELS = {
   pending: 'Preparing song…',
@@ -43,19 +45,16 @@ const STATUS_ICONS = {
   failed: '❌',
 };
 
-const SECTIONS = [
-  { id: 'full', label: 'Full Song' },
-  { id: 'verse1', label: 'Verse 1' },
-  { id: 'verse2', label: 'Verse 2' },
-  { id: 'chorus', label: 'The Chorus' },
-];
+// Section tabs are computed dynamically from streamed lines (see `sections` memo).
 
 export default function SongPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [song, setSong] = useState(null);
-  const [lines, setLines] = useState([]);
-  const [pendingSong, setPendingSong] = useState(true);
+  // Instant render from the hover-prefetch cache (if available) — skips the loading spinner
+  const cachedSongData = getCachedSong(id);
+  const [song, setSong] = useState(cachedSongData?.song || null);
+  const [lines, setLines] = useState(cachedSongData?.lines || []);
+  const [pendingSong, setPendingSong] = useState(!cachedSongData?.song);
   const [selectedWord, setSelectedWord] = useState(null);
   const [selectedContext, setSelectedContext] = useState('');
   const [showOffset, setShowOffset] = useState(false);
@@ -118,6 +117,22 @@ export default function SongPage() {
       return () => clearTimeout(timer);
     }
   }, [id, pendingSong, isUnsynced, autoSyncAttempted]);
+
+  // Pre-warm the word-translation cache once enough lines have streamed in (fire-and-forget)
+  const prewarmedRef = useRef(false);
+  useEffect(() => {
+    if (prewarmedRef.current || lines.length < 8) return;
+    prewarmedRef.current = true;
+    const freq = {};
+    lines.forEach((l) => {
+      (l.spanish_text || '').split(/\s+/).forEach((w) => {
+        const clean = w.replace(/[^a-záéíóúüñ]/gi, '').toLowerCase();
+        if (clean.length > 3) freq[clean] = (freq[clean] || 0) + 1;
+      });
+    });
+    const top = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([w]) => w);
+    if (top.length) prewarmWordTranslations(top).catch(() => {});
+  }, [lines]);
 
   // Realtime: single subscription handles all live updates
   // (both Song row and LyricLine changes, eliminating the old polling loop)
@@ -196,6 +211,19 @@ export default function SongPage() {
     u.rate = 0.85;
     speechSynthesis.speak(u);
   };
+
+  // Section tabs appear progressively as lines stream in (Full → Chorus → Verses)
+  const sections = useMemo(() => {
+    const secs = [{ id: 'full', label: 'Full Song' }];
+    const hasChorus = lines.some((l) => l.is_chorus);
+    const nonChorus = lines.filter((l) => !l.is_chorus);
+    if (hasChorus) secs.push({ id: 'chorus', label: 'The Chorus' });
+    if (nonChorus.length > 4) {
+      secs.push({ id: 'verse1', label: 'Verse 1' });
+      secs.push({ id: 'verse2', label: 'Verse 2' });
+    }
+    return secs;
+  }, [lines]);
 
   const filteredLines = useMemo(() => {
     if (section === 'full') return lines;
@@ -330,7 +358,14 @@ export default function SongPage() {
               <span>{STATUS_LABELS[song.sync_status]}</span>
             </div>
           )}
-          <GenerationProgressPill status={song.sync_status} visible={inProgress} />
+          <GenerationProgressPill
+            status={song.sync_status}
+            visible={inProgress}
+            songReady={!!song}
+            lineCount={lines.length}
+            translatedCount={lines.filter((l) => l.english_translation).length}
+            estimatedTotal={40}
+          />
           <div className="flex-1 flex flex-col lg:flex-row min-h-0">
           {/* Left column: video + quiz button — stays in place */}
           <div className="lg:w-3/5 flex flex-col shrink-0">
@@ -358,7 +393,7 @@ export default function SongPage() {
               <>
                 {/* Section filter pills */}
                 <div className="px-4 py-3 flex gap-2 overflow-x-auto no-scrollbar border-b border-border">
-                  {SECTIONS.map((s) => (
+                  {sections.map((s) => (
                     <button
                       key={s.id}
                       onClick={() => setSection(s.id)}
@@ -375,7 +410,7 @@ export default function SongPage() {
                 {/* Lyrics header with language toggle */}
                 <div className="px-4 py-2 flex items-center justify-between border-b border-border">
                   <span className="text-sm font-semibold text-foreground">
-                    {SECTIONS.find((s) => s.id === section)?.label}
+                    {sections.find((s) => s.id === section)?.label || 'Full Song'}
                   </span>
                   <div className="flex rounded-full bg-muted p-0.5">
                     {[
@@ -419,6 +454,7 @@ export default function SongPage() {
                     offset={song.sync_offset_seconds || 0}
                     mode={mode}
                     displayMode={displayMode}
+                    loading={inProgress && lines.length === 0}
                     onWordTap={handleWordTap}
                     onLineSeek={(t) => seekTo(t)}
                     onPausePlayer={pause}

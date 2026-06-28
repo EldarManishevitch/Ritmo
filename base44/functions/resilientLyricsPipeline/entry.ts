@@ -176,18 +176,14 @@ Deno.serve(async (req) => {
     })));
     console.log(`Stage 1 saved ${rawLines.length} raw lines`);
 
-    // Stage 2: Translate in background
+    // Stages 2 (translation) & 3 (timestamps) run in PARALLEL — they write
+    // disjoint fields (Stage 2: english_translation/pronunciation/is_chorus;
+    // Stage 3: start_seconds/end_seconds), so there is no write conflict.
     await base44.entities.Song.update(songId, { sync_status: 'translating' });
-    await base44.functions.invoke('translateLyrics', { songId }).catch(async () => {
-      console.log('Stage 2 skipped');
-      await base44.entities.Song.update(songId, { sync_status: 'ready_unsynced' });
-    });
-
-    // Stage 3: Sync timestamps (retries internally)
-    await base44.functions.invoke('syncLyricsAdvanced', { songId }).catch(async () => {
-      console.log('Stage 3 skipped');
-      await base44.entities.Song.update(songId, { sync_status: 'ready_unsynced' });
-    });
+    await Promise.all([
+      base44.functions.invoke('translateLyrics', { songId }).catch((e) => console.log('Stage 2 skipped:', e?.message)),
+      base44.functions.invoke('syncLyricsAdvanced', { songId }).catch((e) => console.log('Stage 3 skipped:', e?.message)),
+    ]);
 
     return Response.json({ success: true, line_count: rawLines.length });
   } catch (error) {

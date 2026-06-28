@@ -19,6 +19,7 @@ export function useYouTubePlayer(videoId, containerId) {
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,6 +43,12 @@ export function useYouTubePlayer(videoId, containerId) {
           onStateChange: (e) => {
             setIsPlaying(e.data === YT.PlayerState.PLAYING);
             if (e.target.getDuration) setDuration(e.target.getDuration());
+          },
+          onError: (e) => {
+            // Codes 2, 5, 100, 101, 150 = video unavailable/restricted.
+            // No pre-availability check is performed — we rely on the player's own error event.
+            console.warn('YouTube player error:', e.data);
+            setError(e.data);
           },
         },
       });
@@ -74,5 +81,5 @@ export function useYouTubePlayer(videoId, containerId) {
   const play = useCallback(() => { try { playerRef.current?.playVideo(); } catch { /* noop */ } }, []);
   const pause = useCallback(() => { try { playerRef.current?.pauseVideo(); } catch { /* noop */ } }, []);
 
-  return { ready, currentTime, isPlaying, duration, seekTo, play, pause };
+  return { ready, currentTime, isPlaying, duration, error, seekTo, play, pause };
 }

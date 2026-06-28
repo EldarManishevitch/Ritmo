@@ -15,6 +15,7 @@ export default function SyncedLyrics({
   onPausePlayer,
   onResync,
   syncDisabled = false,
+  loading = false,
 }) {
   const containerRef = useRef(null);
   const [karaokeResults, setKaraokeResults] = useState({});
@@ -102,6 +103,18 @@ export default function SyncedLyrics({
   };
 
   if (!lines.length) {
+    if (loading) {
+      return (
+        <div className="h-full overflow-y-auto px-4 py-6 space-y-3 no-scrollbar">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border-2 border-transparent px-4 py-3">
+              <div className="h-4 w-3/4 bg-muted animate-pulse rounded" />
+              <div className="h-3 w-1/2 bg-muted/60 animate-pulse rounded mt-2" />
+            </div>
+          ))}
+        </div>
+      );
+    }
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">
         No lyrics yet.
@@ -173,6 +186,7 @@ export default function SyncedLyrics({
             key={lineKey}
             data-line-id={lineKey}
             onClick={() => hasSyncTimestamps && onLineSeek?.(line.start_seconds - offset)}
+            style={lines.length > 40 ? { contentVisibility: 'auto', containIntrinsicSize: 'auto 96px' } : undefined}
             className={`rounded-2xl px-4 py-3 transition-all duration-300 relative ${
               active
                 ? 'border-2 border-[#D96B43] bg-white font-bold text-[#2C2A29] scale-[1.02] shadow-md'
