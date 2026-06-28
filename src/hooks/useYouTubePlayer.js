@@ -64,14 +64,22 @@ export function useYouTubePlayer(videoId, containerId) {
 
   useEffect(() => {
     if (!ready) return;
-    const interval = setInterval(() => {
+    let raf;
+    let lastReadAt = 0;
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+      // Keep the rAF loop alive (vsync) but only read getCurrentTime() every 250ms
+      const now = performance.now();
+      if (now - lastReadAt < 250) return;
+      lastReadAt = now;
       try {
         if (playerRef.current?.getCurrentTime) {
           setCurrentTime(playerRef.current.getCurrentTime());
         }
       } catch { /* noop */ }
-    }, 200);
-    return () => clearInterval(interval);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, [ready]);
 
   const seekTo = useCallback((seconds) => {

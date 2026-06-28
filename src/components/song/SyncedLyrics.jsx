@@ -106,7 +106,7 @@ export default function SyncedLyrics({
     if (loading) {
       return (
         <div className="h-full overflow-y-auto px-4 py-6 space-y-3 no-scrollbar">
-          {Array.from({ length: 8 }).map((_, i) => (
+          {Array.from({ length: 35 }).map((_, i) => (
             <div key={i} className="rounded-2xl border-2 border-transparent px-4 py-3">
               <div className="h-4 w-3/4 bg-muted animate-pulse rounded" />
               <div className="h-3 w-1/2 bg-muted/60 animate-pulse rounded mt-2" />
@@ -123,7 +123,7 @@ export default function SyncedLyrics({
   }
 
   return (
-    <div ref={containerRef} className="h-full overflow-y-auto px-4 py-6 space-y-3 no-scrollbar">
+    <div ref={containerRef} className={`overflow-y-auto px-4 py-6 space-y-3 no-scrollbar ${lines.length > 40 ? 'max-h-[560px]' : 'h-full'}`}>
       {/* Static mode banner + manual resync */}
       {mode === 'static' && lines.length > 0 && !hasSyncTimestamps && (
         <div className="mb-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 flex items-start justify-between gap-2">
@@ -186,10 +186,9 @@ export default function SyncedLyrics({
             key={lineKey}
             data-line-id={lineKey}
             onClick={() => hasSyncTimestamps && onLineSeek?.(line.start_seconds - offset)}
-            style={lines.length > 40 ? { contentVisibility: 'auto', containIntrinsicSize: 'auto 96px' } : undefined}
             className={`rounded-2xl px-4 py-3 transition-all duration-300 relative ${
               active
-                ? 'border-2 border-[#D96B43] bg-white font-bold text-[#2C2A29] scale-[1.02] shadow-md'
+                ? 'border-2 border-[#D96B43] bg-white font-bold text-[#2C2A29] scale-[1.02] shadow-md will-change-transform'
                 : hasSyncTimestamps
                 ? 'border-2 border-transparent opacity-70 hover:opacity-90'
                 : 'border-2 border-transparent opacity-100'
