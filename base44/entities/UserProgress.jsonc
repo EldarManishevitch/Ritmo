@@ -33,6 +33,49 @@
       },
       "default": [],
       "description": "Ids of unlocked achievements"
+    },
+    "cefr_level": {
+      "type": "string",
+      "enum": [
+        "A1",
+        "A2",
+        "B1",
+        "B2"
+      ],
+      "default": "A1",
+      "description": "Current CEFR proficiency level"
+    },
+    "onboarding_completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the user completed the onboarding wizard"
+    },
+    "fav_genres": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "User's favorite genres picked during onboarding"
+    },
+    "learning_goal": {
+      "type": "string",
+      "description": "User's primary learning goal"
+    },
+    "notifications_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Daily learning reminder toggle"
+    },
+    "notifications_time": {
+      "type": "string",
+      "default": "18:00",
+      "description": "Preferred reminder time (HH:MM)"
+    },
+    "unlocked_conversations": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether daily conversations feature is unlocked"
     }
   },
   "required": [],

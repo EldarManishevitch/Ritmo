@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import TopNav from './TopNav';
+import OnboardingWizard from '@/components/OnboardingWizard';
 
 export default function AppShell() {
   const location = useLocation();
@@ -19,6 +20,7 @@ export default function AppShell() {
           <Outlet />
         </motion.div>
       </AnimatePresence>
+      <OnboardingWizard />
     </div>
   );
 }

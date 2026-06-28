@@ -1,0 +1,91 @@
+{
+  "name": "RoleplaySession",
+  "type": "object",
+  "properties": {
+    "scenario_title": {
+      "type": "string",
+      "description": "Title of the roleplay scenario"
+    },
+    "character_name": {
+      "type": "string",
+      "description": "Name of the character the user talks to"
+    },
+    "location": {
+      "type": "string",
+      "description": "Real Latin city and venue setting"
+    },
+    "dialogue_steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "spanish_text": {
+            "type": "string"
+          },
+          "pronunciation": {
+            "type": "string"
+          },
+          "english_translation": {
+            "type": "string"
+          },
+          "suggested_reply": {
+            "type": "string"
+          }
+        }
+      },
+      "default": []
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false
+    },
+    "xp_awarded": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "scenario_title"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

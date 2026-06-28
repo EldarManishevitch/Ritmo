@@ -1,0 +1,67 @@
+{
+  "name": "SlangDictionary",
+  "type": "object",
+  "properties": {
+    "term": {
+      "type": "string",
+      "description": "Spanish slang term"
+    },
+    "contextual_meaning": {
+      "type": "string",
+      "description": "What it means in context"
+    },
+    "is_urban_slang": {
+      "type": "boolean",
+      "default": true
+    },
+    "literal_meaning": {
+      "type": "string",
+      "description": "Literal translation of the term"
+    },
+    "english_equivalent": {
+      "type": "string",
+      "description": "Closest English slang equivalent"
+    },
+    "example_usage": {
+      "type": "string",
+      "description": "Example sentence using the term"
+    },
+    "example_song_title": {
+      "type": "string",
+      "description": "Song title where this slang appears"
+    },
+    "example_song_artist": {
+      "type": "string",
+      "description": "Artist of the example song"
+    },
+    "lyrics_snippet": {
+      "type": "string",
+      "description": "Short lyric excerpt using the term"
+    },
+    "lyrics_snippet_translation": {
+      "type": "string",
+      "description": "English translation of the lyric snippet"
+    }
+  },
+  "required": [
+    "term"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": null,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

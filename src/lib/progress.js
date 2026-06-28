@@ -2,10 +2,9 @@ import { base44 } from '@/api/base44Client';
 import { unlockedAchievementIds, newlyUnlocked } from '@/lib/achievements';
 
 export const LEVELS = [
-  { xp: 1000, cefr: 'C1', title: 'Expert' },
-  { xp: 500, cefr: 'B2', title: 'Advanced' },
-  { xp: 250, cefr: 'B1', title: 'Intermediate' },
-  { xp: 100, cefr: 'A2', title: 'Beginner' },
+  { xp: 1000, cefr: 'B2', title: 'Maestro' },
+  { xp: 500, cefr: 'B1', title: 'Duro' },
+  { xp: 200, cefr: 'A2', title: 'Amigo' },
   { xp: 0, cefr: 'A1', title: 'Novice' },
 ];
 
@@ -68,4 +67,28 @@ export async function awardQuizCompletion(score = 0, total = 0) {
   });
 
   return { ...nextProgress, achievements, newAchievements: newOnes };
+}
+
+// Award XP for mastering a word (+25). Does NOT update streak.
+export async function awardWordMastered() {
+  const p = await getProgress();
+  const newXp = (p.xp || 0) + 25;
+  await base44.entities.UserProgress.update(p.id, { xp: newXp });
+  return { ...p, xp: newXp };
+}
+
+// Award XP for completing a roleplay (+50). Does NOT update streak.
+export async function awardRoleplayCompletion() {
+  const p = await getProgress();
+  const newXp = (p.xp || 0) + 50;
+  await base44.entities.UserProgress.update(p.id, { xp: newXp });
+  return { ...p, xp: newXp };
+}
+
+// Award XP for completing a song section (+15). Does NOT update streak.
+export async function awardSectionCompletion() {
+  const p = await getProgress();
+  const newXp = (p.xp || 0) + 15;
+  await base44.entities.UserProgress.update(p.id, { xp: newXp });
+  return { ...p, xp: newXp };
 }

@@ -10,6 +10,10 @@
       "type": "string",
       "description": "English translation"
     },
+    "hebrew_translation": {
+      "type": "string",
+      "description": "Hebrew translation of the word"
+    },
     "pronunciation_hint": {
       "type": "string"
     },

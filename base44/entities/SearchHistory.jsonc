@@ -1,0 +1,71 @@
+{
+  "name": "SearchHistory",
+  "type": "object",
+  "properties": {
+    "song_id": {
+      "type": "string",
+      "description": "FK to Song if it was added"
+    },
+    "song_title": {
+      "type": "string",
+      "description": "Title of the searched/opened song"
+    },
+    "song_artist": {
+      "type": "string",
+      "description": "Artist name"
+    },
+    "song_youtube_id": {
+      "type": "string",
+      "description": "YouTube video ID"
+    },
+    "viewed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the user opened/searched this song"
+    }
+  },
+  "required": [
+    "song_title"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

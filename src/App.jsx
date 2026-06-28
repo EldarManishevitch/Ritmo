@@ -10,6 +10,8 @@ import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import PageTransition from '@/components/PageTransition';
 import AppShell from '@/components/layout/AppShell';
+import RootGate from '@/components/RootGate';
+import OnboardingWizard from '@/components/OnboardingWizard';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -18,6 +20,7 @@ import ResetPassword from '@/pages/ResetPassword';
 import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import SongPage from './pages/SongPage';
+import SongPending from './pages/SongPending';
 import Conversations from './pages/Conversations';
 import Roleplay from './pages/Roleplay';
 import ReviewRoom from './pages/ReviewRoom';
@@ -59,7 +62,7 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       {/* Public */}
-      <Route path="/" element={<Landing />} />
+      <Route path="/" element={<RootGate landing={<Landing />} dashboard={<Dashboard />} />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -86,6 +89,7 @@ const AuthenticatedApp = () => {
           <Route path="/settings" element={<Settings />} />
         </Route>
         <Route path="/song/:id" element={<PageTransition><SongPage /></PageTransition>} />
+        <Route path="/song/pending/:youtubeId" element={<PageTransition><SongPending /></PageTransition>} />
       </Route>
 
       <Route path="*" element={<PageNotFound />} />

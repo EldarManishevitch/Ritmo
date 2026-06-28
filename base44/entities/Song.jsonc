@@ -32,6 +32,17 @@
       ],
       "default": "beginner"
     },
+    "cefr_level": {
+      "type": "string",
+      "enum": [
+        "A1",
+        "A2",
+        "B1",
+        "B2"
+      ],
+      "default": "A1",
+      "description": "CEFR proficiency level of this song"
+    },
     "youtube_id": {
       "type": "string",
       "description": "YouTube video ID for the IFrame player"
@@ -47,6 +58,16 @@
     "is_featured": {
       "type": "boolean",
       "default": false
+    },
+    "is_catalog_default": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this song is part of the default seeded catalog"
+    },
+    "is_synced": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether lyrics have been synced with timestamps"
     },
     "sync_status": {
       "type": "string",
