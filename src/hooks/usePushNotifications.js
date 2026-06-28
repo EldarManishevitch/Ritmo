@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 
-const VAPID_PUBLIC_KEY = 'BENnELEEpW0IEDYgZMijTNtf7fGKmpcuBQ0LTB23UVSLPqwen9-gknlvFjX4qwHdK88_s9F5QYdQJBQd9ylrp8s';
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -41,6 +41,7 @@ export function usePushNotifications() {
 
   const subscribe = useCallback(async () => {
     if (!supported) return { ok: false, error: 'Push notifications are not supported in this browser.' };
+    if (!VAPID_PUBLIC_KEY) return { ok: false, error: 'Push notifications are not configured.' };
     setLoading(true);
     try {
       const perm = await Notification.requestPermission();

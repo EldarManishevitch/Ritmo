@@ -132,6 +132,12 @@ async function syncWithRetry(base44, songId, attempt = 1) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+
+    // Require an authenticated user before any service-role data modification
+    let user = null;
+    try { user = await base44.auth.me(); } catch { user = null; }
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
     const { songId } = await req.json();
     if (!songId) return Response.json({ error: 'songId required' }, { status: 400 });
 
