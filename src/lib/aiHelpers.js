@@ -109,6 +109,35 @@ export async function isSpanishSong({ title, artist }) {
   }
 }
 
+/** Generate a full 5-turn roleplay scene in a real Latin setting, tuned to the user's CEFR level. */
+export async function generateRoleplayScene({ level }) {
+  return base44.integrations.Core.InvokeLLM({
+    prompt: `Generate a 5-turn Spanish roleplay scene for a learner. CEFR level: ${level || 'A1'}. Location: pick a real Latin city and venue (e.g. a Havana mojito bar, a Cartagena beach, a Medellín reggaeton club, a colmado in Santo Domingo). The learner steps through the scene turn by turn: each step is one line the character says to them, followed by a suggested reply the learner can give. Keep language natural and at the right level. Return: scenario_title, character_name, location, and dialogue_steps (exactly 5 items) each with spanish_text (the character's line), pronunciation (English-letter phonetics hyphenated by syllable, CAPS on the stressed syllable), english_translation, and suggested_reply (a natural Spanish reply the learner could say).`,
+    response_json_schema: {
+      type: 'object',
+      properties: {
+        scenario_title: { type: 'string' },
+        character_name: { type: 'string' },
+        location: { type: 'string' },
+        dialogue_steps: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              spanish_text: { type: 'string' },
+              pronunciation: { type: 'string' },
+              english_translation: { type: 'string' },
+              suggested_reply: { type: 'string' },
+            },
+            required: ['spanish_text', 'english_translation', 'suggested_reply'],
+          },
+        },
+      },
+      required: ['scenario_title', 'character_name', 'location', 'dialogue_steps'],
+    },
+  });
+}
+
 /** Generate the next assistant turn in a roleplay conversation. */
 export async function generateRoleplay({ roleplayType, scenario, history }) {
   return base44.integrations.Core.InvokeLLM({

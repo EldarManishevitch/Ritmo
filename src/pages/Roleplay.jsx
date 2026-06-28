@@ -1,153 +1,194 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, Loader2, Volume2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Mic, Loader2, Volume2, Eye, EyeOff, RefreshCw, ArrowRight, MapPin, Sparkles } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { generateRoleplay } from '@/lib/aiHelpers';
+import { generateRoleplayScene } from '@/lib/aiHelpers';
+import { getProgress, awardRoleplayCompletion } from '@/lib/progress';
+import UnlockCelebration from '@/components/UnlockCelebration';
 
 export default function Roleplay() {
-  const [params] = useSearchParams();
-  const conversationId = params.get('c');
-  const navigate = useNavigate();
-  const [conversation, setConversation] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const [sending, setSending] = useState(false);
+  const [session, setSession] = useState(null);
+  const [turn, setTurn] = useState(0);
   const [loading, setLoading] = useState(true);
-  const scrollRef = useRef(null);
+  const [showEnglish, setShowEnglish] = useState(false);
+  const [done, setDone] = useState(false);
+  const [levelUp, setLevelUp] = useState(null);
+  const [level, setLevel] = useState('A1');
 
-  useEffect(() => {
-    if (!conversationId) { setLoading(false); return; }
-    let cancelled = false;
-    base44.entities.Conversation.get(conversationId)
-      .then((c) => {
-        if (cancelled) return;
-        setConversation(c);
-        setMessages(c.messages || []);
-      })
-      .catch(() => {})
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [conversationId]);
+  const loadOrCreate = async (forceNew = false) => {
+    setLoading(true);
+    setDone(false);
+    setTurn(0);
+    setShowEnglish(false);
+    setLevelUp(null);
+    try {
+      const p = await getProgress();
+      const cefr = p.cefr_level || 'A1';
+      setLevel(cefr);
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
+      // Resume an incomplete session unless the user explicitly asked for a new scene
+      if (!forceNew) {
+        const incomplete = await base44.entities.RoleplaySession.filter({ completed: false }, '-created_date', 1);
+        if (incomplete && incomplete.length && (incomplete[0].dialogue_steps || []).length) {
+          setSession(incomplete[0]);
+          setLoading(false);
+          return;
+        }
+      }
+
+      const scene = await generateRoleplayScene({ level: cefr });
+      const created = await base44.entities.RoleplaySession.create({
+        scenario_title: scene.scenario_title,
+        character_name: scene.character_name,
+        location: scene.location,
+        dialogue_steps: scene.dialogue_steps || [],
+        completed: false,
+        xp_awarded: false,
+      });
+      setSession(created);
+    } catch { /* noop */ }
+    setLoading(false);
+  };
+
+  useEffect(() => { loadOrCreate(false); }, []);
 
   const speak = (text) => {
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'es-ES';
+    u.lang = 'es-MX';
     u.rate = 0.85;
     speechSynthesis.speak(u);
   };
 
-  const send = async () => {
-    if (!input.trim() || sending || !conversationId) return;
-    const userMsg = { role: 'user', content: input.trim() };
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
-    setInput('');
-    setSending(true);
+  const steps = session?.dialogue_steps || [];
+  const current = steps[turn];
+
+  const advance = async () => {
+    setShowEnglish(false);
+    if (turn < steps.length - 1) {
+      setTurn((t) => t + 1);
+      return;
+    }
+    // Final turn — complete the session
+    setDone(true);
     try {
-      const result = await generateRoleplay({
-        roleplayType: conversation?.roleplay_type,
-        scenario: conversation?.scenario,
-        history: newMessages,
-      });
-      const assistantMsg = {
-        role: 'assistant',
-        content: result.spanish_response,
-        translation: result.english_translation,
-      };
-      const updated = [...newMessages, assistantMsg];
-      setMessages(updated);
-      await base44.entities.Conversation.update(conversationId, { messages: updated });
+      if (session && !session.xp_awarded) {
+        await base44.entities.RoleplaySession.update(session.id, { completed: true, xp_awarded: true });
+        const res = await awardRoleplayCompletion();
+        if (res.leveledUp) setLevelUp(res.newLevel);
+      }
     } catch { /* noop */ }
-    setSending(false);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="max-w-lg mx-auto px-4 pt-20 flex flex-col items-center gap-3">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!conversationId) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4 px-6 text-center">
-        <p className="text-muted-foreground">No conversation selected</p>
-        <Button onClick={() => navigate('/conversations')}>Browse conversations</Button>
+        <p className="text-sm text-muted-foreground">Generating your scene…</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col max-w-lg mx-auto">
+    <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
-        <button onClick={() => navigate('/conversations')} className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors">
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div className="min-w-0 flex-1">
-          <h1 className="font-semibold text-sm truncate">{conversation?.title || 'Roleplay'}</h1>
-          <p className="text-xs text-muted-foreground truncate capitalize">{conversation?.roleplay_type}</p>
-        </div>
+      <div className="flex items-center gap-2 mb-1">
+        <Mic className="h-5 w-5 text-primary" />
+        <h1 className="text-2xl font-bold text-foreground">Roleplay</h1>
       </div>
+      <p className="text-sm text-muted-foreground mb-5">
+        Step into a real Latin scene and practice line by line · tuned for {level}.
+      </p>
 
-      {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 no-scrollbar">
-        {messages.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-sm text-muted-foreground mb-1">Start the conversation</p>
-            <p className="text-xs text-muted-foreground/60">{conversation?.scenario}</p>
+      {session && (
+        <div className="rounded-2xl bg-card border border-border p-5 mb-4">
+          {/* Scenario meta */}
+          <h2 className="text-lg font-bold text-foreground">{session.scenario_title}</h2>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 mb-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1"><Sparkles className="h-3.5 w-3.5" /> {session.character_name}</span>
+            <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {session.location}</span>
           </div>
-        )}
-        {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
-              m.role === 'user' ? 'bg-primary text-white' : 'bg-card border border-border'
-            }`}>
-              <p className="text-sm font-medium">{m.content}</p>
-              {m.translation && (
-                <p className={`text-xs mt-1 ${m.role === 'user' ? 'text-white/70' : 'text-muted-foreground'}`}>
-                  {m.translation}
-                </p>
+
+          {!done ? (
+            <>
+              {/* Progress dots */}
+              <div className="flex items-center gap-1.5 mb-4">
+                {steps.map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-1.5 flex-1 rounded-full transition-colors ${i <= turn ? 'bg-primary' : 'bg-muted'}`}
+                  />
+                ))}
+              </div>
+
+              {/* Current turn */}
+              {current && (
+                <div className="rounded-xl bg-muted/40 border border-border p-4 mb-4">
+                  <p className="text-[10px] font-semibold text-muted-foreground/60 tracking-wide mb-1">
+                    {session.character_name?.toUpperCase()} SAYS
+                  </p>
+                  <p className="text-lg font-bold text-foreground leading-snug">{current.spanish_text}</p>
+                  {current.pronunciation && (
+                    <p className="text-xs italic text-muted-foreground mt-1">/{current.pronunciation}/</p>
+                  )}
+
+                  <div className="flex items-center gap-2 mt-3">
+                    <button
+                      onClick={() => speak(current.spanish_text)}
+                      className="h-8 w-8 rounded-full bg-primary/15 flex items-center justify-center hover:bg-primary/25 transition-colors active:scale-95"
+                      title="Listen"
+                    >
+                      <Volume2 className="h-4 w-4 text-primary" />
+                    </button>
+                    <button
+                      onClick={() => setShowEnglish((v) => !v)}
+                      className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+                    >
+                      {showEnglish ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      {showEnglish ? 'Hide' : 'Show'} translation
+                    </button>
+                  </div>
+                  {showEnglish && (
+                    <p className="text-sm text-muted-foreground mt-2">{current.english_translation}</p>
+                  )}
+                </div>
               )}
-              {m.role === 'assistant' && (
-                <button onClick={() => speak(m.content)} className="mt-1.5 inline-flex items-center gap-1 text-xs text-primary">
-                  <Volume2 className="h-3 w-3" /> Listen
+
+              {/* Suggested reply */}
+              {current?.suggested_reply && (
+                <button
+                  onClick={advance}
+                  className="w-full rounded-xl border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 p-4 text-left transition-colors group"
+                >
+                  <p className="text-[10px] font-semibold text-primary tracking-wide mb-1">YOUR REPLY</p>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium text-foreground">{current.suggested_reply}</p>
+                    <ArrowRight className="h-4 w-4 text-primary flex-shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
                 </button>
               )}
+            </>
+          ) : (
+            /* Completion card */
+            <div className="text-center py-6">
+              <div className="text-5xl mb-3">🎉</div>
+              <h3 className="text-xl font-bold text-foreground mb-1">¡Bien hecho!</h3>
+              <p className="text-sm text-primary font-semibold mb-1">+50 XP</p>
+              <p className="text-sm text-muted-foreground mb-5">You completed the whole scene. ¡Qué duro!</p>
+              <Button onClick={() => loadOrCreate(true)} className="w-full">
+                <RefreshCw className="h-4 w-4 mr-1" /> New scene
+              </Button>
             </div>
-          </div>
-        ))}
-        {sending && (
-          <div className="flex justify-start">
-            <div className="bg-card border border-border rounded-2xl px-4 py-3">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
-      {/* Input */}
-      <div className="px-4 py-3 border-t border-border flex items-center gap-2 safe-area-bottom">
-        <Input
-          placeholder="Escribe en español…"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && send()}
-          disabled={sending}
-        />
-        <Button size="icon" onClick={send} disabled={sending || !input.trim()}>
-          <Send className="h-4 w-4" />
+      {!done && (
+        <Button variant="outline" className="w-full" onClick={() => loadOrCreate(true)}>
+          <RefreshCw className="h-4 w-4 mr-1" /> New scene
         </Button>
-      </div>
+      )}
+
+      {levelUp && <UnlockCelebration level={levelUp} onClose={() => setLevelUp(null)} />}
     </div>
   );
 }

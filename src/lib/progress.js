@@ -69,26 +69,27 @@ export async function awardQuizCompletion(score = 0, total = 0) {
   return { ...nextProgress, achievements, newAchievements: newOnes };
 }
 
-// Award XP for mastering a word (+25). Does NOT update streak.
-export async function awardWordMastered() {
+// Award a flat XP amount (no streak change). Persists a CEFR level-up and
+// returns { leveledUp, newLevel } so callers can show a celebration.
+async function awardXp(amount) {
   const p = await getProgress();
-  const newXp = (p.xp || 0) + 25;
-  await base44.entities.UserProgress.update(p.id, { xp: newXp });
-  return { ...p, xp: newXp };
+  const oldXp = p.xp || 0;
+  const newXp = oldXp + amount;
+  const before = levelForXp(oldXp);
+  const after = levelForXp(newXp);
+  const leveledUp = before.cefr !== after.cefr;
+  await base44.entities.UserProgress.update(p.id, {
+    xp: newXp,
+    ...(leveledUp ? { cefr_level: after.cefr } : {}),
+  });
+  return { ...p, xp: newXp, leveledUp, newLevel: after };
 }
+
+// Award XP for mastering a word (+25). Does NOT update streak.
+export const awardWordMastered = () => awardXp(25);
 
 // Award XP for completing a roleplay (+50). Does NOT update streak.
-export async function awardRoleplayCompletion() {
-  const p = await getProgress();
-  const newXp = (p.xp || 0) + 50;
-  await base44.entities.UserProgress.update(p.id, { xp: newXp });
-  return { ...p, xp: newXp };
-}
+export const awardRoleplayCompletion = () => awardXp(50);
 
 // Award XP for completing a song section (+15). Does NOT update streak.
-export async function awardSectionCompletion() {
-  const p = await getProgress();
-  const newXp = (p.xp || 0) + 15;
-  await base44.entities.UserProgress.update(p.id, { xp: newXp });
-  return { ...p, xp: newXp };
-}
+export const awardSectionCompletion = () => awardXp(15);

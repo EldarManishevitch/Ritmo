@@ -5,6 +5,7 @@ import SlangOfTheDay from '@/components/song/SlangOfTheDay';
 import DailyWordCard from '@/components/song/DailyWordCard';
 import AddSongSection from '@/components/song/AddSongSection';
 import SongGridCard from '@/components/song/SongGridCard';
+import SearchHistorySection from '@/components/dashboard/SearchHistorySection';
 import PullToRefresh from '@/components/PullToRefresh';
 import MilestoneCelebration from '@/components/achievements/MilestoneCelebration';
 import { songCefr } from '@/lib/cefr';
@@ -58,10 +59,6 @@ export default function Dashboard() {
   const challenges = useMemo(() => {
     const aboveLevel = deduped.filter((s) => LEVEL_ORDER.indexOf(songCefr(s.difficulty)) > LEVEL_ORDER.indexOf(USER_LEVEL));
     return aboveLevel.slice(0, 3);
-  }, [deduped]);
-
-  const history = useMemo(() => {
-    return [...deduped].sort((a, b) => new Date(b.updated_date) - new Date(a.updated_date)).slice(0, 3);
   }, [deduped]);
 
   return (
@@ -137,19 +134,7 @@ export default function Dashboard() {
       )}
 
       {/* Your Search History */}
-      {history.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-lg font-bold text-foreground mb-1">🎧 Your Search History</h2>
-          <p className="text-sm text-muted-foreground mb-4">
-            the last {history.length} songs you opened — jump right back in.
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {history.map((song) => (
-              <SongGridCard key={song.id} song={song} />
-            ))}
-          </div>
-        </div>
-      )}
+      <SearchHistorySection />
     </div>
     </PullToRefresh>
   );

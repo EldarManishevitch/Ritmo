@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LogOut, Mail, User as UserIcon, Loader2, Trash2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import PushNotificationsCard from '@/components/settings/PushNotificationsCard';
+import NotificationPreferencesCard from '@/components/settings/NotificationPreferencesCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -99,6 +100,9 @@ export default function Settings() {
           </Button>
         </div>
       </div>
+
+      {/* Daily reminder preferences */}
+      <NotificationPreferencesCard />
 
       {/* Push notifications */}
       <PushNotificationsCard />

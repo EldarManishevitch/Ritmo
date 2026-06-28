@@ -10,6 +10,7 @@ import WordLookup from '@/components/song/WordLookup';
 import ChorusQuiz from '@/components/song/ChorusQuiz';
 import GenerationProgressPill from '@/components/song/GenerationProgressPill';
 import { generateLyrics, ensureLyricsLoaded } from '@/lib/lyricsPipeline';
+import { recordSongView } from '@/lib/searchHistory';
 
 const STATUS_LABELS = {
   pending: 'Preparing song…',
@@ -90,6 +91,7 @@ export default function SongPage() {
         setOffsetInput(String(s.sync_offset_seconds || 0));
         setPendingSong(false);
         setAutoSyncAttempted(false);
+        recordSongView(s);
 
         // Never auto-re-trigger the pipeline here — it runs end-to-end in one execution.
         // The Realtime subscription handles progressive UI updates as lines appear.
