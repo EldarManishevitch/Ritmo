@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import BlogLayout from '@/components/layout/BlogLayout';
+import SEOHead from '@/components/SEOHead';
 
 const PICKS = [
   { rank: 1, title: 'Obsesión', artist: 'Aventura', level: 'Beginner', slang: '"es solo una obsesión" = it\'s just an obsession · "jevita" = girl', why: 'The chorus loops the same four-line confession over and over — by the third repeat you\'re singing the conditional tense ("sería", "daría") without realizing it. The verses are slow enough to hear every dropped \'s\'.' },
@@ -22,6 +23,10 @@ const PICKS = [
 export default function BestBachataSongs() {
   return (
     <BlogLayout title="10 Best Bachata Songs to Learn Spanish — Ritmo" badge="Song list">
+      <SEOHead
+        title="Best bachata songs to learn Spanish | Spanish Beats"
+        description="Learn Spanish through Aventura, Romeo Santos, and Prince Royce. The best bachata songs for every level — with lyrics, translations, and vocabulary."
+      />
       <h1 className="text-3xl font-bold text-foreground mb-4">10 Best Bachata Songs to Learn Spanish</h1>
       <p className="text-muted-foreground mb-8">10 Bachata tracks perfect for Spanish learners — clean enunciation, repetitive hooks, and Dominican slang from Romeo Santos, Aventura, and Juan Luis Guerra.</p>
 
