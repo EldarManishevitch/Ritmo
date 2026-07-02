@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Search, Heart, ArrowRight } from 'lucide-react';
 import BlogLayout from '@/components/layout/BlogLayout';
+import SEOHead from '@/components/SEOHead';
 
 const DR_TERMS = [
   { term: 'vaina', contextual: 'thing / stuff / situation', literal: 'pod, sheath', english: 'thing / whatever', category: 'slang', song: { title: 'Propuesta Indecente', artist: 'Romeo Santos', line: 'Esta vaina me tiene loco', translation: 'This whole thing has me crazy' } },
@@ -48,6 +49,10 @@ export default function DominicanSlangGuide() {
 
   return (
     <BlogLayout title="Dominican Slang in Bachata: A Listener's Guide — Ritmo" badge="Bachata lyrics guide">
+      <SEOHead
+        title="Dominican Spanish Slang Guide | Spanish Beats"
+        description="Dominican slang explained — the expressions you'll hear in bachata, from Aventura to Romeo Santos. Real street Spanish from the Dominican Republic."
+      />
       <h1 className="text-3xl font-bold text-foreground mb-4">Dominican Slang in Bachata Lyrics</h1>
       <p className="text-muted-foreground mb-6 leading-relaxed">Bachata isn't sung in textbook Spanish. It's sung in Dominican Spanish — fast, slangy, full of dropped 's' sounds and street vocabulary that even other Spanish speakers have to translate. If you've ever wondered what <em>"qué lo qué, mi jevita"</em> means, or why Romeo keeps saying <em>"dímelo"</em> between verses, this guide is for you.</p>
 

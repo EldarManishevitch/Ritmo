@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import BlogLayout from '@/components/layout/BlogLayout';
+import SEOHead from '@/components/SEOHead';
 
 const PICKS = [
   { rank: 1, title: 'Tití Me Preguntó', artist: 'Bad Bunny', level: 'Intermediate', slang: '"tití" = auntie · "jeva" = girl', why: "A spoken-word verse over a slow Dembow groove. Bad Bunny's diction is unusually clean here, and the chorus is built on one repeated question, so the grammar sticks fast." },
@@ -22,6 +23,10 @@ const PICKS = [
 export default function BestReggaetonSongs() {
   return (
     <BlogLayout title="10 Best Reggaeton Songs to Learn Spanish — Ritmo" badge="Song list">
+      <SEOHead
+        title="Best reggaeton songs to learn Spanish (by level) | Spanish Beats"
+        description="The best Bad Bunny, J Balvin, and Daddy Yankee songs for learning Spanish — ranked by CEFR level from A1 beginner to B2 advanced."
+      />
       <h1 className="text-3xl font-bold text-foreground mb-4">10 Best Reggaeton Songs to Learn Spanish</h1>
       <p className="text-muted-foreground mb-8">10 Reggaeton songs perfect for Spanish learners — slow hooks, clean slang, and unforgettable choruses from Bad Bunny, Karol G, Daddy Yankee, and Rauw Alejandro.</p>
 
