@@ -10,6 +10,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
  */
 
 const QUICK_TIMEOUT = 2800;
+const PIPELINE_TIMEOUT = 45000; // Hard cap: 45 seconds for the entire pipeline
 
 async function fetchGenius(title, artist) {
   const token = Deno.env.get('GENIUS_ACCESS_TOKEN');
@@ -77,7 +78,7 @@ async function fetchMegalobiz(title, artist) {
   if (!detailRes.ok) throw new Error('Megalobiz: detail failed');
   const detail = await detailRes.text();
   const contentMatch = detail.match(/<div[^>]*class="[^"]*lyrics_content[^"]*"[^>]*>([\s\S]*?)<\/div>/i) ||
-                       detail.match(/<p[^>]*class="[^"]*lyrics[^"]*"[^>]*>([\s\S]*?)<\/p>/i);
+                        detail.match(/<p[^>]*class="[^"]*lyrics[^"]*"[^>]*>([\s\S]*?)<\/p>/i);
   if (!contentMatch) throw new Error('Megalobiz: no content');
   const raw = contentMatch[1].replace(/<[^>]+>/g, '').trim();
   return { lines: raw.split('\n').map(t => t.trim()).filter(Boolean), name: 'Megalobiz' };
@@ -129,6 +130,42 @@ async function raceForLyrics(client, title, artist) {
   }
 }
 
+async function runPipeline(sb, base44, songId, title, artist) {
+  console.log('Worker Stage 1: racing 6 providers for', title, 'by', artist);
+
+  const rawLines = await raceForLyrics(sb, title, artist);
+
+  if (!rawLines || rawLines.length === 0) {
+    await sb.entities.LyricLine.deleteMany({ song_id: songId }).catch(() => {});
+    await sb.entities.LyricLine.bulkCreate([{
+      song_id: songId, line_index: 0,
+      spanish_text: "Lyrics could not be loaded automatically. Please try resubmitting.",
+      pronunciation: '', english_translation: '',
+      start_seconds: 0, end_seconds: 0, is_chorus: false,
+    }]);
+    await sb.entities.Song.update(songId, { sync_status: 'ready_unsynced' });
+    return { success: true, line_count: 1, fallback: true };
+  }
+
+  await sb.entities.LyricLine.deleteMany({ song_id: songId }).catch(() => {});
+  await sb.entities.LyricLine.bulkCreate(rawLines.map((text, i) => ({
+    song_id: songId, line_index: i,
+    spanish_text: text,
+    pronunciation: '', english_translation: '',
+    start_seconds: 0, end_seconds: 0, is_chorus: false,
+  })));
+  console.log(`Worker Stage 1 saved ${rawLines.length} raw lines`);
+
+  await sb.entities.Song.update(songId, { sync_status: 'translating' });
+  // Stage 2/3 invoked with the user-scoped client so they receive the user context.
+  await Promise.all([
+    base44.functions.invoke('translateLyrics', { songId }).catch((e) => console.log('Stage 2 skipped:', e?.message)),
+    base44.functions.invoke('syncLyricsAdvanced', { songId }).catch((e) => console.log('Stage 3 skipped:', e?.message)),
+  ]);
+
+  return { success: true, line_count: rawLines.length };
+}
+
 Deno.serve(async (req) => {
   let songId = '';
   let base44;
@@ -144,42 +181,30 @@ Deno.serve(async (req) => {
 
     const song = await sb.entities.Song.get(songId);
     if (!song) return Response.json({ error: 'Song not found' }, { status: 404 });
-    const title = song.title, artist = song.artist;
 
-    console.log('Worker Stage 1: racing 6 providers for', title, 'by', artist);
-    await sb.entities.Song.update(songId, { sync_status: 'fetching_lyrics' });
-
-    const rawLines = await raceForLyrics(sb, title, artist);
-
-    if (!rawLines || rawLines.length === 0) {
-      await sb.entities.LyricLine.deleteMany({ song_id: songId }).catch(() => {});
-      await sb.entities.LyricLine.bulkCreate([{
-        song_id: songId, line_index: 0,
-        spanish_text: "Lyrics could not be loaded automatically. Please try resubmitting.",
-        pronunciation: '', english_translation: '',
-        start_seconds: 0, end_seconds: 0, is_chorus: false,
-      }]);
-      await sb.entities.Song.update(songId, { sync_status: 'ready_unsynced' });
-      return Response.json({ success: true, line_count: 1, fallback: true });
+    // Prevent retries on permanently failed songs
+    if (song.sync_status === 'failed_permanent') {
+      return Response.json({ error: 'Song permanently failed after 3 retries' }, { status: 410 });
     }
 
-    await sb.entities.LyricLine.deleteMany({ song_id: songId }).catch(() => {});
-    await sb.entities.LyricLine.bulkCreate(rawLines.map((text, i) => ({
-      song_id: songId, line_index: i,
-      spanish_text: text,
-      pronunciation: '', english_translation: '',
-      start_seconds: 0, end_seconds: 0, is_chorus: false,
-    })));
-    console.log(`Worker Stage 1 saved ${rawLines.length} raw lines`);
+    // Increment retry count and guard against infinite retries
+    const retryCount = (song.retry_count || 0) + 1;
+    if (retryCount > 3) {
+      await sb.entities.Song.update(songId, { sync_status: 'failed_permanent', retry_count: retryCount });
+      return Response.json({ error: 'Max retries (3) exceeded — song marked as permanently failed' }, { status: 410 });
+    }
+    await sb.entities.Song.update(songId, { sync_status: 'fetching_lyrics', retry_count: retryCount });
 
-    await sb.entities.Song.update(songId, { sync_status: 'translating' });
-    // Stage 2/3 invoked with the user-scoped client so they receive the user context.
-    await Promise.all([
-      base44.functions.invoke('translateLyrics', { songId }).catch((e) => console.log('Stage 2 skipped:', e?.message)),
-      base44.functions.invoke('syncLyricsAdvanced', { songId }).catch((e) => console.log('Stage 3 skipped:', e?.message)),
+    const title = song.title, artist = song.artist;
+
+    // Run the full pipeline with a 45-second hard timeout — if it hangs, the
+    // catch block below sets sync_status='failed' so the song never stays stuck.
+    await Promise.race([
+      runPipeline(sb, base44, songId, title, artist),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Pipeline timed out after 45s')), PIPELINE_TIMEOUT)),
     ]);
 
-    return Response.json({ success: true, line_count: rawLines.length });
+    return Response.json({ success: true });
   } catch (error) {
     console.error('Worker fatal:', error.message);
     if (base44?.asServiceRole && songId) {

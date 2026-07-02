@@ -80,6 +80,7 @@
         "ready_synced",
         "ready_unsynced",
         "failed",
+        "failed_permanent",
         "static"
       ],
       "default": "pending"
@@ -88,6 +89,11 @@
       "type": "number",
       "default": 0,
       "description": "Global calibration offset for music videos"
+    },
+    "retry_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of lyrics pipeline retry attempts"
     }
   },
   "required": [

@@ -40,7 +40,8 @@
         "A1",
         "A2",
         "B1",
-        "B2"
+        "B2",
+        "C1"
       ],
       "default": "A1",
       "description": "Current CEFR proficiency level"
@@ -76,6 +77,10 @@
       "type": "boolean",
       "default": true,
       "description": "Whether daily conversations feature is unlocked"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "User's email for sending daily reminders"
     }
   },
   "required": [],
