@@ -1,19 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Volume2, Trash2, Loader2 } from 'lucide-react';
 import PullToRefresh from '@/components/PullToRefresh';
 import { displayLevel, daysToMastery, LEVEL_META, MASTERY_DATE_COUNT } from '@/lib/wordKnowledge';
+import { genreColor, genreLabel } from '@/lib/genres';
 
 export default function Vocab() {
   const [vocab, setVocab] = useState([]);
+  const [songs, setSongs] = useState([]);
+  const [genreFilter, setGenreFilter] = useState('all');
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     try {
-      const data = await base44.entities.SavedWord.list('-created_date', 200);
-      setVocab(data || []);
+      const [wordData, songData] = await Promise.all([
+        base44.entities.SavedWord.list('-created_date', 200),
+        base44.entities.Song.list('-created_date', 200),
+      ]);
+      setVocab(wordData || []);
+      setSongs(songData || []);
     } catch { /* noop */ }
     setLoading(false);
   };
@@ -47,10 +54,30 @@ export default function Vocab() {
     } catch { /* noop */ }
   };
 
-  const slang = vocab.filter((v) => v.is_slang);
-  const standard = vocab.filter((v) => !v.is_slang);
+  const genreMap = useMemo(() => {
+    const m = new Map();
+    songs.forEach((s) => m.set(s.id, s.genre));
+    return m;
+  }, [songs]);
 
-  const Section = ({ title, items }) => (
+  const availableGenres = useMemo(() => {
+    const set = new Set();
+    vocab.forEach((v) => {
+      const g = genreMap.get(v.source_song_id);
+      if (g) set.add(g);
+    });
+    return Array.from(set);
+  }, [vocab, genreMap]);
+
+  const filteredVocab = useMemo(() => {
+    if (genreFilter === 'all') return vocab;
+    return vocab.filter((v) => genreMap.get(v.source_song_id) === genreFilter);
+  }, [vocab, genreMap, genreFilter]);
+
+  const slang = filteredVocab.filter((v) => v.is_slang);
+  const standard = filteredVocab.filter((v) => !v.is_slang);
+
+  const Section = ({ title, items, genreMap }) => (
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-3">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{title}</h2>
@@ -64,7 +91,14 @@ export default function Vocab() {
             <div key={v.id} className="rounded-xl bg-card border border-border p-4">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-bold text-foreground">{v.word}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-foreground">{v.word}</h3>
+                    {v.source_song_id && genreMap.get(v.source_song_id) && (
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${genreColor(genreMap.get(v.source_song_id)).solid} text-white`}>
+                        {genreLabel(genreMap.get(v.source_song_id))}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-muted-foreground">{v.english_meaning}</p>
                   {v.pronunciation_hint && (
                     <p className="text-xs text-primary mt-1">🔊 {v.pronunciation_hint}</p>
@@ -123,8 +157,31 @@ export default function Vocab() {
         </div>
       ) : (
         <>
-          <Section title="Standard" items={standard} />
-          <Section title="Slang" items={slang} />
+          {availableGenres.length > 0 && (
+            <div className="flex gap-2 mb-6 overflow-x-auto no-scrollbar">
+              <button
+                onClick={() => setGenreFilter('all')}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                  genreFilter === 'all' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/70'
+                }`}
+              >
+                All
+              </button>
+              {availableGenres.map((g) => (
+                <button
+                  key={g}
+                  onClick={() => setGenreFilter(g)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                    genreFilter === g ? `${genreColor(g).solid} text-white` : 'bg-muted text-muted-foreground hover:bg-muted/70'
+                  }`}
+                >
+                  {genreLabel(g)}
+                </button>
+              ))}
+            </div>
+          )}
+          <Section title="Standard" items={standard} genreMap={genreMap} />
+          <Section title="Slang" items={slang} genreMap={genreMap} />
         </>
       )}
     </div>

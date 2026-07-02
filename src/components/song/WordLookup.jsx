@@ -3,6 +3,7 @@ import { Volume2, BookmarkPlus, BookmarkCheck, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { translateWord, getCachedWordTranslation } from '@/lib/aiHelpers';
+import { upsertGenreStatsOnWordSaved } from '@/lib/genres';
 
 export default function WordLookup({ word, context, songId }) {
   const [info, setInfo] = useState(null);
@@ -44,6 +45,7 @@ export default function WordLookup({ word, context, songId }) {
         is_slang: info.is_slang || false,
         source_song_id: songId || null,
       });
+      upsertGenreStatsOnWordSaved({ sourceSongId: songId }).catch(() => {});
       setSaved(true);
     } catch { /* noop */ }
     setSaving(false);

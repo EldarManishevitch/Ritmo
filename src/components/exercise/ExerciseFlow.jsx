@@ -7,6 +7,7 @@ import SpeakChorusStep from './SpeakChorusStep';
 import CompletionScreen from './CompletionScreen';
 import { awardExerciseCompletion } from '@/lib/exerciseHelpers';
 import { issueCertificateIfMastered } from '@/lib/certificates';
+import { upsertGenreStatsOnCompletion } from '@/lib/genres';
 
 const STEP_LABELS = ['Quiz', 'Vocab Match', 'Speak'];
 
@@ -42,6 +43,7 @@ export default function ExerciseFlow({ open, onClose, song, lines }) {
     setDbWriteDone(true);
     (async () => {
       // Create SongCompletion record first so "next song" excludes it
+      const xpAwarded = scores.quiz * 10 + 15;
       await base44.entities.SongCompletion.create({
         song_id: song.id,
         song_title: song.title,
@@ -49,8 +51,9 @@ export default function ExerciseFlow({ open, onClose, song, lines }) {
         vocab_score: scores.vocab,
         chorus_score: scores.chorus,
         completed_at: new Date().toISOString(),
-        xp_awarded: scores.quiz * 10 + 15,
+        xp_awarded: xpAwarded,
       }).catch(() => {});
+      upsertGenreStatsOnCompletion({ songId: song.id, xpAwarded }).catch(() => {});
       const result = await awardExerciseCompletion(scores.quiz);
       setProgress(result);
       const cert = await issueCertificateIfMastered({ song, score: scores.quiz, total: scores.quizTotal });

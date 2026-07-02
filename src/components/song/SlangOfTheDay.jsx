@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Music, Play, Volume2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import CollapsibleCard from '@/components/song/CollapsibleCard';
+import { artistToGenre, genreColor, genreLabel } from '@/lib/genres';
 
-export default function SlangOfTheDay() {
+export default function SlangOfTheDay({ favGenres = [] }) {
   const navigate = useNavigate();
   const [slang, setSlang] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,7 +18,14 @@ export default function SlangOfTheDay() {
         const rows = await base44.entities.SlangDictionary.filter({ is_urban_slang: true }, '-created_date', 50);
         if (cancelled) return;
         if (!rows || !rows.length) { setLoading(false); return; }
-        const pick = rows[Math.floor(Math.random() * rows.length)];
+        // Prefer slang from user's favorite genres using artist→genre map
+        const favSet = new Set(favGenres);
+        const genreMatched = rows.filter((r) => {
+          const g = artistToGenre(r.example_song_artist);
+          return g && favSet.has(g);
+        });
+        const pool = favSet.size > 0 && genreMatched.length > 0 ? genreMatched : rows;
+        const pick = pool[Math.floor(Math.random() * pool.length)];
         setSlang(pick);
 
         // Try to match the example song to an existing Song record for the play button
@@ -58,6 +66,14 @@ export default function SlangOfTheDay() {
       <div className="px-5 pb-4">
         <div className="flex items-center gap-3 mb-3">
           <h3 className="text-2xl font-bold text-foreground">{slang.term}</h3>
+          {slang.example_song_artist && (() => {
+            const g = artistToGenre(slang.example_song_artist);
+            return g ? (
+              <span className={`text-xs px-2 py-0.5 rounded-full ${genreColor(g).solid} text-white`}>
+                {genreLabel(g)}
+              </span>
+            ) : null;
+          })()}
           <button
             onClick={speak}
             className="h-8 w-8 rounded-full bg-primary/15 flex items-center justify-center hover:bg-primary/25 transition-colors active:scale-95"

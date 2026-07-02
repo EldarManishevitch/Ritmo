@@ -1,15 +1,32 @@
-import React from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Lock, Check, Plus, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { levelMeta } from '@/lib/curriculum';
+import { genreColor, genreLabel } from '@/lib/genres';
 
-export default function LevelCard({ track, levelProgress, songs, completedSongIds, isLocked, userCefrLevel }) {
+export default function LevelCard({ track, levelProgress, songs, completedSongIds, isLocked, userCefrLevel, favGenres = [] }) {
+  const [genreTab, setGenreTab] = useState('all');
   const meta = levelMeta(track.cefr_level);
   const songsCompleted = levelProgress?.songs_completed?.length || 0;
   const totalSlots = 12;
   const pct = Math.round((songsCompleted / totalSlots) * 100);
   const hasCert = levelProgress?.certificate_issued;
   const curatedSongs = (track.song_ids || []).map((id) => songs.find((s) => s.id === id)).filter(Boolean);
+
+  const availableGenres = useMemo(() => {
+    const set = new Set();
+    curatedSongs.forEach((s) => { if (s.genre) set.add(s.genre); });
+    return Array.from(set);
+  }, [curatedSongs]);
+
+  useEffect(() => {
+    if (favGenres.length && availableGenres.length) {
+      const match = favGenres.find((g) => availableGenres.includes(g));
+      if (match) setGenreTab(match);
+    }
+  }, [favGenres, availableGenres]);
+
+  const displaySongs = genreTab === 'all' ? curatedSongs : curatedSongs.filter((s) => s.genre === genreTab);
   const nextSongId = (track.song_ids || []).find((id) => !completedSongIds.includes(id));
 
   return (
@@ -46,9 +63,34 @@ export default function LevelCard({ track, levelProgress, songs, completedSongId
         </div>
       </div>
 
+      {/* Genre filter tabs */}
+      {availableGenres.length > 1 && (
+        <div className="flex gap-2 mb-3 overflow-x-auto no-scrollbar">
+          <button
+            onClick={() => setGenreTab('all')}
+            className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+              genreTab === 'all' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/70'
+            }`}
+          >
+            All
+          </button>
+          {availableGenres.map((g) => (
+            <button
+              key={g}
+              onClick={() => setGenreTab(g)}
+              className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                genreTab === g ? `${genreColor(g).solid} text-white` : 'bg-muted text-muted-foreground hover:bg-muted/70'
+              }`}
+            >
+              {genreLabel(g)}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Song grid */}
       <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-        {curatedSongs.map((song, idx) => {
+        {displaySongs.map((song, idx) => {
           const completed = completedSongIds.includes(song.id);
           const isNext = song.id === nextSongId;
           return (

@@ -47,6 +47,7 @@ export default function Curriculum() {
   }, []);
 
   const userCefr = progress?.cefr_level || levelForXp(progress?.xp || 0).cefr;
+  const favGenres = Array.isArray(progress?.fav_genres) ? progress.fav_genres : [];
   const userLevelIndex = LEVEL_ORDER.indexOf(userCefr);
   const completedSongIds = useMemo(() => completions.map((c) => c.song_id), [completions]);
 
@@ -106,6 +107,7 @@ export default function Curriculum() {
               completedSongIds={completedSongIds}
               isLocked={isLocked}
               userCefrLevel={userCefr}
+              favGenres={favGenres}
             />
           );
         })}
