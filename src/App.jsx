@@ -20,6 +20,7 @@ import ResetPassword from '@/pages/ResetPassword';
 import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import Curriculum from './pages/Curriculum';
+import Lesson from './pages/Lesson';
 import CertificatePage from './pages/CertificatePage';
 import SongPage from './pages/SongPage';
 import SongPending from './pages/SongPending';
@@ -85,6 +86,7 @@ const AuthenticatedApp = () => {
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route element={<AppShell />}>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/lesson" element={<PageTransition><Lesson /></PageTransition>} />
           <Route path="/curriculum" element={<Curriculum />} />
           <Route path="/conversations" element={<Conversations />} />
           <Route path="/roleplay" element={<Roleplay />} />

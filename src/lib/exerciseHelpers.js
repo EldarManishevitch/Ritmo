@@ -196,18 +196,11 @@ export function prepareChorusBlanks(lines, flags = []) {
 
 const dayStr = (d = new Date()) => d.toISOString().slice(0, 10);
 
-/** Award XP (+10 per quiz answer + 15 completion bonus), update streak, songs_completed, achievements. */
+/** Award XP (+10 per quiz answer + 15 completion bonus), update songs_completed + achievements.
+ *  NOTE: Streaks are now ONLY updated by DailyLesson completion — not here. */
 export async function awardExerciseCompletion(quizScore = 0) {
   const p = await getProgress();
-  const today = dayStr();
   const xpGain = quizScore * 10 + 15;
-
-  let current = p.current_streak || 0;
-  if (p.last_activity_date !== today) {
-    const yesterday = dayStr(new Date(Date.now() - 86400000));
-    current = p.last_activity_date === yesterday ? current + 1 : 1;
-  }
-  const best = Math.max(p.best_streak || 0, current);
   const songsCompleted = (p.songs_completed || 0) + 1;
   const newXp = (p.xp || 0) + xpGain;
 
@@ -216,16 +209,13 @@ export async function awardExerciseCompletion(quizScore = 0) {
   const leveledUp = oldLevel.cefr !== newLevel.cefr;
 
   const existingAchievements = Array.isArray(p.achievements) ? p.achievements : [];
-  const nextProgress = { ...p, xp: newXp, current_streak: current, best_streak: best, songs_completed: songsCompleted };
+  const nextProgress = { ...p, xp: newXp, songs_completed: songsCompleted };
   const unlocked = unlockedAchievementIds(nextProgress, {});
   const newOnes = newlyUnlocked(existingAchievements, unlocked);
   const achievements = Array.from(new Set([...existingAchievements, ...unlocked]));
 
   await base44.entities.UserProgress.update(p.id, {
     xp: newXp,
-    current_streak: current,
-    best_streak: best,
-    last_activity_date: today,
     songs_completed: songsCompleted,
     achievements,
     ...(leveledUp ? { cefr_level: newLevel.cefr } : {}),

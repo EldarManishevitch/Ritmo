@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Sparkles, BookOpen, RotateCcw, MessageCircle, Mic, Settings, Flame, LogOut, Music2, User, GraduationCap } from 'lucide-react';
+import { Sparkles, BookOpen, RotateCcw, MessageCircle, Mic, Settings, Flame, LogOut, Music2, User, GraduationCap, Zap } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { getProgress, levelForXp } from '@/lib/progress';
 
 const tabs = [
   { path: '/dashboard', icon: Sparkles, label: 'Discover' },
+  { path: '/lesson', icon: Zap, label: 'Daily' },
   { path: '/curriculum', icon: GraduationCap, label: 'Curriculum' },
   { path: '/vocab', icon: BookOpen, label: 'Vocab' },
   { path: '/review', icon: RotateCcw, label: 'Review' },

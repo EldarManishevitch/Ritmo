@@ -1,0 +1,77 @@
+{
+  "name": "GenreStats",
+  "type": "object",
+  "properties": {
+    "genre": {
+      "type": "string",
+      "enum": [
+        "reggaeton",
+        "bachata",
+        "pop latino",
+        "trap latino",
+        "salsa"
+      ],
+      "description": "Genre this stats record tracks"
+    },
+    "songs_completed": {
+      "type": "number",
+      "default": 0
+    },
+    "words_saved": {
+      "type": "number",
+      "default": 0
+    },
+    "total_xp": {
+      "type": "number",
+      "default": 0
+    },
+    "last_practiced": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "genre"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

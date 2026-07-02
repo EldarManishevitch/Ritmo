@@ -6,6 +6,7 @@ import DailyWordCard from '@/components/song/DailyWordCard';
 import AddSongSection from '@/components/song/AddSongSection';
 import SongGridCard from '@/components/song/SongGridCard';
 import SearchHistorySection from '@/components/dashboard/SearchHistorySection';
+import DailyLessonBanner from '@/components/dashboard/DailyLessonBanner';
 import PullToRefresh from '@/components/PullToRefresh';
 import MilestoneCelebration from '@/components/achievements/MilestoneCelebration';
 import { songCefrLevel } from '@/lib/cefr';
@@ -70,6 +71,7 @@ export default function Dashboard() {
     <PullToRefresh onRefresh={loadSongs}>
     <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-24">
       <MilestoneCelebration />
+      <DailyLessonBanner />
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl sm:text-4xl font-bold text-foreground">

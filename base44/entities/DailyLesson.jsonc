@@ -1,0 +1,67 @@
+{
+  "name": "DailyLesson",
+  "type": "object",
+  "properties": {
+    "song_id": {
+      "type": "string",
+      "description": "FK to Song chosen as today's lesson"
+    },
+    "song_title": {
+      "type": "string"
+    },
+    "lesson_date": {
+      "type": "string",
+      "format": "date",
+      "description": "YYYY-MM-DD for this daily lesson"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "song_id",
+    "lesson_date"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

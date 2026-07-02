@@ -8,6 +8,18 @@ export function getCachedWordTranslation(word) {
   return wordCache.get((word || '').toLowerCase()) || null;
 }
 
+/** Translate a single word (string) and cache it. Returns normalized shape
+ *  with pronunciation_hint + english_meaning for convenience. */
+export async function translateWordCached(word) {
+  const result = await translateWord({ word });
+  if (!result) return null;
+  return {
+    english_meaning: result.english_meaning || '',
+    pronunciation_hint: result.pronunciation || '',
+    is_slang: result.is_slang || false,
+  };
+}
+
 /** Tap-to-define a single word from a lyric line. Results are cached per word. */
 export async function translateWord({ word, context }) {
   const key = (word || '').toLowerCase();
