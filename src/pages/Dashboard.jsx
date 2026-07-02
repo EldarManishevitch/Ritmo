@@ -8,19 +8,27 @@ import SongGridCard from '@/components/song/SongGridCard';
 import SearchHistorySection from '@/components/dashboard/SearchHistorySection';
 import PullToRefresh from '@/components/PullToRefresh';
 import MilestoneCelebration from '@/components/achievements/MilestoneCelebration';
-import { songCefr } from '@/lib/cefr';
-
-const LEVEL_ORDER = ['A1', 'A2', 'B1', 'B2'];
-const USER_LEVEL = 'A1';
+import { songCefrLevel } from '@/lib/cefr';
+import { getProgress } from '@/lib/progress';
+import { getCurriculumTracks, getSongCompletions, LEVEL_ORDER } from '@/lib/curriculum';
+import CurriculumProgressWidget from '@/components/curriculum/CurriculumProgressWidget';
 
 export default function Dashboard() {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [userLevel, setUserLevel] = useState('A1');
+  const [completedSongIds, setCompletedSongIds] = useState([]);
 
   const loadSongs = async () => {
     const list = await base44.entities.Song.list('-created_date', 100);
     setSongs(list);
+    try {
+      const [p, comps] = await Promise.all([getProgress(), getSongCompletions()]);
+      const level = p?.cefr_level || 'A1';
+      setUserLevel(level);
+      setCompletedSongIds(comps.map((c) => c.song_id));
+    } catch { /* noop */ }
   };
 
   useEffect(() => {
@@ -43,23 +51,20 @@ export default function Dashboard() {
     });
   }, [songs]);
 
-  // Stable bank of 18 songs at the user's level — seeded once, never updated with recent searches
-  const seeded = useRef(null);
+  // Recommended songs: pull from the user's curriculum track first (next incomplete highlighted),
+  // then fall back to any songs at the user's CEFR level.
   const recommended = useMemo(() => {
-    if (seeded.current) return seeded.current;
-    if (deduped.length === 0) return []; // songs not loaded yet → stay empty until first render after load
-    const atLevel = deduped.filter((s) => songCefr(s.difficulty) === USER_LEVEL);
-    const shuffled = [...atLevel].sort(() => Math.random() - 0.5);
-    const picked = shuffled.slice(0, 18); // seed from 18
-
-    seeded.current = picked;
-    return picked;
-  }, [deduped]);
+    if (deduped.length === 0) return [];
+    const atLevel = deduped.filter((s) => songCefrLevel(s) === userLevel);
+    // Put incomplete songs first, then completed ones at the end
+    const incomplete = atLevel.filter((s) => !completedSongIds.includes(s.id));
+    return [...incomplete, ...atLevel.filter((s) => completedSongIds.includes(s.id))].slice(0, 6);
+  }, [deduped, userLevel, completedSongIds, refreshKey]);
 
   const challenges = useMemo(() => {
-    const aboveLevel = deduped.filter((s) => LEVEL_ORDER.indexOf(songCefr(s.difficulty)) > LEVEL_ORDER.indexOf(USER_LEVEL));
+    const aboveLevel = deduped.filter((s) => LEVEL_ORDER.indexOf(songCefrLevel(s)) > LEVEL_ORDER.indexOf(userLevel));
     return aboveLevel.slice(0, 3);
-  }, [deduped]);
+  }, [deduped, userLevel]);
 
   return (
     <PullToRefresh onRefresh={loadSongs}>
@@ -88,6 +93,9 @@ export default function Dashboard() {
         <AddSongSection />
       </div>
 
+      {/* Curriculum progress widget */}
+      <CurriculumProgressWidget cefrLevel={userLevel} songsCompleted={completedSongIds.length} />
+
       {/* Recommended For Your Level */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-1">
@@ -101,7 +109,7 @@ export default function Dashboard() {
           </button>
         </div>
         <p className="text-sm text-muted-foreground mb-4">
-          6 songs picked for you · tuned for <span className="font-semibold">{USER_LEVEL}</span> · refreshed manually for a new mix.
+          6 songs picked for you · tuned for <span className="font-semibold">{userLevel}</span> · refreshed manually for a new mix.
         </p>
         {loading ? (
           <div className="flex items-center justify-center py-12">
@@ -123,7 +131,7 @@ export default function Dashboard() {
         <div className="mb-8">
           <h2 className="text-lg font-bold text-foreground mb-1">Explore Next Challenges 🚀</h2>
           <p className="text-sm text-muted-foreground mb-4">
-            stretch picks above {USER_LEVEL} — fully unlocked, dive in whenever you're feeling brave.
+            stretch picks above {userLevel} — fully unlocked, dive in whenever you're feeling brave.
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {challenges.map((song) => (

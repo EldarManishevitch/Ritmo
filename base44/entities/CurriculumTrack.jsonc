@@ -1,0 +1,62 @@
+{
+  "name": "CurriculumTrack",
+  "type": "object",
+  "properties": {
+    "cefr_level": {
+      "type": "string",
+      "enum": [
+        "A1",
+        "A2",
+        "B1",
+        "B2",
+        "C1"
+      ]
+    },
+    "level_name": {
+      "type": "string",
+      "description": "Novice / Amigo / Duro / Experto / Maestro"
+    },
+    "level_description": {
+      "type": "string",
+      "description": "What this level covers linguistically"
+    },
+    "song_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Ordered list of curated song IDs \u2014 the core track"
+    },
+    "songs_needed_to_complete": {
+      "type": "number",
+      "default": 8
+    },
+    "xp_reward": {
+      "type": "number",
+      "description": "XP awarded on level certificate"
+    }
+  },
+  "required": [
+    "cefr_level",
+    "level_name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": null,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

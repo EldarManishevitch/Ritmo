@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, RefreshCw, SlidersHorizontal, X, Music, BookOpen, Trophy, Volume2 } from 'lucide-react';
+import { ArrowLeft, Loader2, RefreshCw, SlidersHorizontal, X, Music, BookOpen, Trophy, Volume2, GraduationCap } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,12 +9,11 @@ import SyncedLyrics from '@/components/song/SyncedLyrics';
 import WordLookup from '@/components/song/WordLookup';
 import ChorusQuiz from '@/components/song/ChorusQuiz';
 import GenerationProgressPill from '@/components/song/GenerationProgressPill';
-import PlaybackSpeedSelector from '@/components/song/PlaybackSpeedSelector';
-import SlowDownToast from '@/components/song/SlowDownToast';
 import { generateLyrics, ensureLyricsLoaded } from '@/lib/lyricsPipeline';
 import { recordSongView } from '@/lib/searchHistory';
 import { getCachedSong } from '@/lib/songCache';
 import { prewarmWordTranslations } from '@/lib/aiHelpers';
+import ExerciseFlow from '@/components/exercise/ExerciseFlow';
 
 const STATUS_LABELS = {
   pending: 'Preparing song…',
@@ -67,13 +66,8 @@ export default function SongPage() {
   const [section, setSection] = useState('full');
   const [displayMode, setDisplayMode] = useState('both');
   const [autoSyncAttempted, setAutoSyncAttempted] = useState(false);
-  // Playback speed: savedRateRef holds the user's explicitly-chosen rate (for quiz-lock restore)
-  const savedRateRef = useRef(null);
-  // Slow-down nudge: fires at most once per song page visit
-  const nudgeFiredRef = useRef(false);
-  const lastSectionRef = useRef(null);
-  const consecutiveReplaysRef = useRef(0);
-  const [showNudge, setShowNudge] = useState(false);
+  const [showExerciseBanner, setShowExerciseBanner] = useState(false);
+  const [exerciseOpen, setExerciseOpen] = useState(false);
   const playerContainerId = 'yt-player';
 
   const inProgress = song ? ['pending', 'fetching_lyrics', 'translating'].includes(song.sync_status) : false;
@@ -184,45 +178,10 @@ export default function SongPage() {
 
   const displayId = playerContainerId;
 
-  const { ready, currentTime, seekTo, pause, playbackRate, setPlaybackRate } = useYouTubePlayer(
+  const { ready, currentTime, duration, seekTo, pause } = useYouTubePlayer(
     song?.youtube_id || '',
     displayId
   );
-
-  // Keep savedRateRef in sync with the rate loaded by the hook on ready
-  if (savedRateRef.current === null) savedRateRef.current = playbackRate;
-
-  const handleSpeedSelect = (rate) => {
-    setPlaybackRate(rate);
-    try { localStorage.setItem('sbPlaybackRate', String(rate)); } catch { /* noop */ }
-    savedRateRef.current = rate;
-    setShowNudge(false);
-  };
-
-  const handleTabChange = (newTab) => {
-    setTab(newTab);
-    if (newTab === 'quiz') {
-      // Auto-lock to 0.75× for easier fill-in-blank listening (not persisted)
-      setPlaybackRate(0.75);
-    } else if (newTab === 'lyrics') {
-      // Restore the user's saved preferred rate
-      setPlaybackRate(savedRateRef.current ?? playbackRate);
-    }
-  };
-
-  const handleSectionChange = (newSection) => {
-    setSection(newSection);
-    if (lastSectionRef.current === newSection) {
-      consecutiveReplaysRef.current += 1;
-    } else {
-      consecutiveReplaysRef.current = 1;
-      lastSectionRef.current = newSection;
-    }
-    if (consecutiveReplaysRef.current >= 3 && !nudgeFiredRef.current) {
-      nudgeFiredRef.current = true;
-      setShowNudge(true);
-    }
-  };
 
   const handleWordTap = (word, context) => {
     setSelectedWord(word);
@@ -248,6 +207,12 @@ export default function SongPage() {
   useEffect(() => {
     if (tab === 'vocab') loadVocab();
   }, [tab, id]);
+
+  // Show exercise banner when user has listened past 60% of the song
+  useEffect(() => {
+    if (!ready || !duration || showExerciseBanner || exerciseOpen) return;
+    if (currentTime / duration >= 0.6) setShowExerciseBanner(true);
+  }, [currentTime, duration, ready, showExerciseBanner, exerciseOpen]);
 
   const speakWord = (w) => {
     const u = new SpeechSynthesisUtterance(w);
@@ -361,7 +326,7 @@ export default function SongPage() {
           return (
             <button
               key={t.id}
-              onClick={() => handleTabChange(t.id)}
+              onClick={() => setTab(t.id)}
               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 tab === t.id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/70'
               }`}
@@ -376,6 +341,13 @@ export default function SongPage() {
             </button>
           );
         })}
+        <button
+          onClick={() => setExerciseOpen(true)}
+          className="ml-auto flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold bg-primary text-white shadow-sm transition-colors hover:bg-primary/90"
+        >
+          <GraduationCap className="h-3.5 w-3.5" />
+          Practice
+        </button>
       </div>
 
       {/* Main content — always rendered even while lines stream in */}
@@ -422,7 +394,7 @@ export default function SongPage() {
               )}
             </div>
             <div className="px-4 py-3 flex items-center gap-3 border-b lg:border-b-0 lg:border-r border-border">
-              <Button size="sm" variant="outline" onClick={() => handleTabChange('quiz')} className="flex-shrink-0">
+              <Button size="sm" variant="outline" onClick={() => setTab('quiz')} className="flex-shrink-0">
                 <Trophy className="h-4 w-4 mr-1" /> Practice with a Quiz
               </Button>
               <p className="text-xs text-muted-foreground">
@@ -440,7 +412,7 @@ export default function SongPage() {
                   {sections.map((s) => (
                     <button
                       key={s.id}
-                      onClick={() => handleSectionChange(s.id)}
+                      onClick={() => setSection(s.id)}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                         section === s.id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/70'
                       }`}
@@ -452,13 +424,11 @@ export default function SongPage() {
                 </div>
 
                 {/* Lyrics header with language toggle */}
-                <div className="px-4 py-2 flex items-center justify-between gap-2 flex-wrap border-b border-border">
-                  <span className="text-sm font-semibold text-foreground whitespace-nowrap">
+                <div className="px-4 py-2 flex items-center justify-between border-b border-border">
+                  <span className="text-sm font-semibold text-foreground">
                     {sections.find((s) => s.id === section)?.label || 'Full Song'}
                   </span>
-                  <div className="flex items-center gap-2">
-                    <PlaybackSpeedSelector rate={playbackRate} onChange={handleSpeedSelect} />
-                    <div className="flex rounded-full bg-muted p-0.5">
+                  <div className="flex rounded-full bg-muted p-0.5">
                     {[
                       { id: 'spanish', label: 'ES' },
                       { id: 'both', label: 'ES/EN' },
@@ -477,7 +447,6 @@ export default function SongPage() {
                         {opt.label}
                       </button>
                     ))}
-                    </div>
                   </div>
                 </div>
 
@@ -508,6 +477,14 @@ export default function SongPage() {
                     onResync={() => generateLyrics({ songId: id })}
                   />
                 </div>
+                {showExerciseBanner && !exerciseOpen && (
+                  <div className="flex items-center justify-between gap-2 px-4 py-3 bg-card border-t border-border shadow-lg">
+                    <p className="text-sm text-foreground">Ready to lock in what you learned? Start the exercise →</p>
+                    <button onClick={() => setExerciseOpen(true)} className="flex-shrink-0 h-9 px-4 rounded-lg bg-primary text-white text-sm font-medium whitespace-nowrap">
+                      Start exercise
+                    </button>
+                  </div>
+                )}
               </>
             )}
 
@@ -555,10 +532,11 @@ export default function SongPage() {
         </div>
         </>
       )}
-      <SlowDownToast
-        visible={showNudge}
-        onQuickSet={() => handleSpeedSelect(0.75)}
-        onDismiss={() => setShowNudge(false)}
+      <ExerciseFlow
+        open={exerciseOpen}
+        onClose={() => setExerciseOpen(false)}
+        song={song}
+        lines={lines}
       />
     </div>
   );

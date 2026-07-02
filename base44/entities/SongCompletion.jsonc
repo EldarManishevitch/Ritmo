@@ -1,0 +1,59 @@
+{
+  "name": "SongCompletion",
+  "type": "object",
+  "properties": {
+    "song_id": {
+      "type": "string",
+      "description": "FK to Song"
+    },
+    "song_title": {
+      "type": "string"
+    },
+    "quiz_score": {
+      "type": "number",
+      "default": 0
+    },
+    "vocab_score": {
+      "type": "number",
+      "default": 0
+    },
+    "chorus_score": {
+      "type": "number",
+      "default": 0
+    },
+    "xp_awarded": {
+      "type": "number",
+      "default": 0
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "song_id"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { songCefr } from '@/lib/cefr';
+import { songCefrLevel } from '@/lib/cefr';
 import { prefetchSong } from '@/lib/songCache';
 
 const FALLBACK_ART = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=70';
@@ -9,7 +9,7 @@ export default function SongGridCard({ song, levelUp = false }) {
   const initialThumb = song.album_art_url || (song.youtube_id ? `https://i.ytimg.com/vi/${song.youtube_id}/mqdefault.jpg` : FALLBACK_ART);
   const [thumbnail, setThumbnail] = React.useState(initialThumb);
   const isPending = ['pending', 'fetching_lyrics', 'translating'].includes(song.sync_status);
-  const cefr = songCefr(song.difficulty);
+  const cefr = songCefrLevel(song);
 
   return (
     <Link to={`/song/${song.id}`} className="block group" onMouseEnter={() => prefetchSong(song.id)} onFocus={() => prefetchSong(song.id)}>

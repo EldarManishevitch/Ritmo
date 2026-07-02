@@ -1,0 +1,80 @@
+{
+  "name": "LevelProgress",
+  "type": "object",
+  "properties": {
+    "cefr_level": {
+      "type": "string",
+      "enum": [
+        "A1",
+        "A2",
+        "B1",
+        "B2",
+        "C1"
+      ]
+    },
+    "songs_completed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Song IDs where user finished the exercise flow"
+    },
+    "certificate_issued": {
+      "type": "boolean",
+      "default": false
+    },
+    "certificate_issued_at": {
+      "type": "string",
+      "description": "ISO date when certificate was issued"
+    },
+    "total_xp_earned_at_level": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "cefr_level"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

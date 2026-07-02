@@ -2,7 +2,8 @@ import { base44 } from '@/api/base44Client';
 import { unlockedAchievementIds, newlyUnlocked } from '@/lib/achievements';
 
 export const LEVELS = [
-  { xp: 1000, cefr: 'B2', title: 'Maestro' },
+  { xp: 2000, cefr: 'C1', title: 'Maestro' },
+  { xp: 1000, cefr: 'B2', title: 'Experto' },
   { xp: 500, cefr: 'B1', title: 'Duro' },
   { xp: 200, cefr: 'A2', title: 'Amigo' },
   { xp: 0, cefr: 'A1', title: 'Novice' },
@@ -18,17 +19,11 @@ export async function getProgress() {
   const list = await base44.entities.UserProgress.filter({});
   if (list && list.length) return list[0];
   return base44.entities.UserProgress.create({
-    xp: 0,
-    current_streak: 0,
-    best_streak: 0,
-    last_activity_date: '',
-    songs_completed: 0,
-    achievements: [],
+    xp: 0, current_streak: 0, best_streak: 0, last_activity_date: '',
+    songs_completed: 0, achievements: [],
   });
 }
 
-// Award XP + update streak + count the song + unlock achievements.
-// Call ONLY after a full quiz is completed. `score` = correct count, `total` = question count.
 export async function awardQuizCompletion(score = 0, total = 0) {
   const p = await getProgress();
   const today = dayStr();
@@ -45,11 +40,8 @@ export async function awardQuizCompletion(score = 0, total = 0) {
   const newXp = (p.xp || 0) + xpGain;
 
   const nextProgress = {
-    ...p,
-    xp: newXp,
-    current_streak: current,
-    best_streak: best,
-    songs_completed: songsCompleted,
+    ...p, xp: newXp, current_streak: current,
+    best_streak: best, songs_completed: songsCompleted,
   };
 
   const existingAchievements = Array.isArray(p.achievements) ? p.achievements : [];
@@ -58,19 +50,13 @@ export async function awardQuizCompletion(score = 0, total = 0) {
   const achievements = Array.from(new Set([...existingAchievements, ...unlocked]));
 
   await base44.entities.UserProgress.update(p.id, {
-    xp: newXp,
-    current_streak: current,
-    best_streak: best,
-    last_activity_date: today,
-    songs_completed: songsCompleted,
-    achievements,
+    xp: newXp, current_streak: current, best_streak: best,
+    last_activity_date: today, songs_completed: songsCompleted, achievements,
   });
 
   return { ...nextProgress, achievements, newAchievements: newOnes };
 }
 
-// Award a flat XP amount (no streak change). Persists a CEFR level-up and
-// returns { leveledUp, newLevel } so callers can show a celebration.
 async function awardXp(amount) {
   const p = await getProgress();
   const oldXp = p.xp || 0;
@@ -85,11 +71,6 @@ async function awardXp(amount) {
   return { ...p, xp: newXp, leveledUp, newLevel: after };
 }
 
-// Award XP for mastering a word (+25). Does NOT update streak.
 export const awardWordMastered = () => awardXp(25);
-
-// Award XP for completing a roleplay (+50). Does NOT update streak.
 export const awardRoleplayCompletion = () => awardXp(50);
-
-// Award XP for completing a song section (+15). Does NOT update streak.
 export const awardSectionCompletion = () => awardXp(15);

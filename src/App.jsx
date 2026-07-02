@@ -19,6 +19,8 @@ import ResetPassword from '@/pages/ResetPassword';
 // Page imports
 import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
+import Curriculum from './pages/Curriculum';
+import CertificatePage from './pages/CertificatePage';
 import SongPage from './pages/SongPage';
 import SongPending from './pages/SongPending';
 import Conversations from './pages/Conversations';
@@ -68,6 +70,8 @@ const AuthenticatedApp = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
 
+      <Route path="/certificate/:level" element={<CertificatePage />} />
+
       {/* Public blog/SEO pages */}
       <Route path="/how-to-learn-spanish-with-music" element={<HowToLearnSpanishWithMusic />} />
       <Route path="/reggaeton-slang-guide" element={<ReggaetonSlangGuide />} />
@@ -81,6 +85,7 @@ const AuthenticatedApp = () => {
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route element={<AppShell />}>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/curriculum" element={<Curriculum />} />
           <Route path="/conversations" element={<Conversations />} />
           <Route path="/roleplay" element={<Roleplay />} />
           <Route path="/review" element={<ReviewRoom />} />
