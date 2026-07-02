@@ -194,6 +194,10 @@ Deno.serve(async (req) => {
       console.log('Stage 3b: no youtube_id, skipping');
       return Response.json({ success: false, stage: '3b', skipped: true, reason: 'No youtube_id' });
     }
+    // Ownership check: only the song creator or an admin can run alignment
+    if (song.created_by_id !== user.id && user.role !== 'admin') {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     console.log(`Stage 3b: Whisper forced alignment for ${song.title}`);
     const lines = await base44.asServiceRole.entities.LyricLine.filter({ song_id: songId }, 'line_index', 500);

@@ -16,6 +16,14 @@ Deno.serve(async (req) => {
     const { songId } = await req.json();
     if (!songId) return Response.json({ error: 'songId required' }, { status: 400 });
 
+    // Ownership check: only the song creator or an admin can trigger the pipeline
+    let song;
+    try { song = await base44.entities.Song.get(songId); }
+    catch { return Response.json({ error: 'Song not found' }, { status: 404 }); }
+    if (song.created_by_id !== user.id && user.role !== 'admin') {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     // Mark as fetching immediately so the UI shows the right state
     await base44.asServiceRole.entities.Song.update(songId, { sync_status: 'fetching_lyrics' }).catch(() => {});
 

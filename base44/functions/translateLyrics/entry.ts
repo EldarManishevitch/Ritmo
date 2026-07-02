@@ -75,6 +75,13 @@ Deno.serve(async (req) => {
     const { songId } = await req.json();
     if (!songId) return Response.json({ error: 'songId required' }, { status: 400 });
 
+    // Ownership check: only the song creator or an admin can translate lyrics
+    const song = await base44.entities.Song.get(songId);
+    if (!song) return Response.json({ error: 'Song not found' }, { status: 404 });
+    if (song.created_by_id !== user.id && user.role !== 'admin') {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     console.log('Stage 2 translation:', songId);
 
     // Fetch current raw lines to translate

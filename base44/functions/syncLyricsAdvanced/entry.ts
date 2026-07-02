@@ -141,6 +141,13 @@ Deno.serve(async (req) => {
     const { songId } = await req.json();
     if (!songId) return Response.json({ error: 'songId required' }, { status: 400 });
 
+    // Ownership check: only the song creator or an admin can sync lyrics
+    const song = await base44.entities.Song.get(songId);
+    if (!song) return Response.json({ error: 'Song not found' }, { status: 404 });
+    if (song.created_by_id !== user.id && user.role !== 'admin') {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     console.log('Stage 3 syncAdvanced:', songId);
     const success = await syncWithRetry(base44, songId);
     return Response.json({ success, stage: 3, synced: success });
