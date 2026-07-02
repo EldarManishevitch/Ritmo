@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Mic, Loader2, Volume2, Eye, EyeOff, RefreshCw, ArrowRight, MapPin, Sparkles } from 'lucide-react';
+import { Mic, Loader2, Volume2, Eye, EyeOff, RefreshCw, ArrowRight, MapPin, Sparkles, MessageSquare, Lock } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { useToast } from '@/components/ui/use-toast';
 import { generateRoleplayScene } from '@/lib/aiHelpers';
 import { getProgress, awardRoleplayCompletion } from '@/lib/progress';
+import { useSubscription } from '@/hooks/useSubscription';
+import { speechSupported } from '@/hooks/useSpeechRecognition';
 import UnlockCelebration from '@/components/UnlockCelebration';
+import VoiceCoach from '@/components/roleplay/VoiceCoach';
+import VoiceHistory from '@/components/roleplay/VoiceHistory';
 
 export default function Roleplay() {
   const [session, setSession] = useState(null);
@@ -14,6 +20,17 @@ export default function Roleplay() {
   const [done, setDone] = useState(false);
   const [levelUp, setLevelUp] = useState(null);
   const [level, setLevel] = useState('A1');
+  const [mode, setMode] = useState('text');
+  const [showProModal, setShowProModal] = useState(false);
+  const [historyKey, setHistoryKey] = useState(0);
+  const { isPro } = useSubscription();
+  const { toast } = useToast();
+
+  const handleSelectVoice = () => {
+    if (!speechSupported) { toast({ description: 'Voice mode needs Chrome or Edge.' }); return; }
+    if (!isPro) { setShowProModal(true); return; }
+    setMode('voice');
+  };
 
   const loadOrCreate = async (forceNew = false) => {
     setLoading(true);
@@ -99,7 +116,37 @@ export default function Roleplay() {
         Step into a real Latin scene and practice line by line · tuned for {level}.
       </p>
 
-      {session && (
+      {/* Text | Voice toggle */}
+      <div className="inline-flex rounded-full bg-muted p-1 mb-5">
+        <button
+          onClick={() => setMode('text')}
+          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${mode === 'text' ? 'bg-background shadow text-foreground' : 'text-muted-foreground'}`}
+        >
+          <MessageSquare className="h-4 w-4" /> Text
+        </button>
+        <button
+          onClick={handleSelectVoice}
+          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${mode === 'voice' ? 'bg-background shadow text-foreground' : 'text-muted-foreground'}`}
+        >
+          <Mic className="h-4 w-4" /> Voice {!isPro && <Lock className="h-3 w-3" />}
+        </button>
+      </div>
+
+      {/* Voice mode */}
+      {mode === 'voice' && session && (
+        <>
+          <VoiceCoach
+            key={session.id}
+            session={session}
+            level={level}
+            onNewScene={() => { setMode('voice'); loadOrCreate(true); }}
+            onSessionComplete={() => setHistoryKey((k) => k + 1)}
+          />
+          <VoiceHistory refreshKey={historyKey} />
+        </>
+      )}
+
+      {mode === 'text' && session && (
         <div className="rounded-2xl bg-card border border-border p-5 mb-4">
           {/* Scenario meta */}
           <h2 className="text-lg font-bold text-foreground">{session.scenario_title}</h2>
@@ -182,11 +229,26 @@ export default function Roleplay() {
         </div>
       )}
 
-      {!done && (
+      {mode === 'text' && !done && (
         <Button variant="outline" className="w-full" onClick={() => loadOrCreate(true)}>
           <RefreshCw className="h-4 w-4 mr-1" /> New scene
         </Button>
       )}
+
+      {/* Pro upgrade modal */}
+      <Dialog open={showProModal} onOpenChange={setShowProModal}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Mic className="h-5 w-5 text-primary" /> Voice Coach is Pro</DialogTitle>
+            <DialogDescription>Practice speaking out loud with real-time AI feedback. Upgrade coming soon.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button className="w-full" onClick={() => { setShowProModal(false); setMode('text'); }}>
+              Continue with text
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {levelUp && <UnlockCelebration level={levelUp} onClose={() => setLevelUp(null)} />}
     </div>

@@ -206,6 +206,24 @@ export async function generateRoleplayScene({ level }) {
   });
 }
 
+/** Evaluate one voice-coach turn: did the learner communicate the expected meaning? */
+export async function evaluateVoiceTurn({ level, expected, transcript }) {
+  return base44.integrations.Core.InvokeLLM({
+    model: 'claude_sonnet_4_6',
+    prompt: `Spanish learner CEFR ${level || 'A1'}. Expected: '${expected || ''}'. User said: '${transcript || ''}'. Did they communicate the right meaning? Be generous. Reply ONLY valid JSON: {understood: boolean, score: number 0-100, feedback_es: string (1 encouraging sentence in Spanish), feedback_en: string (1 tip in English)}`,
+    response_json_schema: {
+      type: 'object',
+      properties: {
+        understood: { type: 'boolean' },
+        score: { type: 'number' },
+        feedback_es: { type: 'string' },
+        feedback_en: { type: 'string' },
+      },
+      required: ['understood', 'score', 'feedback_es', 'feedback_en'],
+    },
+  });
+}
+
 /** Generate the next assistant turn in a roleplay conversation. */
 export async function generateRoleplay({ roleplayType, scenario, history }) {
   return base44.integrations.Core.InvokeLLM({
