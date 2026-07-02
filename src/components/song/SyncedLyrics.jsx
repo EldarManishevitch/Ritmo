@@ -227,8 +227,21 @@ export default function SyncedLyrics({
                   onResult={handleKaraokeResult}
                 />
               ) : (
-                <button disabled className="h-8 w-8 rounded-full bg-muted flex items-center justify-center cursor-not-allowed opacity-50">
-                  <Volume2 className="h-4 w-4 text-muted-foreground" />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+                    window.speechSynthesis.cancel();
+                    const u = new SpeechSynthesisUtterance(line.spanish_text);
+                    u.lang = 'es-ES';
+                    u.rate = 0.85;
+                    window.speechSynthesis.speak(u);
+                  }}
+                  className="flex items-center justify-center h-7 w-7 rounded-full bg-muted text-muted-foreground hover:bg-primary/15 hover:text-primary transition-all duration-300 flex-shrink-0"
+                  title="Play line"
+                >
+                  <Volume2 className="h-3.5 w-3.5" />
                 </button>
               )}
               <GrammarInsight line={line} />

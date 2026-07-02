@@ -22,10 +22,10 @@ export default function GrammarInsight({ line }) {
     try {
       const res = await base44.integrations.Core.InvokeLLM({
         prompt:
-          'You are a fun, casual Spanish teacher explaining grammar to a Hebrew speaker. ' +
-          'Explain the grammar structure of the following Spanish lyric line IN HEBREW (write Hebrew text, RTL). ' +
+          'You are a fun, casual Spanish teacher explaining grammar to an English speaker. ' +
+          'Explain the grammar structure of the following Spanish lyric line IN ENGLISH. ' +
           'Be practical, casual, and fun. Mention the specific tense/mood used (e.g. Subjuntivo, Pretérito) and why. ' +
-          'Then give a short real-life usage example in Spanish + Hebrew translation (e.g. ordering a beer, chatting with a friend). ' +
+          'Then give a short real-life usage example in Spanish + English translation (e.g. ordering a beer, chatting with a friend). ' +
           'Keep the whole thing under 120 words.\n\n' +
           `Spanish line: "${line.spanish_text}"\n` +
           `English translation: "${line.english_translation || ''}"`,
@@ -70,11 +70,11 @@ export default function GrammarInsight({ line }) {
         >
           <SheetHeader>
             <SheetTitle className="text-[#2C2A29]">💡 Grammar Insight</SheetTitle>
-            <SheetDescription className="text-[#2C2A29]/70" dir="rtl">
+            <SheetDescription className="text-[#2C2A29]/70">
               {line.spanish_text}
             </SheetDescription>
           </SheetHeader>
-          <div className="px-4 pb-6" dir="rtl">
+          <div className="px-4 pb-6">
             {loading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-[#D96B43]" />
@@ -87,7 +87,7 @@ export default function GrammarInsight({ line }) {
                   {insight.explanation}
                 </p>
                 <div className="rounded-xl bg-[#D96B43]/10 p-3">
-                  <p className="text-xs font-semibold text-[#D96B43] mb-1">💡 דוגמה מהחיים</p>
+                  <p className="text-xs font-semibold text-[#D96B43] mb-1">💡 Real-life example</p>
                   <p className="text-sm text-[#2C2A29] whitespace-pre-line">{insight.example}</p>
                 </div>
               </div>
