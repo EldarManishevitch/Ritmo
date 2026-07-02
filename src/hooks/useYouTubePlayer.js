@@ -20,6 +20,12 @@ export function useYouTubePlayer(videoId, containerId) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [error, setError] = useState(null);
+  const [playbackRate, setPlaybackRateState] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sbPlaybackRate');
+      return saved ? parseFloat(saved) || 1 : 1;
+    } catch { return 1; }
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -39,6 +45,15 @@ export function useYouTubePlayer(videoId, containerId) {
             if (cancelled) return;
             setReady(true);
             setDuration(e.target.getDuration());
+            // Resume at the user's preferred playback rate
+            try {
+              const saved = localStorage.getItem('sbPlaybackRate');
+              const rate = saved ? parseFloat(saved) || 1 : 1;
+              if (rate && rate !== 1 && e.target.setPlaybackRate) {
+                e.target.setPlaybackRate(rate);
+              }
+              setPlaybackRateState(rate);
+            } catch { /* noop */ }
           },
           onStateChange: (e) => {
             setIsPlaying(e.data === YT.PlayerState.PLAYING);
@@ -88,6 +103,10 @@ export function useYouTubePlayer(videoId, containerId) {
 
   const play = useCallback(() => { try { playerRef.current?.playVideo(); } catch { /* noop */ } }, []);
   const pause = useCallback(() => { try { playerRef.current?.pauseVideo(); } catch { /* noop */ } }, []);
+  const setPlaybackRate = useCallback((rate) => {
+    try { playerRef.current?.setPlaybackRate?.(rate); } catch { /* noop */ }
+    setPlaybackRateState(rate);
+  }, []);
 
-  return { ready, currentTime, isPlaying, duration, error, seekTo, play, pause };
+  return { ready, currentTime, isPlaying, duration, error, playbackRate, seekTo, play, pause, setPlaybackRate };
 }
