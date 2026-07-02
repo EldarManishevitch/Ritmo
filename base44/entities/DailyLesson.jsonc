@@ -11,15 +11,15 @@
     },
     "song_artist": {
       "type": "string",
-      "description": "Artist of the lesson song"
+      "description": "Artist of today's lesson song"
     },
     "song_youtube_id": {
       "type": "string",
-      "description": "YouTube video ID of the lesson song"
+      "description": "YouTube video ID of today's lesson song"
     },
     "song_genre": {
       "type": "string",
-      "description": "Genre of the lesson song"
+      "description": "Genre of today's lesson song"
     },
     "lesson_date": {
       "type": "string",
@@ -32,17 +32,17 @@
         "type": "string"
       },
       "default": [],
-      "description": "LyricLine ids used for the lesson chorus activity"
+      "description": "LyricLine ids selected for this lesson"
     },
     "activity_step": {
       "type": "number",
       "default": 1,
-      "description": "Current step in the daily lesson flow"
+      "description": "Current step index in the lesson flow"
     },
     "quiz_score": {
       "type": "number",
       "default": 0,
-      "description": "Score achieved on the lesson quiz"
+      "description": "Quiz score for this lesson"
     },
     "words_tapped": {
       "type": "array",
@@ -50,12 +50,12 @@
         "type": "string"
       },
       "default": [],
-      "description": "Words the user tapped during the lesson"
+      "description": "Words the user tapped/looked up during the lesson"
     },
     "streak_awarded": {
       "type": "boolean",
       "default": false,
-      "description": "Whether the streak has already been awarded for this lesson"
+      "description": "Whether the streak/XP was already granted for this lesson"
     },
     "completed": {
       "type": "boolean",

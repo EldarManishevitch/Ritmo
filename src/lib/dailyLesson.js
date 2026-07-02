@@ -1,7 +1,7 @@
 import { base44 } from '@/api/base44Client';
 import { getProgress } from '@/lib/progress';
 import { getCurriculumTracks, getSongCompletions } from '@/lib/curriculum';
-import { upsertWeeklyXP } from '@/lib/weeklyXP';
+import { upsertWeeklyXp } from '@/lib/weeklyXp';
 
 const READY_STATUSES = ['ready', 'ready_synced', 'ready_unsynced', 'static'];
 
@@ -166,6 +166,7 @@ export async function completeTodayLesson({ quizScore, wordsTapped }) {
     last_activity_date: today,
     xp: newXp,
   });
+  upsertWeeklyXp({ amount: xpGain, source: 'lesson' });
   await base44.entities.DailyLesson.update(lesson.id, {
     completed: true,
     completed_at: new Date().toISOString(),
@@ -173,8 +174,6 @@ export async function completeTodayLesson({ quizScore, wordsTapped }) {
     words_tapped: wordsTapped || [],
     streak_awarded: true,
   });
-
-  upsertWeeklyXP(xpGain, { lessonCompleted: true }); // fire-and-forget
 
   // GenreStats upsert (entity created as part of the genre-cohorts feature)
   try {

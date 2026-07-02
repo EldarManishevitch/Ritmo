@@ -1,0 +1,77 @@
+{
+  "name": "VoiceAttempt",
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "description": "FK to RoleplaySession"
+    },
+    "turn_index": {
+      "type": "number",
+      "description": "Which dialogue turn (0-based)"
+    },
+    "transcript": {
+      "type": "string",
+      "description": "What the user said, from STT"
+    },
+    "expected_reply": {
+      "type": "string",
+      "description": "The suggested reply for this turn"
+    },
+    "score": {
+      "type": "number",
+      "default": 0,
+      "description": "0-100 comprehension score from AI"
+    },
+    "understood": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the AI judged the meaning communicated"
+    },
+    "feedback_en": {
+      "type": "string",
+      "description": "English tip"
+    },
+    "feedback_es": {
+      "type": "string",
+      "description": "Encouraging Spanish sentence"
+    },
+    "attempts": {
+      "type": "number",
+      "default": 1,
+      "description": "Attempt count for this turn"
+    },
+    "skipped": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the turn was skipped"
+    }
+  },
+  "required": [
+    "session_id",
+    "turn_index"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

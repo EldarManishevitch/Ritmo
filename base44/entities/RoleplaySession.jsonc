@@ -35,6 +35,11 @@
       },
       "default": []
     },
+    "voice_mode": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this session was practiced in voice mode"
+    },
     "completed": {
       "type": "boolean",
       "default": false
