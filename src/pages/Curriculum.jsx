@@ -8,6 +8,7 @@ import {
   levelMeta, LEVEL_ORDER, getNextSongInTrack,
 } from '@/lib/curriculum';
 import LevelCard from '@/components/curriculum/LevelCard';
+import SEOHead from '@/components/SEOHead';
 
 export default function Curriculum() {
   const [loading, setLoading] = useState(true);
@@ -68,6 +69,10 @@ export default function Curriculum() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 pb-24">
+      <SEOHead
+        title="Spanish CEFR curriculum A1 to C1 — learn through music | Spanish Beats"
+        description="A structured Spanish learning path from absolute beginner (A1) to advanced (C1) — using real reggaeton, bachata, and pop latino songs. Earn certificates at every level."
+      />
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Your Spanish journey</h1>

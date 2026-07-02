@@ -7,6 +7,7 @@ import { ACHIEVEMENTS } from '@/lib/achievements';
 import AddFriends from '@/components/friends/AddFriends';
 import InviteButton from '@/components/friends/InviteButton';
 import CertificatesSection from '@/components/certificate/CertificatesSection';
+import SEOHead from '@/components/SEOHead';
 
 const medal = (rank) => (rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null);
 
@@ -76,6 +77,10 @@ export default function Leaderboard() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 pb-24">
+      <SEOHead
+        title="Weekly Spanish learning leaderboard | Spanish Beats"
+        description="Compete with friends and learners worldwide. See who earned the most XP this week learning Spanish through reggaeton and bachata. Invite friends and climb the ranks."
+      />
       <div className="flex items-center gap-2 mb-1">
         <Trophy className="h-7 w-7 text-primary" />
         <h1 className="text-3xl font-bold text-foreground">Leaderboard</h1>

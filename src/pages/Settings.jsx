@@ -6,6 +6,7 @@ import NotificationPreferencesCard from '@/components/settings/NotificationPrefe
 import GenrePreferencesCard from '@/components/settings/GenrePreferencesCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import SEOHead from '@/components/SEOHead';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -74,6 +75,10 @@ export default function Settings() {
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-6">
+      <SEOHead
+        title="Settings | Spanish Beats"
+        description="Manage your Spanish Beats preferences — genre settings, daily reminder time, and learning goals."
+      />
       <h1 className="text-2xl font-bold text-foreground mb-6">Settings</h1>
 
       {/* Profile */}

@@ -39,6 +39,7 @@ export default function BlogLayout({ title, badge, children }) {
           <div className="flex items-center justify-center gap-4 mt-3">
             <Link to="/about" className="text-primary font-medium hover:underline">About</Link>
             <Link to="/contact" className="text-primary font-medium hover:underline">Contact</Link>
+            <Link to="/compare/spanish-beats-vs-duolingo" className="text-primary font-medium hover:underline">Compare</Link>
           </div>
         </div>
       </footer>

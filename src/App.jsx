@@ -35,6 +35,9 @@ import ReggaetonSlangGuide from './pages/ReggaetonSlangGuide';
 import DominicanSlangGuide from './pages/DominicanSlangGuide';
 import BestReggaetonSongs from './pages/BestReggaetonSongs';
 import BestBachataSongs from './pages/BestBachataSongs';
+import CompareDuolingo from './pages/CompareDuolingo';
+import CompareLingopie from './pages/CompareLingopie';
+import CompareLyricsTraining from './pages/CompareLyricsTraining';
 import About from './pages/About';
 import Contact from './pages/Contact';
 
@@ -79,6 +82,9 @@ const AuthenticatedApp = () => {
       <Route path="/dominican-slang-guide" element={<DominicanSlangGuide />} />
       <Route path="/best-reggaeton-songs" element={<BestReggaetonSongs />} />
       <Route path="/best-bachata-songs" element={<BestBachataSongs />} />
+      <Route path="/compare/spanish-beats-vs-duolingo" element={<CompareDuolingo />} />
+      <Route path="/compare/spanish-beats-vs-lingopie" element={<CompareLingopie />} />
+      <Route path="/compare/spanish-beats-vs-lyrics-training" element={<CompareLyricsTraining />} />
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
 

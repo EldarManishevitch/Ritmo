@@ -6,6 +6,7 @@ import { BookOpen, Volume2, Trash2, Loader2 } from 'lucide-react';
 import PullToRefresh from '@/components/PullToRefresh';
 import { displayLevel, daysToMastery, LEVEL_META, MASTERY_DATE_COUNT } from '@/lib/wordKnowledge';
 import { genreColor, genreLabel } from '@/lib/genres';
+import SEOHead from '@/components/SEOHead';
 
 export default function Vocab() {
   const [vocab, setVocab] = useState([]);
@@ -144,6 +145,10 @@ export default function Vocab() {
   return (
     <PullToRefresh onRefresh={load}>
     <div>
+      <SEOHead
+        title="My Spanish vocabulary from music | Spanish Beats"
+        description="All the Spanish words you've saved from songs — Bad Bunny, Aventura, Karol G and more. Review flashcards, track your mastery, and build real street Spanish."
+      />
       <div className="flex items-center gap-2 mb-6">
         <BookOpen className="h-6 w-6 text-primary" />
         <h1 className="text-2xl font-bold text-foreground">My Vocab</h1>

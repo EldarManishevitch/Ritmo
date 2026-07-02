@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { LogIn, Facebook } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
+import SEOHead from "@/components/SEOHead";
 
 export default function Login() {
   const handleGoogle = () => {
@@ -18,6 +19,12 @@ export default function Login() {
   return (
     <AuthLayout
       icon={LogIn}
+      seo={
+        <SEOHead
+          title="Sign in or create your account | Spanish Beats"
+          description="Join Spanish Beats and start learning Spanish through real music — Bad Bunny, Aventura, Karol G, and more. Free to start, no credit card needed."
+        />
+      }
       title="Welcome back"
       subtitle="Log in to your account"
       footer={

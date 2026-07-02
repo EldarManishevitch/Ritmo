@@ -4,6 +4,7 @@ import { Plus, MessageCircle, Loader2, Trash2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import SEOHead from '@/components/SEOHead';
 
 const SCENARIOS = [
   { type: 'restaurant', label: 'Restaurant', desc: 'Order food and chat with a waiter' },
@@ -49,6 +50,10 @@ export default function Conversations() {
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-6">
+      <SEOHead
+        title="Daily Spanish conversation phrases | Spanish Beats"
+        description="5 fresh Spanish phrases every day — real expressions from reggaeton and Latin culture. Hear them, practice them, and build conversational Spanish naturally."
+      />
       <h1 className="text-2xl font-bold text-foreground mb-1">Conversations</h1>
       <p className="text-sm text-muted-foreground mb-6">Practice Spanish with AI roleplay</p>
 

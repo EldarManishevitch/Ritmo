@@ -14,6 +14,7 @@ import { recordSongView } from '@/lib/searchHistory';
 import { getCachedSong } from '@/lib/songCache';
 import { prewarmWordTranslations } from '@/lib/aiHelpers';
 import ExerciseFlow from '@/components/exercise/ExerciseFlow';
+import SEOHead from '@/components/SEOHead';
 
 const STATUS_LABELS = {
   pending: 'Preparing song…',
@@ -264,6 +265,11 @@ export default function SongPage() {
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
+      <SEOHead
+        title={`${song.title} by ${song.artist} — Spanish lyrics with English translation | Spanish Beats`}
+        description={`Learn Spanish by singing '${song.title}' by ${song.artist}. Tap any word for an instant translation, sing along with karaoke lyrics, and quiz yourself on the vocabulary. CEFR level: ${song.cefr_level}.`}
+        ogImage={song.album_art_url}
+      />
       {/* Top bar */}
       <div className="safe-area-top flex items-center justify-between px-4 py-3 border-b border-border">
         <button onClick={() => navigate('/dashboard')} className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors">

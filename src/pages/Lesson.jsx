@@ -8,6 +8,7 @@ import ListenActivity from '@/components/lesson/ListenActivity';
 import QuizActivity from '@/components/lesson/QuizActivity';
 import FlashActivity from '@/components/lesson/FlashActivity';
 import LessonCompletion from '@/components/lesson/LessonCompletion';
+import SEOHead from '@/components/SEOHead';
 
 export default function Lesson() {
   const navigate = useNavigate();
@@ -62,9 +63,17 @@ export default function Lesson() {
     setStep(3);
   };
 
+  const seo = (
+    <SEOHead
+      title="Today's Spanish lesson — 5 minutes | Spanish Beats"
+      description="Your daily 5-minute Spanish lesson powered by music. Listen to a chorus, answer 5 quick questions, review 3 words. Build a streak and make Spanish a daily habit."
+    />
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
+        {seo}
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -115,6 +124,7 @@ export default function Lesson() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {seo}
       <div className="safe-area-top flex items-center px-4 py-3 border-b border-border">
         <button onClick={() => navigate('/dashboard')} className="p-2 -ml-2 rounded-lg hover:bg-muted">
           <ArrowLeft className="h-5 w-5" />

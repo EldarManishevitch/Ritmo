@@ -3,6 +3,7 @@ import { BookOpen, Loader2, CheckCircle2, RotateCw, Volume2, Flame } from 'lucid
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { recordWordSuccess, displayLevel, daysToMastery, LEVEL_META, MASTERY_DATE_COUNT } from '@/lib/wordKnowledge';
+import SEOHead from '@/components/SEOHead';
 
 export default function ReviewRoom() {
   const [words, setWords] = useState([]);
@@ -63,6 +64,10 @@ export default function ReviewRoom() {
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-6">
+      <SEOHead
+        title="Vocab review & flashcards | Spanish Beats"
+        description="Review the Spanish words you've missed. Flashcards, multiple choice quizzes, and spaced repetition — built around the real songs you're learning from."
+      />
       <h1 className="text-2xl font-bold text-foreground mb-1">Review</h1>
       <p className="text-sm text-muted-foreground mb-6">Flip the card, test yourself, mark mastered</p>
 

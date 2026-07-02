@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { UserPlus, Facebook } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
+import SEOHead from "@/components/SEOHead";
 
 export default function Register() {
   const handleGoogle = () => {
@@ -18,6 +19,12 @@ export default function Register() {
   return (
     <AuthLayout
       icon={UserPlus}
+      seo={
+        <SEOHead
+          title="Sign in or create your account | Spanish Beats"
+          description="Join Spanish Beats and start learning Spanish through real music — Bad Bunny, Aventura, Karol G, and more. Free to start, no credit card needed."
+        />
+      }
       title="Create your account"
       subtitle="Sign up to get started"
       footer={

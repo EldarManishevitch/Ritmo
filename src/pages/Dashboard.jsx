@@ -15,6 +15,7 @@ import CurriculumProgressWidget from '@/components/curriculum/CurriculumProgress
 import { isSongReady } from '@/lib/genres';
 import GenreStatsWidget from '@/components/dashboard/GenreStatsWidget';
 import GenrePicker from '@/components/dashboard/GenrePicker';
+import SEOHead from '@/components/SEOHead';
 
 export default function Dashboard() {
   const [songs, setSongs] = useState([]);
@@ -98,6 +99,10 @@ export default function Dashboard() {
   return (
     <PullToRefresh onRefresh={loadSongs}>
     <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-24">
+      <SEOHead
+        title="Learn Spanish by singing Bad Bunny, Aventura & Karol G | Spanish Beats"
+        description="Learn Spanish through real music — Bad Bunny, Aventura, Shakira, and more. Tap any word for an instant translation. Karaoke lyrics synced to YouTube. AI voice coach. Start free."
+      />
       <MilestoneCelebration />
       {/* Header */}
       <div className="mb-6">

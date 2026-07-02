@@ -11,6 +11,7 @@ import { speechSupported } from '@/hooks/useSpeechRecognition';
 import UnlockCelebration from '@/components/UnlockCelebration';
 import VoiceCoach from '@/components/roleplay/VoiceCoach';
 import VoiceHistory from '@/components/roleplay/VoiceHistory';
+import SEOHead from '@/components/SEOHead';
 
 export default function Roleplay() {
   const [session, setSession] = useState(null);
@@ -107,6 +108,10 @@ export default function Roleplay() {
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
+      <SEOHead
+        title="Practice speaking Spanish with AI | Spanish Beats"
+        description="Roleplay conversations in Spanish with an AI character set in Latin America. Speak your lines, get feedback, and build real confidence — at your CEFR level."
+      />
       {/* Header */}
       <div className="flex items-center gap-2 mb-1">
         <Mic className="h-5 w-5 text-primary" />
