@@ -11,24 +11,20 @@
     },
     "song_artist": {
       "type": "string",
-      "description": "Denormalized artist name"
+      "description": "Artist of the lesson song"
     },
     "song_youtube_id": {
       "type": "string",
-      "description": "Denormalized YouTube video ID"
+      "description": "YouTube video ID of the lesson song"
     },
     "song_genre": {
       "type": "string",
-      "description": "Denormalized genre"
+      "description": "Genre of the lesson song"
     },
     "lesson_date": {
       "type": "string",
       "format": "date",
       "description": "YYYY-MM-DD for this daily lesson"
-    },
-    "completed": {
-      "type": "boolean",
-      "default": false
     },
     "chorus_line_ids": {
       "type": "array",
@@ -36,12 +32,17 @@
         "type": "string"
       },
       "default": [],
-      "description": "LyricLine IDs used in the quiz"
+      "description": "LyricLine ids used for the lesson chorus activity"
+    },
+    "activity_step": {
+      "type": "number",
+      "default": 1,
+      "description": "Current step in the daily lesson flow"
     },
     "quiz_score": {
       "type": "number",
       "default": 0,
-      "description": "Quiz score out of 5"
+      "description": "Score achieved on the lesson quiz"
     },
     "words_tapped": {
       "type": "array",
@@ -49,17 +50,21 @@
         "type": "string"
       },
       "default": [],
-      "description": "Spanish words the user tapped in Activity 1"
+      "description": "Words the user tapped during the lesson"
     },
     "streak_awarded": {
       "type": "boolean",
       "default": false,
-      "description": "Whether the streak was already awarded for this lesson"
+      "description": "Whether the streak has already been awarded for this lesson"
     },
-    "activity_step": {
-      "type": "number",
-      "default": 1,
-      "description": "Which activity the user is currently on: 1, 2, or 3"
+    "completed": {
+      "type": "boolean",
+      "default": false
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the lesson was completed"
     }
   },
   "required": [

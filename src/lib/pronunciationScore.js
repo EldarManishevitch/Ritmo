@@ -7,6 +7,9 @@ export function normalize(str) {
     .trim();
 }
 
+// Backward-compatible alias used by SyncedLyrics
+export const normalizeSpanish = normalize;
+
 // Levenshtein distance between two strings
 export function levenshtein(a, b) {
   a = a || ''; b = b || '';

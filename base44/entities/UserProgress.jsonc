@@ -78,6 +78,10 @@
       "default": true,
       "description": "Whether daily conversations feature is unlocked"
     },
+    "user_email": {
+      "type": "string",
+      "description": "User's email for sending daily reminders"
+    },
     "subscription_status": {
       "type": "string",
       "enum": [
@@ -85,7 +89,7 @@
         "pro"
       ],
       "default": "free",
-      "description": "User's subscription tier \u2014 pro unlocks sing-along and voice coach"
+      "description": "Subscription tier gating Pro features"
     }
   },
   "required": [],

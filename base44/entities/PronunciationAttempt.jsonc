@@ -39,6 +39,7 @@
     },
     "overall_score": {
       "type": "number",
+      "default": 0,
       "description": "0-100 overall score"
     },
     "attempt_number": {
