@@ -36,6 +36,14 @@ Deno.serve(async (req) => {
     }
 
     // --- Scheduled mode ---
+    // Allow scheduled runs (no user) and admin direct calls; block non-admin users
+    // from triggering mass emails by hitting the endpoint directly.
+    let schedUser = null;
+    try { schedUser = await base44.auth.me(); } catch (e) { /* scheduled / no user */ }
+    if (schedUser && schedUser.role !== 'admin') {
+      return Response.json({ error: 'Forbidden — admin only' }, { status: 403 });
+    }
+
     const now = new Date();
     const currentHour = `${String(now.getUTCHours()).padStart(2, '0')}:00`;
     const today = now.toISOString().slice(0, 10);

@@ -64,6 +64,13 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'remove') {
+      let f;
+      try { f = await svc.entities.Friendship.get(body.friendshipId); }
+      catch { return Response.json({ error: 'Not found' }, { status: 404 }); }
+      // Ownership check: only the two people in the friendship can delete it
+      if (f.created_by_id !== user.id && f.friend_user_id !== user.id) {
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
       await svc.entities.Friendship.delete(body.friendshipId);
       return Response.json({ ok: true });
     }
