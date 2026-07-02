@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Search, ArrowRight } from 'lucide-react';
 import BlogLayout from '@/components/layout/BlogLayout';
-import SEOHead from '@/components/SEOHead';
 
 const SLANG = [
   { term: 'perreo', contextual: 'The grinding dance style; by extension, the genre itself', literal: 'from "perro" (dog)', english: 'grinding / doggy-style dancing', song: { title: 'Gasolina', artist: 'Daddy Yankee' } },
@@ -63,10 +62,6 @@ export default function ReggaetonSlangGuide() {
 
   return (
     <BlogLayout title="Reggaeton Slang & Spanish Curse Words — Ritmo" badge="Lyrics guide">
-      <SEOHead
-        title="Reggaeton Slang Dictionary — 50+ terms explained | Spanish Beats"
-        description="The complete guide to reggaeton slang — from 'bellakeo' to 'perreo' to 'flow'. Learn what Bad Bunny, J Balvin, and Daddy Yankee are actually saying."
-      />
       <h1 className="text-3xl font-bold text-foreground mb-4">Reggaeton Slang & Spanish Curse Words</h1>
       <p className="text-muted-foreground mb-6 leading-relaxed">If you've ever sung along to Bad Bunny, Karol G, Daddy Yankee, J Balvin, or Anuel AA and wondered what half the words mean, you're in the right place. Standard Spanish textbooks skip the slang. Reggaeton, Latin trap, and dembow are built on it. This is a searchable, song-grounded reference to the urban Spanish slang and curse words you'll hear in real lyrics.</p>
 
@@ -88,7 +83,9 @@ export default function ReggaetonSlangGuide() {
       <div className="space-y-3 mb-8">
         {filtered.map((s) => (
           <Card key={s.term} className="p-5">
-            <h3 className="text-lg font-bold text-foreground mb-2">{s.term}</h3>
+            <Link to={`/slang/${encodeURIComponent(s.term)}`}>
+              <h3 className="text-lg font-bold text-foreground mb-2 hover:text-primary transition-colors">{s.term}</h3>
+            </Link>
             <p className="text-sm text-foreground mb-1"><strong>Means:</strong> {s.contextual}</p>
             {s.english && <p className="text-sm text-muted-foreground mb-1"><strong>English equivalent:</strong> {s.english}</p>}
             {s.literal && <p className="text-sm text-muted-foreground mb-1"><strong>Literal:</strong> {s.literal}</p>}
@@ -121,6 +118,22 @@ export default function ReggaetonSlangGuide() {
         <p className="text-muted-foreground mb-4">Ritmo turns reggaeton, Latin trap, and dembow tracks into interactive Spanish lessons — line-by-line translations, pronunciation, and quizzes on the exact slang above.</p>
         <Link to="/login"><Button className="bg-primary text-white">Start learning Spanish with songs <ArrowRight className="h-4 w-4 ml-1" /></Button></Link>
       </Card>
+
+      <h2 className="text-xl font-bold text-foreground mb-4">Learn Spanish with these artists</h2>
+      <div className="grid sm:grid-cols-3 gap-3 mb-8">
+        <Link to="/learn-spanish-with/bad-bunny" className="block p-4 rounded-xl border border-border hover:border-primary transition-colors">
+          <h3 className="font-semibold text-foreground">Bad Bunny →</h3>
+          <p className="text-sm text-muted-foreground">Puerto Rican reggaeton slang</p>
+        </Link>
+        <Link to="/learn-spanish-with/karol-g" className="block p-4 rounded-xl border border-border hover:border-primary transition-colors">
+          <h3 className="font-semibold text-foreground">Karol G →</h3>
+          <p className="text-sm text-muted-foreground">Colombian reggaeton & slang</p>
+        </Link>
+        <Link to="/learn-spanish-with/aventura" className="block p-4 rounded-xl border border-border hover:border-primary transition-colors">
+          <h3 className="font-semibold text-foreground">Aventura &amp; Romeo Santos →</h3>
+          <p className="text-sm text-muted-foreground">Dominican bachata slang</p>
+        </Link>
+      </div>
     </BlogLayout>
   );
 }

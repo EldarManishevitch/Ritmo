@@ -19,12 +19,6 @@ export default function Login() {
   return (
     <AuthLayout
       icon={LogIn}
-      seo={
-        <SEOHead
-          title="Sign in or create your account | Spanish Beats"
-          description="Join Spanish Beats and start learning Spanish through real music — Bad Bunny, Aventura, Karol G, and more. Free to start, no credit card needed."
-        />
-      }
       title="Welcome back"
       subtitle="Log in to your account"
       footer={
@@ -36,6 +30,10 @@ export default function Login() {
         </>
       }
     >
+      <SEOHead
+        title="Sign in or create your account | Spanish Beats"
+        description="Join Spanish Beats and start learning Spanish through real music — Bad Bunny, Aventura, Karol G, and more. Free to start, no credit card needed."
+      />
       <Button
         variant="outline"
         className="w-full h-12 text-sm font-medium"

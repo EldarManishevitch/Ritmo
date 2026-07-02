@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Search, Heart, ArrowRight } from 'lucide-react';
 import BlogLayout from '@/components/layout/BlogLayout';
-import SEOHead from '@/components/SEOHead';
 
 const DR_TERMS = [
   { term: 'vaina', contextual: 'thing / stuff / situation', literal: 'pod, sheath', english: 'thing / whatever', category: 'slang', song: { title: 'Propuesta Indecente', artist: 'Romeo Santos', line: 'Esta vaina me tiene loco', translation: 'This whole thing has me crazy' } },
@@ -49,10 +48,6 @@ export default function DominicanSlangGuide() {
 
   return (
     <BlogLayout title="Dominican Slang in Bachata: A Listener's Guide — Ritmo" badge="Bachata lyrics guide">
-      <SEOHead
-        title="Dominican Spanish Slang Guide | Spanish Beats"
-        description="Dominican slang explained — the expressions you'll hear in bachata, from Aventura to Romeo Santos. Real street Spanish from the Dominican Republic."
-      />
       <h1 className="text-3xl font-bold text-foreground mb-4">Dominican Slang in Bachata Lyrics</h1>
       <p className="text-muted-foreground mb-6 leading-relaxed">Bachata isn't sung in textbook Spanish. It's sung in Dominican Spanish — fast, slangy, full of dropped 's' sounds and street vocabulary that even other Spanish speakers have to translate. If you've ever wondered what <em>"qué lo qué, mi jevita"</em> means, or why Romeo keeps saying <em>"dímelo"</em> between verses, this guide is for you.</p>
 
@@ -98,6 +93,18 @@ export default function DominicanSlangGuide() {
         <p className="text-muted-foreground mb-4">Ritmo turns Romeo Santos, Aventura, and Juan Luis Guerra tracks into interactive Spanish lessons — slang explained line-by-line as you listen.</p>
         <Link to="/login"><Button className="bg-primary text-white">Start with a Bachata you love <ArrowRight className="h-4 w-4 ml-1" /></Button></Link>
       </Card>
+
+      <h2 className="text-xl font-bold text-foreground mb-4">Learn Dominican Spanish with these artists</h2>
+      <div className="grid sm:grid-cols-2 gap-3 mb-8">
+        <Link to="/learn-spanish-with/aventura" className="block p-4 rounded-xl border border-border hover:border-primary transition-colors">
+          <h3 className="font-semibold text-foreground">Aventura &amp; Romeo Santos →</h3>
+          <p className="text-sm text-muted-foreground">The kings of modern bachata</p>
+        </Link>
+        <Link to="/learn-spanish-with/bad-bunny" className="block p-4 rounded-xl border border-border hover:border-primary transition-colors">
+          <h3 className="font-semibold text-foreground">Bad Bunny →</h3>
+          <p className="text-sm text-muted-foreground">Puerto Rican reggaeton — related Caribbean slang</p>
+        </Link>
+      </div>
     </BlogLayout>
   );
 }

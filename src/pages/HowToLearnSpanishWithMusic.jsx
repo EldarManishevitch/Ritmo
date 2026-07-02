@@ -4,7 +4,6 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Headphones, Repeat, BookOpen, Sparkles, Mic, Music, ArrowRight } from 'lucide-react';
 import BlogLayout from '@/components/layout/BlogLayout';
-import SEOHead from '@/components/SEOHead';
 
 const STEPS = [
   { icon: Headphones, title: '1. Pick a song you actually like', body: "Motivation beats method. Start with a Reggaeton hook or a Bachata chorus that's been stuck in your head — Bad Bunny, Romeo Santos, Karol G, Aventura. If the song bores you, you won't repeat it; repetition is the whole point." },
@@ -31,10 +30,6 @@ const FAQ = [
 export default function HowToLearnSpanishWithMusic() {
   return (
     <BlogLayout title="How to Learn Spanish with Music — Ritmo" badge="Guide">
-      <SEOHead
-        title="How to learn Spanish with music — the complete guide | Spanish Beats"
-        description="The science-backed method for learning Spanish through songs. How to use karaoke lyrics, tap-to-translate, and spaced repetition to build real fluency."
-      />
       <h1 className="text-3xl font-bold text-foreground mb-4">How to Learn Spanish with Music — A Practical Guide</h1>
       <p className="text-muted-foreground mb-8">A step-by-step guide to learning Spanish through Reggaeton, Bachata, and Latin pop. Why songs beat textbooks, how to study lyrics, and best genres to start.</p>
 
@@ -93,6 +88,18 @@ export default function HowToLearnSpanishWithMusic() {
 
       <h2 className="text-xl font-bold text-foreground mb-4">Related guides</h2>
       <div className="grid gap-3">
+        <Link to="/learn-spanish-with/bad-bunny" className="block p-4 rounded-xl border border-border hover:border-primary transition-colors">
+          <h3 className="font-semibold text-foreground">Learn Spanish with Bad Bunny →</h3>
+          <p className="text-sm text-muted-foreground">The most-streamed artist — perfect for Puerto Rican Spanish.</p>
+        </Link>
+        <Link to="/learn-spanish-with/aventura" className="block p-4 rounded-xl border border-border hover:border-primary transition-colors">
+          <h3 className="font-semibold text-foreground">Learn Spanish with Aventura &amp; Romeo Santos →</h3>
+          <p className="text-sm text-muted-foreground">Bachata kings — romantic vocabulary and Dominican Spanish.</p>
+        </Link>
+        <Link to="/learn-spanish-with/karol-g" className="block p-4 rounded-xl border border-border hover:border-primary transition-colors">
+          <h3 className="font-semibold text-foreground">Learn Spanish with Karol G →</h3>
+          <p className="text-sm text-muted-foreground">Colombian reggaeton — one of the clearest accents for learners.</p>
+        </Link>
         <Link to="/reggaeton-slang-guide" className="block p-4 rounded-xl border border-border hover:border-primary transition-colors">
           <h3 className="font-semibold text-foreground">Reggaeton slang guide →</h3>
           <p className="text-sm text-muted-foreground">The vocabulary every reggaeton lyric assumes you know.</p>

@@ -19,12 +19,6 @@ export default function Register() {
   return (
     <AuthLayout
       icon={UserPlus}
-      seo={
-        <SEOHead
-          title="Sign in or create your account | Spanish Beats"
-          description="Join Spanish Beats and start learning Spanish through real music — Bad Bunny, Aventura, Karol G, and more. Free to start, no credit card needed."
-        />
-      }
       title="Create your account"
       subtitle="Sign up to get started"
       footer={
@@ -36,6 +30,10 @@ export default function Register() {
         </>
       }
     >
+      <SEOHead
+        title="Sign in or create your account | Spanish Beats"
+        description="Join Spanish Beats and start learning Spanish through real music — Bad Bunny, Aventura, Karol G, and more. Free to start, no credit card needed."
+      />
       <Button
         variant="outline"
         className="w-full h-12 text-sm font-medium"

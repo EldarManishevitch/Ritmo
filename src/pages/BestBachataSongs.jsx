@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import BlogLayout from '@/components/layout/BlogLayout';
-import SEOHead from '@/components/SEOHead';
 
 const PICKS = [
   { rank: 1, title: 'Obsesión', artist: 'Aventura', level: 'Beginner', slang: '"es solo una obsesión" = it\'s just an obsession · "jevita" = girl', why: 'The chorus loops the same four-line confession over and over — by the third repeat you\'re singing the conditional tense ("sería", "daría") without realizing it. The verses are slow enough to hear every dropped \'s\'.' },
@@ -23,10 +22,6 @@ const PICKS = [
 export default function BestBachataSongs() {
   return (
     <BlogLayout title="10 Best Bachata Songs to Learn Spanish — Ritmo" badge="Song list">
-      <SEOHead
-        title="Best bachata songs to learn Spanish | Spanish Beats"
-        description="Learn Spanish through Aventura, Romeo Santos, and Prince Royce. The best bachata songs for every level — with lyrics, translations, and vocabulary."
-      />
       <h1 className="text-3xl font-bold text-foreground mb-4">10 Best Bachata Songs to Learn Spanish</h1>
       <p className="text-muted-foreground mb-8">10 Bachata tracks perfect for Spanish learners — clean enunciation, repetitive hooks, and Dominican slang from Romeo Santos, Aventura, and Juan Luis Guerra.</p>
 
@@ -61,6 +56,18 @@ export default function BestBachataSongs() {
         <p className="text-muted-foreground mb-4">Ritmo loads any Bachata track with synced lyrics, tap-to-translate words, and a per-section quiz so you actually remember the Dominican slang.</p>
         <Link to="/login"><Button className="bg-primary text-white">Start a song <ArrowRight className="h-4 w-4 ml-1" /></Button></Link>
       </Card>
+
+      <h2 className="text-xl font-bold text-foreground mb-4">Learn with these artists</h2>
+      <div className="grid sm:grid-cols-2 gap-3 mb-8">
+        <Link to="/learn-spanish-with/aventura" className="block p-4 rounded-xl border border-border hover:border-primary transition-colors">
+          <h3 className="font-semibold text-foreground">Aventura &amp; Romeo Santos →</h3>
+          <p className="text-sm text-muted-foreground">The kings of bachata</p>
+        </Link>
+        <Link to="/learn-spanish-with/bad-bunny" className="block p-4 rounded-xl border border-border hover:border-primary transition-colors">
+          <h3 className="font-semibold text-foreground">Bad Bunny →</h3>
+          <p className="text-sm text-muted-foreground">Collaborated on "Volví" with Aventura</p>
+        </Link>
+      </div>
     </BlogLayout>
   );
 }

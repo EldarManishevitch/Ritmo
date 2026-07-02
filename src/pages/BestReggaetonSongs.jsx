@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import BlogLayout from '@/components/layout/BlogLayout';
-import SEOHead from '@/components/SEOHead';
 
 const PICKS = [
   { rank: 1, title: 'Tití Me Preguntó', artist: 'Bad Bunny', level: 'Intermediate', slang: '"tití" = auntie · "jeva" = girl', why: "A spoken-word verse over a slow Dembow groove. Bad Bunny's diction is unusually clean here, and the chorus is built on one repeated question, so the grammar sticks fast." },
@@ -23,10 +22,6 @@ const PICKS = [
 export default function BestReggaetonSongs() {
   return (
     <BlogLayout title="10 Best Reggaeton Songs to Learn Spanish — Ritmo" badge="Song list">
-      <SEOHead
-        title="Best reggaeton songs to learn Spanish (by level) | Spanish Beats"
-        description="The best Bad Bunny, J Balvin, and Daddy Yankee songs for learning Spanish — ranked by CEFR level from A1 beginner to B2 advanced."
-      />
       <h1 className="text-3xl font-bold text-foreground mb-4">10 Best Reggaeton Songs to Learn Spanish</h1>
       <p className="text-muted-foreground mb-8">10 Reggaeton songs perfect for Spanish learners — slow hooks, clean slang, and unforgettable choruses from Bad Bunny, Karol G, Daddy Yankee, and Rauw Alejandro.</p>
 
@@ -61,6 +56,18 @@ export default function BestReggaetonSongs() {
         <p className="text-muted-foreground mb-4">Ritmo loads any Reggaeton track with synced lyrics, tap-to-translate words, and a per-section quiz so you actually remember the slang.</p>
         <Link to="/login"><Button className="bg-primary text-white">Start a song <ArrowRight className="h-4 w-4 ml-1" /></Button></Link>
       </Card>
+
+      <h2 className="text-xl font-bold text-foreground mb-4">Learn with these artists</h2>
+      <div className="grid sm:grid-cols-2 gap-3 mb-8">
+        <Link to="/learn-spanish-with/bad-bunny" className="block p-4 rounded-xl border border-border hover:border-primary transition-colors">
+          <h3 className="font-semibold text-foreground">Bad Bunny →</h3>
+          <p className="text-sm text-muted-foreground">Puerto Rican reggaeton</p>
+        </Link>
+        <Link to="/learn-spanish-with/karol-g" className="block p-4 rounded-xl border border-border hover:border-primary transition-colors">
+          <h3 className="font-semibold text-foreground">Karol G →</h3>
+          <p className="text-sm text-muted-foreground">Colombian reggaeton</p>
+        </Link>
+      </div>
     </BlogLayout>
   );
 }
