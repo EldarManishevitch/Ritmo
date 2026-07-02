@@ -1,5 +1,6 @@
 import { base44 } from '@/api/base44Client';
 import { unlockedAchievementIds, newlyUnlocked } from '@/lib/achievements';
+import { upsertWeeklyXP } from '@/lib/weeklyXP';
 
 export const LEVELS = [
   { xp: 2000, cefr: 'C1', title: 'Maestro' },
@@ -54,6 +55,8 @@ export async function awardQuizCompletion(score = 0, total = 0) {
     last_activity_date: today, songs_completed: songsCompleted, achievements,
   });
 
+  upsertWeeklyXP(xpGain); // fire-and-forget
+
   return { ...nextProgress, achievements, newAchievements: newOnes };
 }
 
@@ -68,6 +71,7 @@ async function awardXp(amount) {
     xp: newXp,
     ...(leveledUp ? { cefr_level: after.cefr } : {}),
   });
+  upsertWeeklyXP(amount); // fire-and-forget
   return { ...p, xp: newXp, leveledUp, newLevel: after };
 }
 

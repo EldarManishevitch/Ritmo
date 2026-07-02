@@ -2,6 +2,7 @@ import { base44 } from '@/api/base44Client';
 import { getCachedWordTranslation, prewarmWordTranslations } from '@/lib/aiHelpers';
 import { getProgress, levelForXp } from '@/lib/progress';
 import { unlockedAchievementIds, newlyUnlocked } from '@/lib/achievements';
+import { upsertWeeklyXP } from '@/lib/weeklyXP';
 
 const SPANISH_STOPWORDS = new Set([
   'el','la','los','las','un','una','unos','unas','de','del','al','a','en','y','o','que','se','su','sus',
@@ -220,6 +221,8 @@ export async function awardExerciseCompletion(quizScore = 0) {
     achievements,
     ...(leveledUp ? { cefr_level: newLevel.cefr } : {}),
   });
+
+  upsertWeeklyXP(xpGain, { songCompleted: true }); // fire-and-forget
 
   return { ...nextProgress, achievements, newAchievements: newOnes, leveledUp, newLevel, xpGain };
 }

@@ -1,6 +1,7 @@
 import { base44 } from '@/api/base44Client';
 import { getProgress } from '@/lib/progress';
 import { getCurriculumTracks, getSongCompletions } from '@/lib/curriculum';
+import { upsertWeeklyXP } from '@/lib/weeklyXP';
 
 const READY_STATUSES = ['ready', 'ready_synced', 'ready_unsynced', 'static'];
 
@@ -172,6 +173,8 @@ export async function completeTodayLesson({ quizScore, wordsTapped }) {
     words_tapped: wordsTapped || [],
     streak_awarded: true,
   });
+
+  upsertWeeklyXP(xpGain, { lessonCompleted: true }); // fire-and-forget
 
   // GenreStats upsert (entity created as part of the genre-cohorts feature)
   try {
