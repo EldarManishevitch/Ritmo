@@ -1,17 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Sparkles, BookOpen, RotateCcw, MessageCircle, Mic, Settings, Flame, LogOut, Music2, User, GraduationCap, Zap } from 'lucide-react';
+import { Sparkles, BookOpen, RotateCcw, MessageCircle, Mic, Settings, Flame, LogOut, Music2, User, GraduationCap, Zap, Languages } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { getProgress, levelForXp } from '@/lib/progress';
+import NavDropdown from '@/components/layout/NavDropdown';
 
 const tabs = [
   { path: '/dashboard', icon: Sparkles, label: 'Discover' },
   { path: '/lesson', icon: Zap, label: 'Daily' },
   { path: '/curriculum', icon: GraduationCap, label: 'Curriculum' },
-  { path: '/vocab', icon: BookOpen, label: 'Vocab' },
-  { path: '/review', icon: RotateCcw, label: 'Review' },
-  { path: '/conversations', icon: MessageCircle, label: 'Talk' },
+];
+
+const vocabDropdown = [
+  { path: '/vocab', icon: BookOpen, label: 'My Words' },
+  { path: '/review', icon: RotateCcw, label: 'Review Room' },
+];
+
+const practiceDropdown = [
+  { path: '/conversations', icon: MessageCircle, label: 'Conversations' },
   { path: '/roleplay', icon: Mic, label: 'Roleplay' },
+];
+
+const rightTabs = [
   { path: '/leaderboard', icon: User, label: 'Profile' },
   { path: '/settings', icon: Settings, label: 'Settings' },
 ];
@@ -40,6 +50,23 @@ export default function TopNav() {
         {/* Center nav */}
         <nav className="flex items-center gap-1 flex-1 justify-center overflow-x-auto no-scrollbar">
           {tabs.map(({ path, icon: Icon, label }) => {
+            const active = pathname.startsWith(path);
+            return (
+              <Link
+                key={path}
+                to={path}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                  active ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                <span className="hidden md:inline">{label}</span>
+              </Link>
+            );
+          })}
+          <NavDropdown icon={BookOpen} label="Vocab" items={vocabDropdown} />
+          <NavDropdown icon={Languages} label="Practice" items={practiceDropdown} />
+          {rightTabs.map(({ path, icon: Icon, label }) => {
             const active = pathname.startsWith(path);
             return (
               <Link
