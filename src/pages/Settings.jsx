@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Mail, User as UserIcon, Loader2, Trash2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import PushNotificationsCard from '@/components/settings/PushNotificationsCard';
 import NotificationPreferencesCard from '@/components/settings/NotificationPreferencesCard';
 import GenrePreferencesCard from '@/components/settings/GenrePreferencesCard';
 import { Button } from '@/components/ui/button';
@@ -107,9 +106,6 @@ export default function Settings() {
 
       {/* Music genre preferences */}
       <GenrePreferencesCard />
-
-      {/* Push notifications */}
-      <PushNotificationsCard />
 
       {/* About */}
       <div className="rounded-2xl bg-card border border-border p-5 mb-4">

@@ -9,6 +9,18 @@
     "song_title": {
       "type": "string"
     },
+    "song_artist": {
+      "type": "string",
+      "description": "Denormalized artist name"
+    },
+    "song_youtube_id": {
+      "type": "string",
+      "description": "Denormalized YouTube video ID"
+    },
+    "song_genre": {
+      "type": "string",
+      "description": "Denormalized genre"
+    },
     "lesson_date": {
       "type": "string",
       "format": "date",
@@ -17,6 +29,37 @@
     "completed": {
       "type": "boolean",
       "default": false
+    },
+    "chorus_line_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "LyricLine IDs used in the quiz"
+    },
+    "quiz_score": {
+      "type": "number",
+      "default": 0,
+      "description": "Quiz score out of 5"
+    },
+    "words_tapped": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Spanish words the user tapped in Activity 1"
+    },
+    "streak_awarded": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the streak was already awarded for this lesson"
+    },
+    "activity_step": {
+      "type": "number",
+      "default": 1,
+      "description": "Which activity the user is currently on: 1, 2, or 3"
     }
   },
   "required": [
