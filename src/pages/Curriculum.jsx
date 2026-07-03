@@ -16,26 +16,38 @@ export default function Curriculum() {
   const [tracks, setTracks] = useState([]);
   const [levelProgresses, setLevelProgresses] = useState([]);
   const [completions, setCompletions] = useState([]);
-  const [songs, setSongs] = useState([]);
+  const [songs, setSongs] = useState({});
   const [nextSong, setNextSong] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const [p, tr, lp, comps, allSongs] = await Promise.all([
+        const [p, tr, lp, comps] = await Promise.all([
           getProgress(),
           getCurriculumTracks(),
           getAllLevelProgress(),
           getSongCompletions(),
-          base44.entities.Song.list('-created_date', 200),
         ]);
         if (cancelled) return;
         setProgress(p);
         setTracks(tr);
         setLevelProgresses(lp);
         setCompletions(comps);
-        setSongs(allSongs);
+
+        // Resolve songs per track (single query per track, cached in state)
+        const songsMap = {};
+        await Promise.all(tr.map(async (track) => {
+          const ids = track.song_ids || [];
+          if (!ids.length) return;
+          try {
+            const trackSongs = await base44.entities.Song.filter({ id: { $in: ids } });
+            const byId = {};
+            trackSongs.forEach((s) => { byId[s.id] = s; });
+            songsMap[track.id] = ids.map((id) => byId[id]).filter(Boolean);
+          } catch { /* noop */ }
+        }));
+        if (!cancelled) setSongs(songsMap);
 
         const userLevel = p?.cefr_level || levelForXp(p?.xp || 0).cefr;
         const completedIds = comps.map((c) => c.song_id);
@@ -48,7 +60,6 @@ export default function Curriculum() {
   }, []);
 
   const userCefr = progress?.cefr_level || levelForXp(progress?.xp || 0).cefr;
-  const favGenres = Array.isArray(progress?.fav_genres) ? progress.fav_genres : [];
   const userLevelIndex = LEVEL_ORDER.indexOf(userCefr);
   const completedSongIds = useMemo(() => completions.map((c) => c.song_id), [completions]);
 
@@ -108,11 +119,9 @@ export default function Curriculum() {
               key={track.id}
               track={track}
               levelProgress={lp}
-              songs={songs}
-              completedSongIds={completedSongIds}
+              songs={songs[track.id] || []}
               isLocked={isLocked}
               userCefrLevel={userCefr}
-              favGenres={favGenres}
             />
           );
         })}

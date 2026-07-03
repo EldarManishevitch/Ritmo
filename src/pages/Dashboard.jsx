@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { Loader2, RefreshCw, Music2 } from 'lucide-react';
+import { Loader2, RefreshCw, Music2, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import SlangOfTheDay from '@/components/song/SlangOfTheDay';
 import DailyWordCard from '@/components/song/DailyWordCard';
@@ -20,20 +21,42 @@ import SEOHead from '@/components/SEOHead';
 export default function Dashboard() {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [refreshKey, setRefreshKey] = useState(0);
   const [userLevel, setUserLevel] = useState('A1');
   const [completedSongIds, setCompletedSongIds] = useState([]);
   const [favGenres, setFavGenres] = useState([]);
+  const [recommendedSongs, setRecommendedSongs] = useState([]);
+  const [challengeSongs, setChallengeSongs] = useState([]);
 
   const loadSongs = async () => {
     const list = await base44.entities.Song.list('-created_date', 100);
     setSongs(list.filter(isSongReady));
     try {
-      const [p, comps] = await Promise.all([getProgress(), getSongCompletions()]);
+      const [p, comps, tracks] = await Promise.all([getProgress(), getSongCompletions(), getCurriculumTracks()]);
       const level = p?.cefr_level || 'A1';
       setUserLevel(level);
       setCompletedSongIds(comps.map((c) => c.song_id));
       setFavGenres(Array.isArray(p?.fav_genres) ? p.fav_genres : []);
+
+      // Recommended For Your Level — from curriculum track
+      const userTrack = tracks.find((t) => t.cefr_level === level);
+      let recs = [];
+      if (userTrack?.song_ids?.length) {
+        const trackSongs = await base44.entities.Song.filter({ id: { $in: userTrack.song_ids } });
+        recs = trackSongs.filter((s) => ['ready', 'ready_synced', 'ready_unsynced', 'static', 'pending'].includes(s.sync_status));
+      } else {
+        const fallback = await base44.entities.Song.filter({ cefr_level: level, is_catalog_default: true });
+        recs = fallback.slice(0, 12);
+      }
+      setRecommendedSongs(recs);
+
+      // Explore Next Challenges — next CEFR level
+      const nextLevel = LEVEL_ORDER[LEVEL_ORDER.indexOf(level) + 1];
+      let challenges = [];
+      if (nextLevel) {
+        const nextSongs = await base44.entities.Song.filter({ cefr_level: nextLevel, is_catalog_default: true });
+        challenges = nextSongs.slice(0, 6);
+      }
+      setChallengeSongs(challenges);
     } catch { /* noop */ }
   };
 
@@ -67,28 +90,6 @@ export default function Dashboard() {
       return true;
     });
   }, [songs]);
-
-  // Recommended songs: pull from the user's curriculum track first (next incomplete highlighted),
-  // then fall back to any songs at the user's CEFR level.
-  const recommended = useMemo(() => {
-    if (deduped.length === 0) return [];
-    const favSet = new Set(favGenres);
-    const atLevel = deduped.filter((s) => songCefrLevel(s) === userLevel);
-    // Sort: fav genre first, then by created_date desc (already sorted)
-    const sorted = [...atLevel].sort((a, b) => {
-      const aFav = favSet.has(a.genre) ? 0 : 1;
-      const bFav = favSet.has(b.genre) ? 0 : 1;
-      return aFav - bFav;
-    });
-    const incomplete = sorted.filter((s) => !completedSongIds.includes(s.id));
-    const complete = sorted.filter((s) => completedSongIds.includes(s.id));
-    return [...incomplete, ...complete].slice(0, 6);
-  }, [deduped, userLevel, completedSongIds, favGenres, refreshKey]);
-
-  const challenges = useMemo(() => {
-    const aboveLevel = deduped.filter((s) => LEVEL_ORDER.indexOf(songCefrLevel(s)) > LEVEL_ORDER.indexOf(userLevel));
-    return aboveLevel.slice(0, 3);
-  }, [deduped, userLevel]);
 
   const exploreGenres = useMemo(() => {
     if (deduped.length === 0 || favGenres.length === 0) return [];
@@ -137,28 +138,40 @@ export default function Dashboard() {
         <div className="flex items-center justify-between mb-1">
           <h2 className="text-lg font-bold text-foreground">🔥 Recommended For Your Level 🔥</h2>
           <button
-            onClick={() => setRefreshKey((k) => k + 1)}
+            onClick={() => loadSongs()}
             className="p-2 rounded-lg hover:bg-muted transition-colors"
-            title="Refresh for a new mix"
+            title="Refresh"
           >
             <RefreshCw className="h-4 w-4 text-muted-foreground" />
           </button>
         </div>
         <p className="text-sm text-muted-foreground mb-4">
-          6 songs picked for you · tuned for <span className="font-semibold">{userLevel}</span> · refreshed manually for a new mix.
+          Songs from your <span className="font-semibold">{userLevel}</span> curriculum track.
         </p>
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-        ) : recommended.length === 0 ? (
+        ) : recommendedSongs.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {recommended.slice(0, 6).map((song) => (
-              <SongGridCard key={song.id} song={song} />
-            ))}
-          </div>
+          <>
+            <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 sm:hidden">
+              {recommendedSongs.map((song) => (
+                <div key={song.id} className="min-w-[160px] flex-shrink-0">
+                  <SongGridCard song={song} />
+                </div>
+              ))}
+            </div>
+            <div className="hidden sm:grid grid-cols-3 gap-4">
+              {recommendedSongs.map((song) => (
+                <SongGridCard key={song.id} song={song} />
+              ))}
+            </div>
+            <Link to="/curriculum" className="inline-flex items-center gap-1 text-sm font-semibold text-primary mt-4 hover:underline">
+              View full curriculum <ArrowRight className="h-4 w-4" />
+            </Link>
+          </>
         )}
       </div>
 
@@ -182,14 +195,14 @@ export default function Dashboard() {
       )}
 
       {/* Explore Next Challenges */}
-      {challenges.length > 0 && (
+      {challengeSongs.length > 0 && (
         <div className="mb-8">
           <h2 className="text-lg font-bold text-foreground mb-1">Explore Next Challenges 🚀</h2>
           <p className="text-sm text-muted-foreground mb-4">
-            stretch picks above {userLevel} — fully unlocked, dive in whenever you're feeling brave.
+            Stretch picks above {userLevel} — fully unlocked, dive in whenever you're feeling brave.
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {challenges.map((song) => (
+            {challengeSongs.map((song) => (
               <SongGridCard key={song.id} song={song} levelUp />
             ))}
           </div>
