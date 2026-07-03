@@ -29,9 +29,13 @@ const rightTabs = [
 export default function TopNav() {
   const { pathname } = useLocation();
   const [p, setP] = useState(null);
+  const [authed, setAuthed] = useState(true);
 
   useEffect(() => {
-    getProgress().then(setP).catch(() => {});
+    base44.auth.isAuthenticated().then((ok) => {
+      setAuthed(ok);
+      if (ok) getProgress().then(setP).catch(() => {});
+    }).catch(() => setAuthed(false));
   }, []);
 
   const level = p ? levelForXp(p.xp || 0) : null;
@@ -99,13 +103,19 @@ export default function TopNav() {
               </div>
             </>
           )}
-          <button
-            onClick={() => base44.auth.logout()}
-            className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
-            title="Log out"
-          >
-            <LogOut className="h-5 w-5" />
-          </button>
+          {authed ? (
+            <button
+              onClick={() => base44.auth.logout()}
+              className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
+              title="Log out"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          ) : (
+            <Link to="/login" className="text-sm font-medium text-primary px-3 py-1.5 rounded-full hover:bg-primary/10 transition-colors">
+              Sign in
+            </Link>
+          )}
         </div>
       </div>
     </header>

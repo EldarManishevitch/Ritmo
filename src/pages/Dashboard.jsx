@@ -157,14 +157,14 @@ export default function Dashboard() {
         ) : (
           <>
             <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 sm:hidden">
-              {recommendedSongs.map((song) => (
+              {recommendedSongs.slice(0, 6).map((song) => (
                 <div key={song.id} className="min-w-[160px] flex-shrink-0">
                   <SongGridCard song={song} />
                 </div>
               ))}
             </div>
             <div className="hidden sm:grid grid-cols-3 gap-4">
-              {recommendedSongs.map((song) => (
+              {recommendedSongs.slice(0, 6).map((song) => (
                 <SongGridCard key={song.id} song={song} />
               ))}
             </div>

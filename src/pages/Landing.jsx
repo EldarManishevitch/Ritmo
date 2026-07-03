@@ -1,8 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Music, MousePointer, Music2, GraduationCap } from 'lucide-react';
+import { MousePointer, Music2, GraduationCap, Music } from 'lucide-react';
 import SEOHead from '@/components/SEOHead';
 import InteractiveLyrics from '@/components/landing/InteractiveLyrics';
+import TopNav from '@/components/layout/TopNav';
 
 export default function Landing() {
   return (
@@ -12,28 +13,8 @@ export default function Landing() {
         description="Learn Spanish through real music — Bad Bunny, Aventura, Shakira, and more. Tap any word for an instant translation. Karaoke lyrics synced to YouTube. AI voice coach. Start free."
       />
 
-      {/* Nav */}
-      <header className="safe-area-top sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2 font-bold text-foreground">
-            <Music className="h-5 w-5 text-primary" />
-            Spanish Beats
-          </div>
-          <div className="flex items-center gap-4">
-            <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Pricing
-            </Link>
-            <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Sign in
-            </Link>
-            <Link to="/register">
-              <button className="bg-primary text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-primary/90 transition-colors">
-                Try free
-              </button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      {/* Top nav */}
+      <TopNav />
 
       {/* Hero */}
       <section className="max-w-3xl mx-auto px-4 pt-16 pb-12 text-center">
