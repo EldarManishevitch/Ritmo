@@ -89,7 +89,16 @@ export default function SlangTermPage() {
             <h2 className="text-lg font-bold text-foreground mb-3">Heard in music</h2>
             <div className="rounded-2xl bg-slate-900 p-6">
               {data.example_song_title && (
-                <p className="text-xs text-white/50 mb-3">As heard in "{data.example_song_title}" by {data.example_song_artist}</p>
+                <p className="text-xs text-white/50 mb-3">
+                  As heard in{' '}
+                  {data.song_id ? (
+                    <Link to={`/song/${data.song_id}`} className="text-primary/80 hover:text-primary hover:underline">
+                      "{data.example_song_title}" by {data.example_song_artist}
+                    </Link>
+                  ) : (
+                    <>"{data.example_song_title}" by {data.example_song_artist}</>
+                  )}
+                </p>
               )}
               <p className="text-lg text-white font-medium leading-relaxed mb-3">"{data.lyrics_snippet}"</p>
               {data.lyrics_snippet_translation && (

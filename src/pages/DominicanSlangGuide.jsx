@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { base44 } from '@/api/base44Client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,19 @@ const CATEGORY_COLOR = { slang: 'default', expression: 'secondary', romantic: 'd
 
 export default function DominicanSlangGuide() {
   const [q, setQ] = useState('');
+  const [songIdMap, setSongIdMap] = useState({});
+
+  useEffect(() => {
+    base44.entities.SlangDictionary.filter({}, 'term', 500)
+      .then((list) => {
+        const map = {};
+        (list || []).forEach((s) => {
+          if (s.song_id) map[s.term?.toLowerCase()] = s.song_id;
+        });
+        setSongIdMap(map);
+      })
+      .catch(() => {});
+  }, []);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -79,7 +93,13 @@ export default function DominicanSlangGuide() {
             <p className="text-sm text-muted-foreground mb-2"><strong>English:</strong> {t.english}</p>
             {t.song && (
               <div className="mt-2 pt-2 border-t border-border">
-                <p className="text-xs text-primary font-medium">Heard in {t.song.title} — {t.song.artist}</p>
+                <p className="text-xs text-primary font-medium">
+                  {songIdMap[t.term.toLowerCase()] ? (
+                    <Link to={`/song/${songIdMap[t.term.toLowerCase()]}`} className="hover:underline">Heard in {t.song.title} — {t.song.artist}</Link>
+                  ) : (
+                    <>Heard in {t.song.title} — {t.song.artist}</>
+                  )}
+                </p>
                 {t.song.line && <p className="text-sm text-foreground italic mt-1">"{t.song.line}"</p>}
                 {t.song.translation && <p className="text-xs text-muted-foreground mt-0.5">{t.song.translation}</p>}
               </div>

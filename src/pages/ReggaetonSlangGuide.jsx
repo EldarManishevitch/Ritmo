@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { base44 } from '@/api/base44Client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -45,6 +46,19 @@ const INTENSITY_COLOR = { mild: 'secondary', strong: 'default', 'very strong': '
 
 export default function ReggaetonSlangGuide() {
   const [q, setQ] = useState('');
+  const [songIdMap, setSongIdMap] = useState({});
+
+  useEffect(() => {
+    base44.entities.SlangDictionary.filter({}, 'term', 500)
+      .then((list) => {
+        const map = {};
+        (list || []).forEach((s) => {
+          if (s.song_id) map[s.term?.toLowerCase()] = s.song_id;
+        });
+        setSongIdMap(map);
+      })
+      .catch(() => {});
+  }, []);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -95,7 +109,13 @@ export default function ReggaetonSlangGuide() {
             {s.english && <p className="text-sm text-muted-foreground mb-1"><strong>English equivalent:</strong> {s.english}</p>}
             {s.literal && <p className="text-sm text-muted-foreground mb-1"><strong>Literal:</strong> {s.literal}</p>}
             {s.song && (
-              <p className="text-xs text-primary font-medium mt-2">Heard in "{s.song.title}" — {s.song.artist}</p>
+              <p className="text-xs text-primary font-medium mt-2">
+                {songIdMap[s.term.toLowerCase()] ? (
+                  <Link to={`/song/${songIdMap[s.term.toLowerCase()]}`} className="hover:underline">Heard in "{s.song.title}" — {s.song.artist}</Link>
+                ) : (
+                  <>Heard in "{s.song.title}" — {s.song.artist}</>
+                )}
+              </p>
             )}
           </Card>
         ))}

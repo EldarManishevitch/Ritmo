@@ -34,6 +34,10 @@
       "type": "string",
       "description": "Artist of the example song"
     },
+    "song_id": {
+      "type": "string",
+      "description": "FK to the Song entity where this slang appears (null if no match found)"
+    },
     "lyrics_snippet": {
       "type": "string",
       "description": "Short lyric excerpt using the term"
