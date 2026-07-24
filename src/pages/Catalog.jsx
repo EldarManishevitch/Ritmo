@@ -11,6 +11,17 @@ import SEOHead from '@/components/SEOHead';
 const GENRES = ['All', 'Reggaeton', 'Pop', 'Latin Pop', 'Bachata', 'Salsa', 'Trap'];
 const LEVELS = ['All', 'A1', 'A2', 'B1', 'B2', 'C1'];
 
+// Song.genre stores lowercase values that don't all match the display labels
+// above 1:1 (e.g. 'Pop' vs 'pop latino', 'Trap' vs 'trap latino').
+const GENRE_TO_VALUE = {
+  Reggaeton: 'reggaeton',
+  Pop: 'pop latino',
+  'Latin Pop': 'pop latino',
+  Bachata: 'bachata',
+  Salsa: 'salsa',
+  Trap: 'trap latino',
+};
+
 export default function Catalog() {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -49,8 +60,8 @@ export default function Catalog() {
     const matchSearch = !search ||
       s.title?.toLowerCase().includes(search.toLowerCase()) ||
       s.artist?.toLowerCase().includes(search.toLowerCase());
-    const matchGenre = genre === 'All' || s.genre === genre;
-    const matchLevel = level === 'All' || s.difficulty === level;
+    const matchGenre = genre === 'All' || s.genre === GENRE_TO_VALUE[genre];
+    const matchLevel = level === 'All' || s.cefr_level === level;
     return matchSearch && matchGenre && matchLevel;
   });
 
