@@ -26,7 +26,8 @@ export default function GrammarInsight({ line, pulse = false, showBadge = false,
           'Explain the grammar structure of the following Spanish lyric line IN ENGLISH. ' +
           'Be practical, casual, and fun. Mention the specific tense/mood used (e.g. Subjuntivo, Pretérito) and why. ' +
           'Then give a short real-life usage example in Spanish + English translation (e.g. ordering a beer, chatting with a friend). ' +
-          'Keep the whole thing under 120 words.\n\n' +
+          'Finally, point out one specific way an English speaker\'s habits would cause a mistake here — name the English instinct, then what Spanish actually does and why (e.g. "English speakers drop the subjunctive here — Spanish keeps it because…"). Be concrete and short. ' +
+          'Keep the whole thing under 150 words.\n\n' +
           `Spanish line: "${line.spanish_text}"\n` +
           `English translation: "${line.english_translation || ''}"`,
         response_json_schema: {
@@ -34,8 +35,9 @@ export default function GrammarInsight({ line, pulse = false, showBadge = false,
           properties: {
             explanation: { type: 'string' },
             example: { type: 'string' },
+            l1_interference_tip: { type: 'string' },
           },
-          required: ['explanation', 'example'],
+          required: ['explanation', 'example', 'l1_interference_tip'],
         },
       });
       setInsight(res);
@@ -100,6 +102,12 @@ export default function GrammarInsight({ line, pulse = false, showBadge = false,
                   <p className="text-xs font-semibold text-[#6C6BD4] mb-1">💡 Real-life example</p>
                   <p className="text-sm text-[#23252F] whitespace-pre-line">{insight.example}</p>
                 </div>
+                {insight.l1_interference_tip && (
+                  <div className="rounded-xl bg-amber-100/70 border border-amber-200 p-3">
+                    <p className="text-xs font-semibold text-amber-700 mb-1">⚠️ Watch out (English speakers)</p>
+                    <p className="text-sm text-[#23252F] whitespace-pre-line">{insight.l1_interference_tip}</p>
+                  </div>
+                )}
               </div>
             ) : null}
           </div>
