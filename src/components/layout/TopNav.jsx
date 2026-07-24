@@ -22,11 +22,12 @@ const practiceDropdown = [
   { path: '/roleplay', icon: Mic, label: 'Roleplay' },
 ];
 
-const rightTabs = [
-  { path: '/pricing', icon: CreditCard, label: 'Pricing' },
+const profileDropdown = [
   { path: '/leaderboard', icon: User, label: 'Profile' },
-  { path: '/settings', icon: Settings, label: 'Settings' },
+  { path: '/pricing', icon: CreditCard, label: 'Pricing' },
 ];
+
+const settingsTab = { path: '/settings', icon: Settings, label: 'Settings' };
 
 export default function TopNav() {
   const { pathname } = useLocation();
@@ -72,11 +73,12 @@ export default function TopNav() {
           })}
           <NavDropdown icon={BookOpen} label="Vocab" items={vocabDropdown} />
           <NavDropdown icon={Languages} label="Practice" items={practiceDropdown} />
-          {rightTabs.map(({ path, icon: Icon, label }) => {
+          <NavDropdown icon={User} label="Profile" items={profileDropdown} />
+          {(() => {
+            const { path, icon: Icon, label } = settingsTab;
             const active = pathname.startsWith(path);
             return (
               <Link
-                key={path}
                 to={path}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                   active ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
@@ -86,7 +88,7 @@ export default function TopNav() {
                 <span className="hidden md:inline">{label}</span>
               </Link>
             );
-          })}
+          })()}
         </nav>
 
         {/* Right: progress + logout */}
