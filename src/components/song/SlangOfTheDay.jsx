@@ -58,9 +58,12 @@ export default function SlangOfTheDay({ favGenres = [] }) {
   return (
     <CollapsibleCard
       header={
-        <span className="inline-block text-xs font-semibold text-white bg-[#2d3e4e] px-2.5 py-1 rounded-md">
-          Slang of the Day
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="inline-block text-xs font-semibold text-white bg-[#2d3e4e] px-2.5 py-1 rounded-md">
+            Slang of the Day
+          </span>
+          <span className="text-base font-bold text-foreground">{slang.term}</span>
+        </div>
       }
     >
       <div className="px-5 pb-4">
