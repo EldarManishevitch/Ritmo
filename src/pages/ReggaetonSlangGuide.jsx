@@ -1,6 +1,6 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { useSlangSongIdMap } from '@/data/hooks/useSlangDictionary';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -47,19 +47,7 @@ const INTENSITY_COLOR = { mild: 'secondary', strong: 'default', 'very strong': '
 
 export default function ReggaetonSlangGuide() {
   const [q, setQ] = useState('');
-  const [songIdMap, setSongIdMap] = useState({});
-
-  useEffect(() => {
-    base44.entities.SlangDictionary.filter({}, 'term', 500)
-      .then((list) => {
-        const map = {};
-        (list || []).forEach((s) => {
-          if (s.song_id) map[s.term?.toLowerCase()] = s.song_id;
-        });
-        setSongIdMap(map);
-      })
-      .catch(() => {});
-  }, []);
+  const { map: songIdMap } = useSlangSongIdMap();
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
