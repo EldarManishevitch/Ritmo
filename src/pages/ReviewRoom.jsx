@@ -1,29 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { BookOpen, Loader2, CheckCircle2, RotateCw, Volume2, Flame } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { useSavedWordsFilter } from '@/data/hooks/useSavedWords';
+import { usePracticeFlagsList } from '@/data/hooks/usePracticeFlags';
 import { Button } from '@/components/ui/button';
 import { recordWordSuccess, displayLevel, daysToMastery, LEVEL_META, MASTERY_DATE_COUNT } from '@/lib/wordKnowledge';
 import SEOHead from '@/components/SEOHead';
 
 export default function ReviewRoom() {
+  // words is a local, actively-mutated review deck (cards get removed as they're
+  // mastered) — seeded from the query below, not bound to it directly.
   const [words, setWords] = useState([]);
-  const [flags, setFlags] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
 
-  const load = async () => {
-    const [w, f] = await Promise.all([
-      base44.entities.SavedWord.filter({ mastered: false }, '-created_date', 100),
-      base44.entities.PracticeFlag.list('-created_date', 50),
-    ]);
-    setWords(w);
-    setFlags(f);
-  };
+  const { data: initialWords, isLoading: wordsLoading } = useSavedWordsFilter({ mastered: false }, '-created_date', 100);
+  const { data: flags = [], isLoading: flagsLoading } = usePracticeFlagsList('-created_date', 50);
+  const loading = wordsLoading || flagsLoading;
 
   useEffect(() => {
-    load().catch(() => {}).finally(() => setLoading(false));
-  }, []);
+    if (initialWords) setWords(initialWords);
+  }, [initialWords]);
 
   const current = words[index];
 
