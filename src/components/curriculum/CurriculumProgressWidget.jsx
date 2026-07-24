@@ -7,7 +7,7 @@ export default function CurriculumProgressWidget({ cefrLevel, songsCompleted, to
   const meta = levelMeta(cefrLevel);
   const pct = Math.round((songsCompleted / totalSlots) * 100);
   return (
-    <div className="rounded-xl border border-border bg-card p-4 mb-6">
+    <div className="rounded-xl border border-border bg-card p-4 mb-4">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <GraduationCap className="h-5 w-5 text-primary" />

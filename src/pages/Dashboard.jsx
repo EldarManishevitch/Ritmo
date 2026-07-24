@@ -119,19 +119,20 @@ export default function Dashboard() {
       </div>
 
       {/* Slang of the Day */}
-      <div className="mb-6">
+      <div className="mb-4">
         <SlangOfTheDay favGenres={favGenres} />
       </div>
 
-      {/* Add a New Song */}
-      <div className="mb-8">
-        <AddSongSection />
-      </div>
-
-      {/* Curriculum progress widget */}
+      {/* Continue where you left off */}
       <CurriculumProgressWidget cefrLevel={userLevel} songsCompleted={completedSongIds.length} />
 
+      {/* This week's goal */}
       <GenreStatsWidget favGenres={favGenres} onToggleGenre={handleToggleGenre} />
+
+      {/* Add a New Song */}
+      <div className="mb-4">
+        <AddSongSection />
+      </div>
 
       {/* Recommended For Your Level */}
       <div className="mb-8">

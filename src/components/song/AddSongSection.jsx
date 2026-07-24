@@ -16,14 +16,14 @@ export default function AddSongSection() {
       <p className="text-sm text-muted-foreground mb-4">
         Search YouTube for a Spanish track, pick the right video, and we'll auto-generate lyrics, translations, and chorus markings.
       </p>
-      <div className="flex gap-2">
+      <div className="flex items-center gap-3">
         <Input
           placeholder="e.g. Shakira Hips Don't Lie"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && search()}
           disabled={searching || adding}
-          className="flex-1"
+          className="flex-1 min-w-0"
         />
         <button
           onClick={search}

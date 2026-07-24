@@ -28,12 +28,12 @@ export default function GenreStatsWidget({ favGenres = [], onToggleGenre }) {
   const maxXp = Math.max(1, ...stats.map((s) => s.total_xp || 0));
 
   if (loading) {
-    return <div className="rounded-2xl bg-card border border-border p-5 mb-6 animate-pulse h-32" />;
+    return <div className="rounded-2xl bg-card border border-border p-5 mb-4 animate-pulse h-32" />;
   }
 
   if (visibleGenres.length === 0) {
     return (
-      <div className="rounded-2xl bg-card border border-border p-5 mb-6">
+      <div className="rounded-2xl bg-card border border-border p-5 mb-4">
         <div className="flex items-center gap-2 mb-3">
           <Music className="h-4 w-4 text-primary" />
           <h2 className="text-sm font-bold text-foreground">Pick your music taste</h2>
@@ -45,7 +45,7 @@ export default function GenreStatsWidget({ favGenres = [], onToggleGenre }) {
   }
 
   return (
-    <div className="rounded-2xl bg-card border border-border p-5 mb-6">
+    <div className="rounded-2xl bg-card border border-border p-5 mb-4">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-bold text-foreground">Your genre stats</h2>
         <button
