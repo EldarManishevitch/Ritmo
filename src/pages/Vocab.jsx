@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { base44 } from '@/api/base44Client';
+import React, { useState, useMemo } from 'react';
+import { useSavedWordsList, useDeleteSavedWord, useUpdateSavedWord } from '@/data/hooks/useSavedWords';
+import { useSongsList } from '@/data/hooks/useSongs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Volume2, Trash2, Loader2, Lock } from 'lucide-react';
@@ -11,25 +12,13 @@ import { genreColor, genreLabel } from '@/lib/genres';
 import SEOHead from '@/components/SEOHead';
 
 export default function Vocab() {
-  const [vocab, setVocab] = useState([]);
-  const [songs, setSongs] = useState([]);
+  const { data: vocab = [], isLoading: vocabLoading } = useSavedWordsList('-created_date', 200);
+  const { data: songs = [], isLoading: songsLoading } = useSongsList('-created_date', 200);
+  const loading = vocabLoading || songsLoading;
   const [genreFilter, setGenreFilter] = useState('all');
-  const [loading, setLoading] = useState(true);
   const { isPro } = useSubscription();
-
-  const load = async () => {
-    try {
-      const [wordData, songData] = await Promise.all([
-        base44.entities.SavedWord.list('-created_date', 200),
-        base44.entities.Song.list('-created_date', 200),
-      ]);
-      setVocab(wordData || []);
-      setSongs(songData || []);
-    } catch { /* noop */ }
-    setLoading(false);
-  };
-
-  useEffect(() => { load(); }, []);
+  const deleteSavedWord = useDeleteSavedWord();
+  const updateSavedWord = useUpdateSavedWord();
 
   const speak = (w) => {
     const u = new SpeechSynthesisUtterance(w);
@@ -40,21 +29,20 @@ export default function Vocab() {
 
   const remove = async (id) => {
     try {
-      await base44.entities.SavedWord.delete(id);
-      setVocab((v) => v.filter((x) => x.id !== id));
+      await deleteSavedWord.mutateAsync(id);
     } catch { /* noop */ }
   };
 
   const toggleMastered = async (item) => {
     const nowMastered = displayLevel(item) !== 'mastered';
     try {
-      await base44.entities.SavedWord.update(item.id, {
-        mastered: nowMastered,
-        knowledge_level: nowMastered ? 'mastered' : (item.success_dates?.length ? 'known' : 'new'),
+      await updateSavedWord.mutateAsync({
+        id: item.id,
+        patch: {
+          mastered: nowMastered,
+          knowledge_level: nowMastered ? 'mastered' : (item.success_dates?.length ? 'known' : 'new'),
+        },
       });
-      setVocab((v) => v.map((x) => x.id === item.id
-        ? { ...x, mastered: nowMastered, knowledge_level: nowMastered ? 'mastered' : (x.success_dates?.length ? 'known' : 'new') }
-        : x));
     } catch { /* noop */ }
   };
 
