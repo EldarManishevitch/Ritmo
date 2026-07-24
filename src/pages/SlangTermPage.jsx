@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Volume2, ArrowRight, Loader2, BookOpen } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { useSlangTerms } from '@/data/hooks/useSlangDictionary';
 import BlogLayout from '@/components/layout/BlogLayout';
 import SEOHead from '@/components/SEOHead';
 import JsonLd from '@/components/JsonLd';
@@ -10,22 +10,11 @@ import PageNotFound from '@/lib/PageNotFound';
 
 export default function SlangTermPage() {
   const { term } = useParams();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const results = await base44.entities.SlangDictionary.filter({}, 'term', 500);
-        if (cancelled) return;
-        const match = results.find((s) => s.term?.toLowerCase() === decodeURIComponent(term).toLowerCase());
-        if (match) setData(match);
-      } catch { /* noop */ }
-      if (!cancelled) setLoading(false);
-    })();
-    return () => { cancelled = true; };
-  }, [term]);
+  const { data: results, isLoading: loading } = useSlangTerms();
+  const data = useMemo(
+    () => results?.find((s) => s.term?.toLowerCase() === decodeURIComponent(term).toLowerCase()) ?? null,
+    [results, term]
+  );
 
   const speak = (text) => {
     const u = new SpeechSynthesisUtterance(text);
