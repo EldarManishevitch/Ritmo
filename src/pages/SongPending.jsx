@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Music, Loader2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { songsRepo } from '@/data/repositories/songs.repo';
 
 const STAGES = [
   { pct: 4, label: 'Searching YouTube…' },
@@ -47,7 +47,7 @@ export default function SongPending() {
 
     const poll = async () => {
       try {
-        const songs = await base44.entities.Song.filter({ youtube_id: youtubeId }, '-created_date', 1);
+        const songs = await songsRepo.filter({ youtube_id: youtubeId }, '-created_date', 1);
         if (cancelled) return;
         const song = songs && songs[0];
         if (song && ['ready', 'ready_synced', 'ready_unsynced', 'static'].includes(song.sync_status)) {
