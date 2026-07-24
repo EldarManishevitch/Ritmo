@@ -55,7 +55,9 @@ export default function TopNav() {
         </Link>
 
         {/* Center nav */}
-        <nav className="flex items-center gap-1 flex-1 justify-center overflow-x-auto no-scrollbar">
+        {/* No overflow-x-auto here: it forces overflow-y to 'auto' per the CSS spec,
+            which clips the NavDropdown menus (absolute, top-full) that hang below this row. */}
+        <nav className="flex items-center gap-1 flex-1 justify-center flex-wrap">
           {tabs.map(({ path, icon: Icon, label }) => {
             const active = pathname.startsWith(path);
             return (
