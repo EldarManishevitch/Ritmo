@@ -210,16 +210,16 @@ export default function SongPage() {
 
   const handleSaveOffset = async () => {
     const val = parseFloat(offsetInput) || 0;
-    await base44.entities.Song.update(id, { sync_offset_seconds: val });
+    await songsRepo.update(id, { sync_offset_seconds: val });
     setSong({ ...song, sync_offset_seconds: val });
     setShowOffset(false);
   };
 
   const loadVocab = async () => {
     try {
-      const v = await base44.entities.SavedWord.filter({ source_song_id: id }, '-created_date', 200);
+      const v = await savedWordsRepo.bySong(id, 200);
       setVocab(v || []);
-      const f = await base44.entities.PracticeFlag.filter({ song_id: id });
+      const f = await practiceFlagsRepo.bySong(id);
       setFlags(f || []);
     } catch { /* noop */ }
   };
