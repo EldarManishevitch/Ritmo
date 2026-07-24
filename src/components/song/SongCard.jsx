@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Play, Zap, Lock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { songCefr } from '@/lib/cefr';
+import { songCefrLevel } from '@/lib/cefr';
 
 export default function SongCard({ song, featured = false, locked = false }) {
   const thumbnail = song.album_art_url || `https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80`;
@@ -30,7 +30,7 @@ export default function SongCard({ song, featured = false, locked = false }) {
           </div>
           <div className="bg-card p-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="text-xs font-medium">{songCefr(song.difficulty)}</Badge>
+              <Badge variant="secondary" className="text-xs font-medium">{songCefrLevel(song)}</Badge>
               <Badge variant="outline" className="text-xs">{song.genre || 'Reggaeton'}</Badge>
             </div>
             <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
@@ -60,7 +60,7 @@ export default function SongCard({ song, featured = false, locked = false }) {
           <Badge className="text-[10px] font-medium flex-shrink-0 bg-primary text-white">Pro</Badge>
         ) : (
           <Badge variant="secondary" className="text-[10px] font-medium flex-shrink-0">
-            {songCefr(song.difficulty)}
+            {songCefrLevel(song)}
           </Badge>
         )}
       </div>
