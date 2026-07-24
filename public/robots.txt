@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+# Authenticated app routes redirect to login — keep crawlers off them
+Disallow: /dashboard
+Disallow: /lesson
+Disallow: /curriculum
+Disallow: /conversations
+Disallow: /roleplay
+Disallow: /review
+Disallow: /vocab
+Disallow: /leaderboard
+Disallow: /settings
+
+Sitemap: https://www.spanishbeats.app/sitemap.xml

@@ -18,6 +18,7 @@ import { getCachedSong } from '@/lib/songCache';
 import { prewarmWordTranslations } from '@/lib/aiHelpers';
 import ExerciseFlow from '@/components/exercise/ExerciseFlow';
 import SEOHead from '@/components/SEOHead';
+import JsonLd from '@/components/JsonLd';
 
 const STATUS_LABELS = {
   pending: 'Preparing song…',
@@ -321,6 +322,27 @@ export default function SongPage() {
   }
 
   const thumbnail = song.album_art_url || `https://i.ytimg.com/vi/${song.youtube_id}/mqdefault.jpg`;
+  const songUrl = typeof window !== 'undefined' ? window.location.origin + window.location.pathname : '';
+
+  // The page is a language-learning lesson built around the song, not a place to stream/purchase
+  // the recording — so LearningResource is the most accurate schema.org type, with the song
+  // referenced via `about` as a MusicRecording.
+  const learningResourceLd = {
+    '@context': 'https://schema.org',
+    '@type': 'LearningResource',
+    name: `${song.title} — Spanish Lesson`,
+    description: `Learn Spanish by singing '${song.title}' by ${song.artist}. Tap-to-translate lyrics, karaoke sync, pronunciation practice, and vocabulary quizzes. CEFR level ${song.cefr_level}.`,
+    learningResourceType: 'Language lesson',
+    inLanguage: 'es',
+    teaches: { '@type': 'Language', name: 'Spanish' },
+    educationalLevel: song.cefr_level,
+    url: songUrl,
+    about: {
+      '@type': 'MusicRecording',
+      name: song.title,
+      byArtist: { '@type': 'MusicGroup', name: song.artist },
+    },
+  };
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
@@ -329,6 +351,7 @@ export default function SongPage() {
         description={`Learn Spanish by singing '${song.title}' by ${song.artist}. Tap any word for an instant translation, sing along with karaoke lyrics, and quiz yourself on the vocabulary. CEFR level: ${song.cefr_level}.`}
         ogImage={song.album_art_url}
       />
+      <JsonLd id="song-lesson" data={learningResourceLd} />
       {/* Top bar */}
       <div className="safe-area-top flex items-center justify-between px-4 py-3 border-b border-border">
         <button onClick={() => navigate('/dashboard')} className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors">

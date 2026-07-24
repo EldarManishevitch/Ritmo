@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Search, ArrowRight } from 'lucide-react';
 import BlogLayout from '@/components/layout/BlogLayout';
 import SEOHead from '@/components/SEOHead';
+import JsonLd from '@/components/JsonLd';
 
 const SLANG = [
   { term: 'perreo', contextual: 'The grinding dance style; by extension, the genre itself', literal: 'from "perro" (dog)', english: 'grinding / doggy-style dancing', song: { title: 'Gasolina', artist: 'Daddy Yankee' } },
@@ -80,6 +81,20 @@ export default function ReggaetonSlangGuide() {
       <SEOHead
         title="Reggaeton Slang Dictionary — 50+ terms explained | Spanish Beats"
         description="The complete guide to reggaeton slang — from 'bellakeo' to 'perreo' to 'flow'. Learn what Bad Bunny, J Balvin, and Daddy Yankee are actually saying."
+      />
+      <JsonLd
+        id="reggaeton-slang"
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'DefinedTermSet',
+          name: 'Reggaeton Slang Dictionary',
+          description: 'Urban Spanish slang from reggaeton, Latin trap, and dembow lyrics.',
+          hasDefinedTerm: SLANG.map((s) => ({
+            '@type': 'DefinedTerm',
+            name: s.term,
+            description: s.contextual,
+          })),
+        }}
       />
       <h1 className="text-3xl font-bold text-foreground mb-4">Reggaeton Slang & Spanish Curse Words</h1>
       <p className="text-muted-foreground mb-6 leading-relaxed">If you've ever sung along to Bad Bunny, Karol G, Daddy Yankee, J Balvin, or Anuel AA and wondered what half the words mean, you're in the right place. Standard Spanish textbooks skip the slang. Reggaeton, Latin trap, and dembow are built on it. This is a searchable, song-grounded reference to the urban Spanish slang and curse words you'll hear in real lyrics.</p>

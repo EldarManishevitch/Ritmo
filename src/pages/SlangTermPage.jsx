@@ -5,6 +5,7 @@ import { Volume2, ArrowRight, Loader2, BookOpen } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import BlogLayout from '@/components/layout/BlogLayout';
 import SEOHead from '@/components/SEOHead';
+import JsonLd from '@/components/JsonLd';
 import PageNotFound from '@/lib/PageNotFound';
 
 export default function SlangTermPage() {
@@ -48,6 +49,15 @@ export default function SlangTermPage() {
       <SEOHead
         title={`${data.term} meaning in Spanish — reggaeton slang explained | Spanish Beats`}
         description={`What does '${data.term}' mean? ${data.contextual_meaning}. Hear it used in ${data.example_song_title || 'reggaeton'} by ${data.example_song_artist || 'popular artists'}. Learn reggaeton slang on Spanish Beats.`}
+      />
+      <JsonLd
+        id="slang-term"
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'DefinedTerm',
+          name: data.term,
+          description: data.contextual_meaning,
+        }}
       />
       <article>
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-6">What does '{data.term}' mean in Spanish?</h1>

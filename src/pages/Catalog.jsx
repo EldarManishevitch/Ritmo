@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import { useSubscription } from '@/hooks/useSubscription';
+import SEOHead from '@/components/SEOHead';
 
 const GENRES = ['All', 'Reggaeton', 'Pop', 'Latin Pop', 'Bachata', 'Salsa', 'Trap'];
 const LEVELS = ['All', 'A1', 'A2', 'B1', 'B2', 'C1'];
@@ -55,6 +56,10 @@ export default function Catalog() {
 
   return (
     <div className="min-h-screen">
+      <SEOHead
+        title="Song Catalog — Learn Spanish with Music | Spanish Beats"
+        description="Browse the full Spanish Beats song catalog — reggaeton, bachata, pop latino. Tap-to-translate lyrics, karaoke, and CEFR-leveled lessons."
+      />
       <div className="px-5 pt-14 pb-4">
         <h1 className="text-2xl font-bold mb-1">Song Catalog</h1>
         <p className="text-sm text-muted-foreground">Browse songs and start learning</p>
