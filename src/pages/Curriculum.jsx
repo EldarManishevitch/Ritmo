@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, ArrowRight, GraduationCap } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { songsRepo } from '@/data/repositories/songs.repo';
 import { getProgress, levelForXp } from '@/lib/progress';
 import {
   getCurriculumTracks, getAllLevelProgress, getSongCompletions,
@@ -41,7 +41,7 @@ export default function Curriculum() {
           const ids = track.song_ids || [];
           if (!ids.length) return;
           try {
-            const trackSongs = await base44.entities.Song.filter({ id: { $in: ids } });
+            const trackSongs = await songsRepo.filter({ id: { $in: ids } });
             const byId = {};
             trackSongs.forEach((s) => { byId[s.id] = s; });
             songsMap[track.id] = ids.map((id) => byId[id]).filter(Boolean);
