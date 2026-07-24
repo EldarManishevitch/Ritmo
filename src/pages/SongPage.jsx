@@ -11,6 +11,7 @@ import ChorusQuiz from '@/components/song/ChorusQuiz';
 import GenerationProgressPill from '@/components/song/GenerationProgressPill';
 import SongPageSkeleton from '@/components/song/SongPageSkeleton';
 import WarmUpCard from '@/components/song/WarmUpCard';
+import { useFirstSongTutorial, FirstSongCoach, FirstSongRoleplayPrompt } from '@/components/song/FirstSongTutorial';
 import { generateLyrics, ensureLyricsLoaded } from '@/lib/lyricsPipeline';
 import { recordSongView } from '@/lib/searchHistory';
 import { getCachedSong } from '@/lib/songCache';
@@ -190,9 +191,20 @@ export default function SongPage() {
     displayId
   );
 
+  const tutorial = useFirstSongTutorial({
+    songId: id,
+    lines,
+    playbackStarted,
+    currentTime,
+    duration,
+    selectedWord,
+    setTab,
+  });
+
   const handleWordTap = (word, context) => {
     setSelectedWord(word);
     setSelectedContext(context);
+    try { localStorage.setItem('sb_passport_tapped_word', '1'); } catch { /* noop */ }
   };
 
   const handleSaveOffset = async () => {
@@ -535,7 +547,7 @@ export default function SongPage() {
                     >
                       <X className="h-4 w-4" />
                     </button>
-                    <WordLookup word={selectedWord} context={selectedContext} songId={id} />
+                    <WordLookup word={selectedWord} context={selectedContext} songId={id} pulseSave={tutorial.pulseSave} onSaved={tutorial.handleSave} />
                   </div>
                 )}
 
@@ -555,6 +567,11 @@ export default function SongPage() {
                       onPausePlayer={pause}
                       onResync={() => generateLyrics({ songId: id })}
                       playbackStarted={playbackStarted}
+                      tutorialTargetWord={tutorial.targetWord}
+                      tutorialActive={tutorial.active && tutorial.step === 'tap-word'}
+                      grammarPulseStep={tutorial.grammarPulseStep}
+                      grammarBadge={tutorial.grammarBadge}
+                      onGrammarOpen={tutorial.handleGrammarOpen}
                     />
                   )}
                 </div>
@@ -607,7 +624,7 @@ export default function SongPage() {
             {tab === 'quiz' && (
               <div className="flex-1 overflow-y-auto px-4 py-4 no-scrollbar">
                 {playbackStarted ? (
-                  <ChorusQuiz songId={id} lines={lines} songTitle={song.title} songArtist={song.artist} songDifficulty={song.difficulty} />
+                  <ChorusQuiz songId={id} lines={lines} songTitle={song.title} songArtist={song.artist} songDifficulty={song.difficulty} ensureWord={tutorial.ensureWord} onComplete={tutorial.handleQuizComplete} />
                 ) : (
                   <div className="text-center py-12">
                     <Trophy className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
@@ -626,6 +643,8 @@ export default function SongPage() {
         song={song}
         lines={lines}
       />
+      <FirstSongCoach step={tutorial.step} onDismiss={tutorial.handleGrammarDismiss} />
+      {tutorial.roleplayPrompt && <FirstSongRoleplayPrompt onClose={tutorial.handleRoleplayCta} />}
     </div>
   );
 }

@@ -9,7 +9,7 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 
-export default function GrammarInsight({ line }) {
+export default function GrammarInsight({ line, pulse = false, showBadge = false, onOpen }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [insight, setInsight] = useState(null);
@@ -49,6 +49,11 @@ export default function GrammarInsight({ line }) {
   const handleOpen = (e) => {
     e.stopPropagation();
     setOpen(true);
+    try {
+      localStorage.setItem('sb_grammar_note_opened', '1');
+      localStorage.setItem('sb_passport_grammar_opened', '1');
+    } catch { /* noop */ }
+    onOpen?.();
     loadInsight();
   };
 
@@ -57,10 +62,15 @@ export default function GrammarInsight({ line }) {
       <button
         type="button"
         onClick={handleOpen}
-        className="text-xs text-[#6C6BD4] hover:underline cursor-pointer flex items-center gap-0.5 flex-shrink-0"
+        className={`relative text-xs text-[#6C6BD4] hover:underline cursor-pointer flex items-center gap-0.5 flex-shrink-0 ${
+          pulse ? 'animate-pulse font-bold ring-2 ring-[#6C6BD4]/40 rounded-full px-1.5 py-0.5 bg-[#6C6BD4]/5' : ''
+        }`}
       >
         <Lightbulb className="h-3 w-3" />
         Grammar
+        {showBadge && !open && (
+          <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-[#6C6BD4] ring-1 ring-card" />
+        )}
       </button>
 
       <Sheet open={open} onOpenChange={setOpen}>

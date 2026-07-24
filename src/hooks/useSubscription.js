@@ -16,7 +16,11 @@ export function useSubscription() {
       .then((list) => {
         if (cancelled) return;
         const progress = list?.[0];
-        setIsPro(progress?.subscription_status === 'pro');
+        const subPro = progress?.subscription_status === 'pro';
+        const passportTrial =
+          !!progress?.passport_pro_trial_expires_at &&
+          new Date(progress.passport_pro_trial_expires_at + 'T23:59:59') > new Date();
+        setIsPro(subPro || passportTrial);
       })
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });

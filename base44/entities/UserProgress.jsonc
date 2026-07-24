@@ -89,7 +89,12 @@
         "pro"
       ],
       "default": "free",
-      "description": "Subscription tier gating Pro features"
+      "description": "Subscription tier gating Pro features (managed by Stripe billing \u2014 do not set directly for trials)"
+    },
+    "passport_pro_trial_expires_at": {
+      "type": "string",
+      "format": "date",
+      "description": "YYYY-MM-DD when the Feature Passport 7-day Pro trial expires. Treated as Pro by isPro checks; separate from Stripe subscription_status."
     }
   },
   "required": [],

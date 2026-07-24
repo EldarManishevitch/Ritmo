@@ -13,7 +13,7 @@ import CertificateModal from '@/components/certificate/CertificateModal';
 const cleanWord = (w) => w.toLowerCase().replace(/[¿¡!?.,;:"'()]/g, '').trim();
 const shuffle = (a) => [...a].sort(() => Math.random() - 0.5);
 
-export default function ChorusQuiz({ songId, lines, songTitle, songArtist, songDifficulty }) {
+export default function ChorusQuiz({ songId, lines, songTitle, songArtist, songDifficulty, ensureWord, onComplete }) {
   const [seed, setSeed] = useState(0);
   const [idx, setIdx] = useState(0);
   const [answer, setAnswer] = useState(null);
@@ -56,7 +56,7 @@ export default function ChorusQuiz({ songId, lines, songTitle, songArtist, songD
     if (!validLines.length || allWords.length < 4) return [];
     const count = Math.min(validLines.length, Math.floor(Math.random() * 4) + 5);
     const picked = shuffle(validLines).slice(0, count);
-    return picked.map((line) => {
+    const built = picked.map((line) => {
       const words = line.spanish_text.split(/\s+/);
       const candidates = words
         .map((w, i) => ({ w, i, c: cleanWord(w) }))
@@ -65,7 +65,22 @@ export default function ChorusQuiz({ songId, lines, songTitle, songArtist, songD
       const distractors = shuffle(allWords.filter((w) => w !== pick.c)).slice(0, 3);
       return { line, missing: pick.c, options: shuffle([pick.c, ...distractors]), words, missingIdx: pick.i };
     });
-  }, [lines, seed, songTitle, songArtist]);
+
+    // First-song tutorial: guarantee the word the user just saved appears as a quiz item
+    if (ensureWord) {
+      const ew = cleanWord(ensureWord);
+      const existing = built.find((q) => q.missing === ew);
+      if (existing) return [existing, ...built.filter((q) => q !== existing)];
+      const lineWith = validLines.find((l) => l.spanish_text.split(/\s+/).map(cleanWord).includes(ew));
+      if (lineWith) {
+        const words = lineWith.spanish_text.split(/\s+/);
+        const idx = words.findIndex((w) => cleanWord(w) === ew);
+        const distractors = shuffle(allWords.filter((w) => w !== ew)).slice(0, 3);
+        return [{ line: lineWith, missing: ew, options: shuffle([ew, ...distractors]), words, missingIdx: idx }, ...built.slice(0, count - 1)];
+      }
+    }
+    return built;
+  }, [lines, seed, songTitle, songArtist, ensureWord]);
 
   useEffect(() => {
     setIdx(0);
@@ -131,6 +146,7 @@ export default function ChorusQuiz({ songId, lines, songTitle, songArtist, songD
           confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
         }
       } catch { /* noop */ }
+      onComplete?.(score, questions.length);
     } else {
       setIdx(idx + 1);
       setAnswer(null);

@@ -7,7 +7,7 @@ import { upsertGenreStatsOnWordSaved } from '@/lib/genres';
 import { Link } from 'react-router-dom';
 import { useSubscription } from '@/hooks/useSubscription';
 
-export default function WordLookup({ word, context, songId }) {
+export default function WordLookup({ word, context, songId, pulseSave = false, onSaved }) {
   const [info, setInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -58,6 +58,7 @@ export default function WordLookup({ word, context, songId }) {
       });
       upsertGenreStatsOnWordSaved({ sourceSongId: songId }).catch(() => {});
       setSaved(true);
+      onSaved?.(word);
     } catch { /* noop */ }
     setSaving(false);
   };
@@ -86,8 +87,8 @@ export default function WordLookup({ word, context, songId }) {
                   <Volume2 className="h-4 w-4 text-primary" />
                 </button>
                 <button onClick={handleSave} disabled={saving || saved}
-                  className={`h-9 w-9 rounded-full flex items-center justify-center transition-colors active:scale-95
-                    ${saved ? 'bg-green-100 text-green-600' : 'bg-primary/10 hover:bg-primary/20 text-primary'}`}>
+                  className={`relative h-9 w-9 rounded-full flex items-center justify-center transition-colors active:scale-95
+                    ${saved ? 'bg-green-100 text-green-600' : 'bg-primary/10 hover:bg-primary/20 text-primary'} ${pulseSave && !saved ? 'animate-pulse ring-4 ring-primary/40 shadow-lg' : ''}`}>
                   {saved ? <BookmarkCheck className="h-4 w-4" /> : <BookmarkPlus className="h-4 w-4" />}
                 </button>
               </div>

@@ -19,6 +19,11 @@ export default function SyncedLyrics({
   syncDisabled = false,
   loading = false,
   playbackStarted = false,
+  tutorialTargetWord = null,
+  tutorialActive = false,
+  grammarPulseStep = false,
+  grammarBadge = false,
+  onGrammarOpen,
 }) {
   const containerRef = useRef(null);
   const [karaokeResults, setKaraokeResults] = useState({});
@@ -99,15 +104,24 @@ export default function SyncedLyrics({
           </span>
         );
       }
+      const isTutorialTarget = tutorialActive && tutorialTargetWord && clean === tutorialTargetWord;
       return (
-        <button
-          key={i}
-          type="button"
-          onClick={() => onWordTap?.(clean, lineText)}
-          className="inline-block transition-colors hover:text-primary hover:underline decoration-primary/40 underline-offset-2"
-        >
-          {token}
-        </button>
+        <span key={i} className="relative inline-block">
+          {isTutorialTarget && (
+            <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-sm animate-bounce pointer-events-none select-none">
+              👆
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => onWordTap?.(clean, lineText)}
+            className={`inline-block transition-colors hover:text-primary hover:underline decoration-primary/40 underline-offset-2 ${
+              isTutorialTarget ? 'ring-2 ring-primary rounded bg-primary/10 px-1 animate-pulse font-semibold' : ''
+            }`}
+          >
+            {token}
+          </button>
+        </span>
       );
     });
   };
@@ -257,7 +271,14 @@ export default function SyncedLyrics({
                   <Volume2 className="h-3.5 w-3.5" />
                 </button>
               )}
-              {playbackStarted && <GrammarInsight line={line} />}
+              {playbackStarted && (
+                <GrammarInsight
+                  line={line}
+                  showBadge={grammarBadge}
+                  pulse={grammarPulseStep && active}
+                  onOpen={onGrammarOpen}
+                />
+              )}
               {karaokeResult && (
                 <div className="flex items-center gap-1.5 ml-auto">
                   <span className="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full bg-primary/10 text-primary">

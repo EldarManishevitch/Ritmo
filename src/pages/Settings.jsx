@@ -5,6 +5,7 @@ import { base44 } from '@/api/base44Client';
 import NotificationPreferencesCard from '@/components/settings/NotificationPreferencesCard';
 import GenrePreferencesCard from '@/components/settings/GenrePreferencesCard';
 import SubscriptionCard from '@/components/settings/SubscriptionCard';
+import FeaturePassport from '@/components/achievements/FeaturePassport';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import SEOHead from '@/components/SEOHead';
@@ -109,6 +110,9 @@ export default function Settings() {
 
       {/* Subscription */}
       <SubscriptionCard />
+
+      {/* Feature Passport */}
+      <FeaturePassport />
 
       {/* Daily reminder preferences */}
       <NotificationPreferencesCard />
