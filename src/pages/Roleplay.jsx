@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mic, Loader2, Volume2, Eye, EyeOff, RefreshCw, ArrowRight, MapPin, Sparkles, MessageSquare, Lock } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { roleplaySessionsRepo } from '@/data/repositories/roleplaySessions.repo';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
@@ -47,7 +47,7 @@ export default function Roleplay() {
 
       // Resume an incomplete session unless the user explicitly asked for a new scene
       if (!forceNew) {
-        const incomplete = await base44.entities.RoleplaySession.filter({ completed: false }, '-created_date', 1);
+        const incomplete = await roleplaySessionsRepo.filter({ completed: false }, '-created_date', 1);
         if (incomplete && incomplete.length && (incomplete[0].dialogue_steps || []).length) {
           setSession(incomplete[0]);
           setLoading(false);
@@ -56,7 +56,7 @@ export default function Roleplay() {
       }
 
       const scene = await generateRoleplayScene({ level: cefr });
-      const created = await base44.entities.RoleplaySession.create({
+      const created = await roleplaySessionsRepo.create({
         scenario_title: scene.scenario_title,
         character_name: scene.character_name,
         location: scene.location,
@@ -91,7 +91,7 @@ export default function Roleplay() {
     setDone(true);
     try {
       if (session && !session.xp_awarded) {
-        await base44.entities.RoleplaySession.update(session.id, { completed: true, xp_awarded: true });
+        await roleplaySessionsRepo.update(session.id, { completed: true, xp_awarded: true });
         const res = await awardRoleplayCompletion();
         if (res.leveledUp) setLevelUp(res.newLevel);
       }
