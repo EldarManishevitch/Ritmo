@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Search, Music, SlidersHorizontal } from 'lucide-react';
 import SongCard from '@/components/song/SongCard';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
+import { useSubscription } from '@/hooks/useSubscription';
 
 const GENRES = ['All', 'Reggaeton', 'Pop', 'Latin Pop', 'Bachata', 'Salsa', 'Trap'];
 const LEVELS = ['All', 'A1', 'A2', 'B1', 'B2', 'C1'];
@@ -15,6 +16,7 @@ export default function Catalog() {
   const [search, setSearch] = useState('');
   const [genre, setGenre] = useState('All');
   const [level, setLevel] = useState('All');
+  const { isPro } = useSubscription();
 
   useEffect(() => {
     const load = async () => {
@@ -26,6 +28,21 @@ export default function Catalog() {
     };
     load();
   }, []);
+
+  const freeIds = useMemo(() => {
+    const FREE_COUNT = 12;
+    const total = songs.length;
+    const ids = new Set();
+    if (total <= FREE_COUNT) {
+      songs.forEach(s => ids.add(s.id));
+    } else {
+      const dayOffset = new Date().getDay();
+      for (let i = 0; i < FREE_COUNT; i++) {
+        ids.add(songs[(dayOffset * 2 + i) % total].id);
+      }
+    }
+    return ids;
+  }, [songs]);
 
   const filtered = songs.filter(s => {
     const matchSearch = !search ||
@@ -115,7 +132,7 @@ export default function Catalog() {
             className="bg-card rounded-2xl border border-border/50 divide-y divide-border/50"
           >
             {filtered.map(song => (
-              <SongCard key={song.id} song={song} />
+              <SongCard key={song.id} song={song} locked={!isPro && !freeIds.has(song.id)} />
             ))}
           </motion.div>
         ) : (

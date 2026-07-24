@@ -42,6 +42,8 @@ import ArtistSpotlight from './pages/ArtistSpotlight';
 import SlangTermPage from './pages/SlangTermPage';
 import About from './pages/About';
 import Contact from './pages/Contact';
+import Pricing from './pages/Pricing';
+import Catalog from './pages/Catalog';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -86,6 +88,7 @@ const AuthenticatedApp = () => {
       <Route path="/best-bachata-songs" element={<BestBachataSongs />} />
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
+      <Route path="/pricing" element={<Pricing />} />
 
       {/* Comparison pages */}
       <Route path="/compare/spanish-beats-vs-duolingo" element={<CompareDuolingo />} />
@@ -106,6 +109,7 @@ const AuthenticatedApp = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/lesson" element={<PageTransition><Lesson /></PageTransition>} />
           <Route path="/curriculum" element={<Curriculum />} />
+          <Route path="/catalog" element={<Catalog />} />
           <Route path="/conversations" element={<Conversations />} />
           <Route path="/roleplay" element={<Roleplay />} />
           <Route path="/review" element={<ReviewRoom />} />

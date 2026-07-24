@@ -4,15 +4,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { translateWord, getCachedWordTranslation } from '@/lib/aiHelpers';
 import { upsertGenreStatsOnWordSaved } from '@/lib/genres';
+import { Link } from 'react-router-dom';
+import { useSubscription } from '@/hooks/useSubscription';
 
 export default function WordLookup({ word, context, songId }) {
   const [info, setInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [capReached, setCapReached] = useState(false);
+  const { isPro } = useSubscription();
 
   useEffect(() => {
-    if (!word) { setInfo(null); setSaved(false); return; }
+    if (!word) { setInfo(null); setSaved(false); setCapReached(false); return; }
+    setCapReached(false);
     // Instant render from the word-translation cache (no API call, no spinner)
     const cached = getCachedWordTranslation(word);
     if (cached) { setInfo(cached); setSaved(false); setLoading(false); return; }
@@ -36,6 +41,12 @@ export default function WordLookup({ word, context, songId }) {
 
   const handleSave = async () => {
     if (!info || saving) return;
+    if (!isPro) {
+      try {
+        const existing = await base44.entities.SavedWord.list('-created_date', 51);
+        if (existing.length >= 50) { setCapReached(true); return; }
+      } catch { /* proceed to save */ }
+    }
     setSaving(true);
     try {
       await base44.entities.SavedWord.create({
@@ -96,6 +107,12 @@ export default function WordLookup({ word, context, songId }) {
               <div className="bg-muted/50 rounded-xl p-3 space-y-1">
                 <p className="text-sm font-medium">{info.example_spanish}</p>
                 <p className="text-xs text-muted-foreground">{info.example_english}</p>
+              </div>
+            )}
+            {capReached && (
+              <div className="rounded-xl bg-primary/5 border border-primary/20 p-2.5 text-center">
+                <p className="text-xs text-muted-foreground mb-1">50-word free limit reached</p>
+                <Link to="/pricing" className="text-xs font-semibold text-primary hover:underline">Upgrade to Pro for unlimited →</Link>
               </div>
             )}
           </motion.div>

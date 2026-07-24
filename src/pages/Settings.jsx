@@ -4,6 +4,7 @@ import { LogOut, Mail, User as UserIcon, Loader2, Trash2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import NotificationPreferencesCard from '@/components/settings/NotificationPreferencesCard';
 import GenrePreferencesCard from '@/components/settings/GenrePreferencesCard';
+import SubscriptionCard from '@/components/settings/SubscriptionCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import SEOHead from '@/components/SEOHead';
@@ -105,6 +106,9 @@ export default function Settings() {
           </Button>
         </div>
       </div>
+
+      {/* Subscription */}
+      <SubscriptionCard />
 
       {/* Daily reminder preferences */}
       <NotificationPreferencesCard />

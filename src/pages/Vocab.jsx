@@ -2,7 +2,9 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Volume2, Trash2, Loader2 } from 'lucide-react';
+import { BookOpen, Volume2, Trash2, Loader2, Lock } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useSubscription } from '@/hooks/useSubscription';
 import PullToRefresh from '@/components/PullToRefresh';
 import { displayLevel, daysToMastery, LEVEL_META, MASTERY_DATE_COUNT } from '@/lib/wordKnowledge';
 import { genreColor, genreLabel } from '@/lib/genres';
@@ -13,6 +15,7 @@ export default function Vocab() {
   const [songs, setSongs] = useState([]);
   const [genreFilter, setGenreFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const { isPro } = useSubscription();
 
   const load = async () => {
     try {
@@ -154,6 +157,17 @@ export default function Vocab() {
         <h1 className="text-2xl font-bold text-foreground">My Vocab</h1>
       </div>
       <p className="text-sm text-muted-foreground mb-6">Words you've collected from songs.</p>
+
+      {!isPro && vocab.length >= 50 && (
+        <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 mb-6 flex items-center gap-3">
+          <Lock className="h-5 w-5 text-primary flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-foreground">You've reached the 50-word free limit</p>
+            <p className="text-xs text-muted-foreground">Upgrade to Pro for unlimited vocabulary.</p>
+          </div>
+          <Link to="/pricing" className="text-sm font-semibold text-primary hover:underline whitespace-nowrap">Upgrade →</Link>
+        </div>
+      )}
 
       {vocab.length === 0 ? (
         <div className="text-center py-12 rounded-xl border border-dashed border-border">

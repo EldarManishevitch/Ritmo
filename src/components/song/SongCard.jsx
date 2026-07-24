@@ -1,10 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Play, Zap } from 'lucide-react';
+import { Play, Zap, Lock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { songCefr } from '@/lib/cefr';
 
-export default function SongCard({ song, featured = false }) {
+export default function SongCard({ song, featured = false, locked = false }) {
   const thumbnail = song.album_art_url || `https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80`;
 
   if (featured) {
@@ -44,21 +44,25 @@ export default function SongCard({ song, featured = false }) {
   }
 
   return (
-    <Link to={`/song/${song.id}`} className="block group">
+    <Link to={locked ? '/pricing' : `/song/${song.id}`} className="block group">
       <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors">
         <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0">
-          <img src={thumbnail} alt={song.title} className="w-full h-full object-cover" />
+          <img src={thumbnail} alt={song.title} className={`w-full h-full object-cover ${locked ? 'opacity-50' : ''}`} />
           <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Play className="h-4 w-4 text-white fill-white" />
+            {locked ? <Lock className="h-4 w-4 text-white" /> : <Play className="h-4 w-4 text-white fill-white" />}
           </div>
         </div>
         <div className="flex-1 min-w-0">
           <h4 className="font-semibold text-sm truncate">{song.title}</h4>
           <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
         </div>
-        <Badge variant="secondary" className="text-[10px] font-medium flex-shrink-0">
-          {songCefr(song.difficulty)}
-        </Badge>
+        {locked ? (
+          <Badge className="text-[10px] font-medium flex-shrink-0 bg-primary text-white">Pro</Badge>
+        ) : (
+          <Badge variant="secondary" className="text-[10px] font-medium flex-shrink-0">
+            {songCefr(song.difficulty)}
+          </Badge>
+        )}
       </div>
     </Link>
   );

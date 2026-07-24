@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Mic, Loader2, Volume2, Eye, EyeOff, RefreshCw, ArrowRight, MapPin, Sparkles, MessageSquare, Lock } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -245,11 +246,14 @@ export default function Roleplay() {
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Mic className="h-5 w-5 text-primary" /> Voice Coach is Pro</DialogTitle>
-            <DialogDescription>Practice speaking out loud with real-time AI feedback. Upgrade coming soon.</DialogDescription>
+            <DialogDescription>Practice speaking out loud with real-time AI feedback. Upgrade to Pro to unlock voice mode.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button className="w-full" onClick={() => { setShowProModal(false); setMode('text'); }}>
+            <Button variant="outline" onClick={() => { setShowProModal(false); setMode('text'); }}>
               Continue with text
+            </Button>
+            <Button asChild>
+              <Link to="/pricing" onClick={() => setShowProModal(false)}>Upgrade to Pro</Link>
             </Button>
           </DialogFooter>
         </DialogContent>
