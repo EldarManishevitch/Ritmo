@@ -1,5 +1,5 @@
 import { base44 } from '@/api/base44Client';
-import { songCefr } from '@/lib/cefr';
+import { songCefrLevel } from '@/lib/cefr';
 
 // Score percentage required to "master" a song and earn a certificate.
 export const MASTERY_THRESHOLD = 80;
@@ -30,7 +30,7 @@ export async function issueCertificateIfMastered({ song, score, total }) {
       song_title: song.title || 'Unknown',
       artist: song.artist || 'Unknown',
       score: pct,
-      cefr_level: songCefr(song.difficulty),
+      cefr_level: songCefrLevel(song),
       certificate_number: `RTM-${Date.now().toString(36).toUpperCase()}`,
     });
     return { ...cert, isNew: true };
