@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, MessageCircle, Loader2, Trash2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { conversationsRepo } from '@/data/repositories/conversations.repo';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import SEOHead from '@/components/SEOHead';
@@ -21,7 +21,7 @@ export default function Conversations() {
   const [creating, setCreating] = useState(false);
 
   const load = async () => {
-    const list = await base44.entities.Conversation.list('-updated_date', 50);
+    const list = await conversationsRepo.list('-updated_date', 50);
     setConversations(list);
   };
 
@@ -32,7 +32,7 @@ export default function Conversations() {
   const createConversation = async (type, desc) => {
     setCreating(true);
     try {
-      const conv = await base44.entities.Conversation.create({
+      const conv = await conversationsRepo.create({
         title: SCENARIOS.find((s) => s.type === type)?.label || 'Conversation',
         scenario: desc,
         roleplay_type: type,
@@ -44,7 +44,7 @@ export default function Conversations() {
   };
 
   const deleteConversation = async (id) => {
-    await base44.entities.Conversation.delete(id);
+    await conversationsRepo.delete(id);
     load();
   };
 
