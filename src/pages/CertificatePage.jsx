@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Loader2, Music2, Award } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { levelProgressRepo } from '@/data/repositories/levelProgress.repo';
+import { songsRepo } from '@/data/repositories/songs.repo';
 import { levelMeta } from '@/lib/curriculum';
 
 export default function CertificatePage() {
@@ -14,13 +15,13 @@ export default function CertificatePage() {
     let cancelled = false;
     (async () => {
       try {
-        const lps = await base44.entities.LevelProgress.filter({ cefr_level: level });
+        const lps = await levelProgressRepo.byLevel(level);
         const found = lps?.[0];
         if (cancelled) return;
         setLp(found);
         if (found?.songs_completed?.length) {
           const loaded = await Promise.all(
-            found.songs_completed.slice(0, 8).map((id) => base44.entities.Song.get(id).catch(() => null))
+            found.songs_completed.slice(0, 8).map((id) => songsRepo.get(id).catch(() => null))
           );
           if (!cancelled) setSongs(loaded.filter(Boolean));
         }
