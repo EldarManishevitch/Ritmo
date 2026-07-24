@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Loader2, RefreshCw, Music2, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { songsRepo } from '@/data/repositories/songs.repo';
+import { useUpdateUserProgress } from '@/data/hooks/useUserProgress';
 import SlangOfTheDay from '@/components/song/SlangOfTheDay';
 import DailyWordCard from '@/components/song/DailyWordCard';
 import AddSongSection from '@/components/song/AddSongSection';
@@ -26,9 +27,10 @@ export default function Dashboard() {
   const [favGenres, setFavGenres] = useState([]);
   const [recommendedSongs, setRecommendedSongs] = useState([]);
   const [challengeSongs, setChallengeSongs] = useState([]);
+  const updateUserProgress = useUpdateUserProgress();
 
   const loadSongs = async () => {
-    const list = await base44.entities.Song.list('-created_date', 100);
+    const list = await songsRepo.list('-created_date', 100);
     setSongs(list.filter(isSongReady));
     try {
       const [p, comps, tracks] = await Promise.all([getProgress(), getSongCompletions(), getCurriculumTracks()]);
@@ -41,10 +43,10 @@ export default function Dashboard() {
       const userTrack = tracks.find((t) => t.cefr_level === level);
       let recs = [];
       if (userTrack?.song_ids?.length) {
-        const trackSongs = await base44.entities.Song.filter({ id: { $in: userTrack.song_ids } });
+        const trackSongs = await songsRepo.filter({ id: { $in: userTrack.song_ids } });
         recs = trackSongs.filter((s) => ['ready', 'ready_synced', 'ready_unsynced', 'static', 'pending'].includes(s.sync_status));
       } else {
-        const fallback = await base44.entities.Song.filter({ cefr_level: level, is_catalog_default: true });
+        const fallback = await songsRepo.filter({ cefr_level: level, is_catalog_default: true });
         recs = fallback.slice(0, 12);
       }
       setRecommendedSongs(recs);
@@ -53,7 +55,7 @@ export default function Dashboard() {
       const nextLevel = LEVEL_ORDER[LEVEL_ORDER.indexOf(level) + 1];
       let challenges = [];
       if (nextLevel) {
-        const nextSongs = await base44.entities.Song.filter({ cefr_level: nextLevel, is_catalog_default: true });
+        const nextSongs = await songsRepo.filter({ cefr_level: nextLevel, is_catalog_default: true });
         challenges = nextSongs.slice(0, 6);
       }
       setChallengeSongs(challenges);
@@ -67,7 +69,7 @@ export default function Dashboard() {
     setFavGenres(newGenres);
     try {
       const p = await getProgress();
-      await base44.entities.UserProgress.update(p.id, { fav_genres: newGenres });
+      await updateUserProgress.mutateAsync({ id: p.id, patch: { fav_genres: newGenres } });
     } catch { /* noop */ }
   };
 
