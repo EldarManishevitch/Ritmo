@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { savedWordsRepo } from '@/data/repositories/savedWords.repo';
+import { songsRepo } from '@/data/repositories/songs.repo';
 import { User, BookOpen, Music, Trophy, TrendingUp, Flame } from 'lucide-react';
 import { motion } from 'framer-motion';
 import AchievementBadges from '@/components/achievements/AchievementBadges';
@@ -14,8 +15,8 @@ export default function Profile() {
     const load = async () => {
       try {
         const [words, songs] = await Promise.all([
-          base44.entities.SavedWord.list('-created_date', 500),
-          base44.entities.Song.list('-created_date', 500),
+          savedWordsRepo.list('-created_date', 500),
+          songsRepo.list('-created_date', 500),
         ]);
         setWordCount(words.length);
         setMasteredCount(words.filter(w => w.mastered).length);
