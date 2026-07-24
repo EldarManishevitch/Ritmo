@@ -23,7 +23,7 @@ export default function SongGridCard({ song, levelUp = false }) {
           />
           <div className="absolute top-2 right-2 flex flex-col gap-1.5 items-end">
             {song.genre && (
-              <span className="text-[10px] font-semibold text-white px-2 py-0.5 rounded-full" style={{ backgroundColor: '#2A4B62' }}>
+              <span className="text-[10px] font-semibold text-white px-2 py-0.5 rounded-full" style={{ backgroundColor: '#B0801F' }}>
                 {song.genre}
               </span>
             )}
@@ -33,7 +33,7 @@ export default function SongGridCard({ song, levelUp = false }) {
           </div>
           {isPending && (
             <div className="absolute inset-0 flex items-center justify-center bg-white/50">
-              <span className="text-xs font-medium text-[#CC4E3C]">Checking version...</span>
+              <span className="text-xs font-medium text-[#4A4AA8]">Checking version...</span>
             </div>
           )}
         </div>

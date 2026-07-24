@@ -188,7 +188,7 @@ export default function SyncedLyrics({
             onClick={() => hasSyncTimestamps && onLineSeek?.(line.start_seconds - offset)}
             className={`rounded-2xl px-4 py-3 transition-all duration-300 relative ${
               active
-                ? 'border-2 border-[#D96B43] bg-white font-bold text-[#2C2A29] scale-[1.02] shadow-md will-change-transform'
+                ? 'border-2 border-[#6C6BD4] bg-white font-bold text-[#23252F] scale-[1.02] shadow-md will-change-transform'
                 : hasSyncTimestamps
                 ? 'border-2 border-transparent opacity-70 hover:opacity-90'
                 : 'border-2 border-transparent opacity-100'
@@ -197,7 +197,7 @@ export default function SyncedLyrics({
             {(displayMode === 'spanish' || displayMode === 'both') && (
               <p
                 className={`font-medium leading-snug transition-all duration-300 ${
-                  active ? 'text-[#2C2A29] text-lg font-bold' : 'text-foreground text-base'
+                  active ? 'text-[#23252F] text-lg font-bold' : 'text-foreground text-base'
                 }`}
               >
                 {renderWords(line.spanish_text, line.spanish_text, karaokeResult)}
@@ -205,7 +205,7 @@ export default function SyncedLyrics({
             )}
             {(displayMode === 'english' || displayMode === 'both') && (
               line.english_translation ? (
-                <p className={`text-sm mt-1 transition-opacity duration-300 ${active ? 'text-[#2C2A29]/80' : 'text-muted-foreground'}`}>
+                <p className={`text-sm mt-1 transition-opacity duration-300 ${active ? 'text-[#23252F]/80' : 'text-muted-foreground'}`}>
                   {line.english_translation}
                 </p>
               ) : (

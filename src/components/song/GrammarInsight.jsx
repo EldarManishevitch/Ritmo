@@ -57,7 +57,7 @@ export default function GrammarInsight({ line }) {
       <button
         type="button"
         onClick={handleOpen}
-        className="text-xs text-[#D96B43] hover:underline cursor-pointer flex items-center gap-0.5 flex-shrink-0"
+        className="text-xs text-[#6C6BD4] hover:underline cursor-pointer flex items-center gap-0.5 flex-shrink-0"
       >
         <Lightbulb className="h-3 w-3" />
         Grammar
@@ -66,29 +66,29 @@ export default function GrammarInsight({ line }) {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
           side="bottom"
-          className="bg-[#FBF9F6] text-[#2C2A29] max-h-[80vh] overflow-y-auto"
+          className="bg-[#F5F6F9] text-[#23252F] max-h-[80vh] overflow-y-auto"
         >
           <SheetHeader>
-            <SheetTitle className="text-[#2C2A29]">💡 Grammar Insight</SheetTitle>
-            <SheetDescription className="text-[#2C2A29]/70">
+            <SheetTitle className="text-[#23252F]">💡 Grammar Insight</SheetTitle>
+            <SheetDescription className="text-[#23252F]/70">
               {line.spanish_text}
             </SheetDescription>
           </SheetHeader>
           <div className="px-4 pb-6">
             {loading ? (
               <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-[#D96B43]" />
+                <Loader2 className="h-6 w-6 animate-spin text-[#6C6BD4]" />
               </div>
             ) : error ? (
               <p className="text-sm text-destructive">{error}</p>
             ) : insight ? (
               <div className="space-y-3">
-                <p className="text-sm text-[#2C2A29] leading-relaxed whitespace-pre-line">
+                <p className="text-sm text-[#23252F] leading-relaxed whitespace-pre-line">
                   {insight.explanation}
                 </p>
-                <div className="rounded-xl bg-[#D96B43]/10 p-3">
-                  <p className="text-xs font-semibold text-[#D96B43] mb-1">💡 Real-life example</p>
-                  <p className="text-sm text-[#2C2A29] whitespace-pre-line">{insight.example}</p>
+                <div className="rounded-xl bg-[#6C6BD4]/10 p-3">
+                  <p className="text-xs font-semibold text-[#6C6BD4] mb-1">💡 Real-life example</p>
+                  <p className="text-sm text-[#23252F] whitespace-pre-line">{insight.example}</p>
                 </div>
               </div>
             ) : null}

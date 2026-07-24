@@ -36,7 +36,7 @@ export default function CertificateModal({ visible, cefr, songs, userEmail, onCl
             style={{
               left: `${Math.random() * 100}%`,
               top: '-20px',
-              backgroundColor: ['#D96B43', '#2A4B62', '#F5C518', '#4CAF50', '#E91E63'][i % 5],
+              backgroundColor: ['#6C6BD4', '#B0801F', '#F5C518', '#4CAF50', '#E91E63'][i % 5],
               animation: `confetti-fall ${2 + Math.random() * 2}s ${Math.random()}s linear infinite`,
             }}
           />

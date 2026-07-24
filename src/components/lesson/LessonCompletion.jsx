@@ -19,7 +19,7 @@ export default function LessonCompletion({ quizScore, wordsTapped, xpGain, strea
               top: '-20px',
               width: '4px',
               height: '8px',
-              backgroundColor: ['#D96B43', '#8B5CF6', '#F5C518', '#2DD4BF', '#4CAF50'][i % 5],
+              backgroundColor: ['#6C6BD4', '#8B5CF6', '#F5C518', '#2DD4BF', '#4CAF50'][i % 5],
               animation: `confetti-fall ${0.8 + Math.random() * 0.8}s ${Math.random()}s linear forwards`,
             }}
           />

@@ -14,7 +14,7 @@ export default function YouTubeResultsGrid({ results, onSelect, disabled }) {
           type="button"
           disabled={disabled}
           onClick={() => onSelect(video)}
-          className="w-full flex items-center gap-3 rounded-lg p-2 text-left transition-all border border-transparent hover:bg-[#2C2A29]/5 cursor-pointer hover:border-[#D96B43]/30 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center gap-3 rounded-lg p-2 text-left transition-all border border-transparent hover:bg-[#23252F]/5 cursor-pointer hover:border-[#D96B43]/30 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <img
             src={video.thumbnail_url}
@@ -22,8 +22,8 @@ export default function YouTubeResultsGrid({ results, onSelect, disabled }) {
             className="w-24 h-14 rounded-lg object-cover flex-shrink-0"
           />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-[#2C2A29] line-clamp-2">{video.title}</p>
-            <p className="text-xs text-[#2C2A29]/60 truncate">{video.artist}</p>
+            <p className="text-sm font-semibold text-[#23252F] line-clamp-2">{video.title}</p>
+            <p className="text-xs text-[#23252F]/60 truncate">{video.artist}</p>
           </div>
         </button>
       ))}

@@ -131,7 +131,7 @@ export default function SlangOfTheDay({ favGenres = [] }) {
               )}
               <div className="min-w-0">
                 {slang.lyrics_snippet && (
-                  <p className="text-sm italic text-[#a5603c] mb-1">"{slang.lyrics_snippet}"</p>
+                  <p className="text-sm italic text-[#4A4AA8] mb-1">"{slang.lyrics_snippet}"</p>
                 )}
                 {slang.lyrics_snippet_translation && (
                   <p className="text-sm text-muted-foreground">{slang.lyrics_snippet_translation}</p>

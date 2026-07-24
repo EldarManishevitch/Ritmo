@@ -50,7 +50,7 @@ export default function LessonHeader({ lesson, step, resume }) {
           <p className="text-xs text-muted-foreground truncate">{lesson.song_artist}</p>
         </div>
         {lesson.song_genre && (
-          <span className="ml-auto text-[10px] font-semibold text-white px-2 py-0.5 rounded-full" style={{ backgroundColor: '#2A4B62' }}>
+          <span className="ml-auto text-[10px] font-semibold text-white px-2 py-0.5 rounded-full" style={{ backgroundColor: '#B0801F' }}>
             {lesson.song_genre}
           </span>
         )}

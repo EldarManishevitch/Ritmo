@@ -28,7 +28,7 @@ export default function AddSongSection() {
         <button
           onClick={search}
           disabled={searching || adding || !query.trim()}
-          className="h-9 w-9 rounded-md flex items-center justify-center bg-[#e8b79e] hover:bg-[#e0a88c] disabled:opacity-50 transition-colors flex-shrink-0"
+          className="h-9 w-9 rounded-md flex items-center justify-center bg-[#D3D3F2] hover:bg-[#C4C4EE] disabled:opacity-50 transition-colors flex-shrink-0"
         >
           {searching ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Search className="h-4 w-4 text-white" />}
         </button>

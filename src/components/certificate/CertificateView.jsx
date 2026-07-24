@@ -51,31 +51,31 @@ export default function CertificateView({ certificate, userName }) {
       <div
         ref={ref}
         className="relative bg-white p-6 sm:p-8"
-        style={{ border: '4px double #D96B43', borderRadius: '16px' }}
+        style={{ border: '4px double #6C6BD4', borderRadius: '16px' }}
       >
-        <div className="absolute top-3 left-3 w-8 h-8 border-t-2 border-l-2" style={{ borderColor: '#D96B43' }} />
-        <div className="absolute top-3 right-3 w-8 h-8 border-t-2 border-r-2" style={{ borderColor: '#D96B43' }} />
-        <div className="absolute bottom-3 left-3 w-8 h-8 border-b-2 border-l-2" style={{ borderColor: '#D96B43' }} />
-        <div className="absolute bottom-3 right-3 w-8 h-8 border-b-2 border-r-2" style={{ borderColor: '#D96B43' }} />
+        <div className="absolute top-3 left-3 w-8 h-8 border-t-2 border-l-2" style={{ borderColor: '#6C6BD4' }} />
+        <div className="absolute top-3 right-3 w-8 h-8 border-t-2 border-r-2" style={{ borderColor: '#6C6BD4' }} />
+        <div className="absolute bottom-3 left-3 w-8 h-8 border-b-2 border-l-2" style={{ borderColor: '#6C6BD4' }} />
+        <div className="absolute bottom-3 right-3 w-8 h-8 border-b-2 border-r-2" style={{ borderColor: '#6C6BD4' }} />
 
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full mb-3" style={{ backgroundColor: '#D96B43' }}>
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full mb-3" style={{ backgroundColor: '#6C6BD4' }}>
             <Award className="h-7 w-7 text-white" />
           </div>
-          <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#D96B43' }}>Ritmo · Certificate of Achievement</p>
-          <h2 className="text-2xl font-bold mt-2 mb-1" style={{ color: '#2C2A29' }}>{userName || 'Learner'}</h2>
+          <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#6C6BD4' }}>Ritmo · Certificate of Achievement</p>
+          <h2 className="text-2xl font-bold mt-2 mb-1" style={{ color: '#23252F' }}>{userName || 'Learner'}</h2>
           <p className="text-sm" style={{ color: '#6b6b6b' }}>has mastered the Spanish song</p>
-          <h3 className="text-xl font-bold mt-2" style={{ color: '#2C2A29' }}>“{certificate.song_title}”</h3>
+          <h3 className="text-xl font-bold mt-2" style={{ color: '#23252F' }}>“{certificate.song_title}”</h3>
           <p className="text-sm mt-0.5" style={{ color: '#6b6b6b' }}>by {certificate.artist}</p>
 
           <div className="flex items-center justify-center gap-6 mt-5">
             <div>
-              <p className="text-2xl font-bold" style={{ color: '#D96B43' }}>{certificate.score}%</p>
+              <p className="text-2xl font-bold" style={{ color: '#6C6BD4' }}>{certificate.score}%</p>
               <p className="text-xs" style={{ color: '#6b6b6b' }}>Quiz Score</p>
             </div>
             <div className="w-px h-10" style={{ backgroundColor: '#e5e5e5' }} />
             <div>
-              <p className="text-2xl font-bold" style={{ color: '#D96B43' }}>{certificate.cefr_level || 'A2'}</p>
+              <p className="text-2xl font-bold" style={{ color: '#6C6BD4' }}>{certificate.cefr_level || 'A2'}</p>
               <p className="text-xs" style={{ color: '#6b6b6b' }}>CEFR Level</p>
             </div>
           </div>
@@ -83,11 +83,11 @@ export default function CertificateView({ certificate, userName }) {
           <div className="flex items-center justify-between mt-6 pt-4" style={{ borderTop: '1px solid #e5e5e5' }}>
             <div className="text-left">
               <p className="text-xs" style={{ color: '#6b6b6b' }}>Issued</p>
-              <p className="text-xs font-semibold" style={{ color: '#2C2A29' }}>{issued}</p>
+              <p className="text-xs font-semibold" style={{ color: '#23252F' }}>{issued}</p>
             </div>
             <div className="text-right">
               <p className="text-xs" style={{ color: '#6b6b6b' }}>Certificate №</p>
-              <p className="text-xs font-mono font-semibold" style={{ color: '#2C2A29' }}>{certificate.certificate_number || '—'}</p>
+              <p className="text-xs font-mono font-semibold" style={{ color: '#23252F' }}>{certificate.certificate_number || '—'}</p>
             </div>
           </div>
         </div>
