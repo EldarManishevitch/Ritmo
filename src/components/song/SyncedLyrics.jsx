@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 import { Volume2, Star, RotateCcw, Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { normalizeSpanish } from '@/lib/pronunciationScore';
 import PronunciationKaraoke from '@/components/song/PronunciationKaraoke';
 import GrammarInsight from '@/components/song/GrammarInsight';
@@ -16,6 +18,7 @@ export default function SyncedLyrics({
   onResync,
   syncDisabled = false,
   loading = false,
+  playbackStarted = false,
 }) {
   const containerRef = useRef(null);
   const [karaokeResults, setKaraokeResults] = useState({});
@@ -65,11 +68,18 @@ export default function SyncedLyrics({
     });
   };
 
-  const renderWords = (text, lineText, karaokeResult) => {
+  const renderWords = (text, lineText, karaokeResult, disabled) => {
     return text.split(/(\s+)/).map((token, i) => {
       if (/^\s+$/.test(token)) return token;
       const clean = token.replace(/[^a-záéíóúüñ]/gi, '');
       if (!clean) return token;
+      if (disabled) {
+        return (
+          <span key={i} className="text-muted-foreground/40">
+            {token}
+          </span>
+        );
+      }
       if (karaokeResult) {
         const normalized = normalizeSpanish(clean);
         const isCorrect = karaokeResult.correctSet.has(normalized);
@@ -106,10 +116,10 @@ export default function SyncedLyrics({
     if (loading) {
       return (
         <div className="h-full overflow-y-auto px-4 py-6 space-y-3 no-scrollbar">
-          {Array.from({ length: 35 }).map((_, i) => (
+          {Array.from({ length: 12 }).map((_, i) => (
             <div key={i} className="rounded-2xl border-2 border-transparent px-4 py-3">
-              <div className="h-4 w-3/4 bg-muted animate-pulse rounded" />
-              <div className="h-3 w-1/2 bg-muted/60 animate-pulse rounded mt-2" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/2 mt-2" />
             </div>
           ))}
         </div>
@@ -182,9 +192,12 @@ export default function SyncedLyrics({
         }
 
         return (
-          <div
+          <motion.div
             key={lineKey}
             data-line-id={lineKey}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: Math.min(idx * 0.04, 0.4) }}
             onClick={() => hasSyncTimestamps && onLineSeek?.(line.start_seconds - offset)}
             className={`rounded-2xl px-4 py-3 transition-all duration-300 relative ${
               active
@@ -200,7 +213,7 @@ export default function SyncedLyrics({
                   active ? 'text-[#23252F] text-lg font-bold' : 'text-foreground text-base'
                 }`}
               >
-                {renderWords(line.spanish_text, line.spanish_text, karaokeResult)}
+                {renderWords(line.spanish_text, line.spanish_text, karaokeResult, !line.english_translation)}
               </p>
             )}
             {(displayMode === 'english' || displayMode === 'both') && (
@@ -244,7 +257,7 @@ export default function SyncedLyrics({
                   <Volume2 className="h-3.5 w-3.5" />
                 </button>
               )}
-              <GrammarInsight line={line} />
+              {playbackStarted && <GrammarInsight line={line} />}
               {karaokeResult && (
                 <div className="flex items-center gap-1.5 ml-auto">
                   <span className="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full bg-primary/10 text-primary">
@@ -262,7 +275,7 @@ export default function SyncedLyrics({
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         );
       })}
     </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, RefreshCw, SlidersHorizontal, X, Music, BookOpen, Trophy, Volume2, GraduationCap } from 'lucide-react';
+import { ArrowLeft, RefreshCw, SlidersHorizontal, X, Music, BookOpen, Trophy, Volume2, GraduationCap, Play } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,8 @@ import SyncedLyrics from '@/components/song/SyncedLyrics';
 import WordLookup from '@/components/song/WordLookup';
 import ChorusQuiz from '@/components/song/ChorusQuiz';
 import GenerationProgressPill from '@/components/song/GenerationProgressPill';
+import SongPageSkeleton from '@/components/song/SongPageSkeleton';
+import WarmUpCard from '@/components/song/WarmUpCard';
 import { generateLyrics, ensureLyricsLoaded } from '@/lib/lyricsPipeline';
 import { recordSongView } from '@/lib/searchHistory';
 import { getCachedSong } from '@/lib/songCache';
@@ -69,7 +71,11 @@ export default function SongPage() {
   const [autoSyncAttempted, setAutoSyncAttempted] = useState(false);
   const [showExerciseBanner, setShowExerciseBanner] = useState(false);
   const [exerciseOpen, setExerciseOpen] = useState(false);
-  const playerContainerId = 'yt-player';
+  const [playbackStarted, setPlaybackStarted] = useState(false);
+  const [audioFailed, setAudioFailed] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [tier1Progress, setTier1Progress] = useState(0);
+  const playerContainerId = retryCount > 0 ? `yt-player-r${retryCount}` : 'yt-player';
 
   const inProgress = song ? ['pending', 'fetching_lyrics', 'translating'].includes(song.sync_status) : false;
   const mode = song?.sync_status === 'static' || song?.sync_status === 'ready_unsynced' ? 'static' : 'synced';
@@ -179,7 +185,7 @@ export default function SongPage() {
 
   const displayId = playerContainerId;
 
-  const { ready, currentTime, duration, seekTo, pause } = useYouTubePlayer(
+  const { ready, currentTime, duration, seekTo, pause, isPlaying, error, play } = useYouTubePlayer(
     song?.youtube_id || '',
     displayId
   );
@@ -215,6 +221,51 @@ export default function SongPage() {
     if (currentTime / duration >= 0.6) setShowExerciseBanner(true);
   }, [currentTime, duration, ready, showExerciseBanner, exerciseOpen]);
 
+  // Tier 3 gate: track when playback first starts (unlocks quiz, grammar insights)
+  useEffect(() => {
+    if (isPlaying && !playbackStarted) setPlaybackStarted(true);
+  }, [isPlaying, playbackStarted]);
+
+  // Audio failure: auto-retry once on error, then show friendly message.
+  // Only depends on [error, ready, audioFailed] — NOT retryCount — so the stale
+  // error value left in the hook's state after a retry doesn't immediately re-fire.
+  useEffect(() => {
+    if (!error || ready || audioFailed) return;
+    if (retryCount === 0) {
+      const timer = setTimeout(() => setRetryCount(1), 1500);
+      return () => clearTimeout(timer);
+    }
+    setAudioFailed(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [error, ready, audioFailed]);
+
+  // Audio timeout: if player never becomes ready, retry or fail
+  useEffect(() => {
+    if (ready || audioFailed) return;
+    const timeout = retryCount === 0 ? 10000 : 6000;
+    const timer = setTimeout(() => {
+      if (retryCount === 0) setRetryCount(1);
+      else setAudioFailed(true);
+    }, timeout);
+    return () => clearTimeout(timer);
+  }, [ready, audioFailed, retryCount]);
+
+  // Tier 1 determinate progress bar (0→90% while loading, 100% when ready)
+  useEffect(() => {
+    if (ready) { setTier1Progress(100); return; }
+    if (audioFailed) return;
+    setTier1Progress(0);
+    const interval = setInterval(() => {
+      setTier1Progress((p) => Math.min(p + 2.5, 90));
+    }, 100);
+    return () => clearInterval(interval);
+  }, [ready, audioFailed, retryCount]);
+
+  const handleAudioRetry = () => {
+    setAudioFailed(false);
+    setRetryCount((c) => c + 1);
+  };
+
   const speakWord = (w) => {
     const u = new SpeechSynthesisUtterance(w);
     u.lang = 'es-ES';
@@ -245,11 +296,7 @@ export default function SongPage() {
   }, [lines, section]);
 
   if (pendingSong) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <SongPageSkeleton />;
   }
 
   if (!song) {
@@ -391,11 +438,34 @@ export default function SongPage() {
           <div className="flex-1 flex flex-col lg:flex-row min-h-0">
           {/* Left column: video + quiz button — stays in place */}
           <div className="lg:w-3/5 flex flex-col shrink-0">
-            <div className="relative bg-black">
-              <div id={displayId} className="w-full aspect-video" />
-              {!ready && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black">
-                  <Loader2 className="h-8 w-8 animate-spin text-white/60" />
+            <div className="relative bg-black aspect-video">
+              <div id={displayId} className="w-full h-full" />
+              {!ready && !audioFailed && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black">
+                  <img src={thumbnail} alt="" className="w-20 h-20 rounded-xl object-cover opacity-50 mb-4" />
+                  <button disabled className="flex items-center justify-center h-14 w-14 rounded-full bg-white/10 animate-pulse">
+                    <Play className="h-6 w-6 text-white/50 ml-0.5" />
+                  </button>
+                  <p className="text-xs text-white/40 mt-3">Loading audio…</p>
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10">
+                    <div className="h-full bg-primary transition-all duration-100 ease-out" style={{ width: `${tier1Progress}%` }} />
+                  </div>
+                </div>
+              )}
+              {ready && !isPlaying && !audioFailed && (
+                <button onClick={() => play()} className="absolute inset-0 flex items-center justify-center group">
+                  <div className="h-14 w-14 rounded-full bg-primary flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                    <Play className="h-6 w-6 text-white ml-0.5" />
+                  </div>
+                </button>
+              )}
+              {audioFailed && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black px-6 text-center">
+                  <p className="text-sm text-white/80 mb-1">Trouble loading the audio</p>
+                  <p className="text-xs text-white/50 mb-4">But the lyrics are ready — want to read through first?</p>
+                  <Button size="sm" variant="outline" onClick={handleAudioRetry}>
+                    <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry audio
+                  </Button>
                 </div>
               )}
             </div>
@@ -470,18 +540,23 @@ export default function SongPage() {
                 )}
 
                 <div className="flex-1 overflow-y-auto min-h-0 no-scrollbar">
-                  <SyncedLyrics
-                    lines={filteredLines}
-                    currentTime={currentTime}
-                    offset={song.sync_offset_seconds || 0}
-                    mode={mode}
-                    displayMode={displayMode}
-                    loading={inProgress && lines.length === 0}
-                    onWordTap={handleWordTap}
-                    onLineSeek={(t) => seekTo(t)}
-                    onPausePlayer={pause}
-                    onResync={() => generateLyrics({ songId: id })}
-                  />
+                  {lines.length === 0 && !ready && !audioFailed ? (
+                    <WarmUpCard songId={id} artist={song?.artist} genre={song?.genre} />
+                  ) : (
+                    <SyncedLyrics
+                      lines={filteredLines}
+                      currentTime={currentTime}
+                      offset={song.sync_offset_seconds || 0}
+                      mode={mode}
+                      displayMode={displayMode}
+                      loading={inProgress && lines.length === 0}
+                      onWordTap={handleWordTap}
+                      onLineSeek={(t) => seekTo(t)}
+                      onPausePlayer={pause}
+                      onResync={() => generateLyrics({ songId: id })}
+                      playbackStarted={playbackStarted}
+                    />
+                  )}
                 </div>
                 {showExerciseBanner && !exerciseOpen && (
                   <div className="flex items-center justify-between gap-2 px-4 py-3 bg-card border-t border-border shadow-lg">
@@ -531,7 +606,14 @@ export default function SongPage() {
 
             {tab === 'quiz' && (
               <div className="flex-1 overflow-y-auto px-4 py-4 no-scrollbar">
-                <ChorusQuiz songId={id} lines={lines} songTitle={song.title} songArtist={song.artist} songDifficulty={song.difficulty} />
+                {playbackStarted ? (
+                  <ChorusQuiz songId={id} lines={lines} songTitle={song.title} songArtist={song.artist} songDifficulty={song.difficulty} />
+                ) : (
+                  <div className="text-center py-12">
+                    <Trophy className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground">Start playing to unlock the quiz.</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
