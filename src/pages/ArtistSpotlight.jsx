@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Music2, Loader2, GraduationCap } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { songsRepo } from '@/data/repositories/songs.repo';
 import BlogLayout from '@/components/layout/BlogLayout';
 import SEOHead from '@/components/SEOHead';
 import { songCefrLevel } from '@/lib/cefr';
@@ -97,7 +97,7 @@ export default function ArtistSpotlight({ slug }) {
         const query = slug === 'aventura'
           ? { artist: { $regex: 'Aventura|Romeo Santos', $options: 'i' } }
           : { artist: { $regex: artist.name, $options: 'i' } };
-        const all = await base44.entities.Song.filter(query, '-created_date', 100);
+        const all = await songsRepo.filter(query, '-created_date', 100);
         if (cancelled) return;
         setSongs((all || []).filter(isSongReady));
 
