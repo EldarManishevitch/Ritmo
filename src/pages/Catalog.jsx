@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { base44 } from '@/api/base44Client';
+import React, { useState, useMemo } from 'react';
+import { useSongsList } from '@/data/hooks/useSongs';
 import { Search, Music, SlidersHorizontal } from 'lucide-react';
 import SongCard from '@/components/song/SongCard';
 import { Input } from '@/components/ui/input';
@@ -22,23 +22,11 @@ const GENRE_TO_VALUE = {
 };
 
 export default function Catalog() {
-  const [songs, setSongs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: songs = [], isLoading: loading } = useSongsList('-created_date', 50);
   const [search, setSearch] = useState('');
   const [genre, setGenre] = useState('All');
   const [level, setLevel] = useState('All');
   const { isPro } = useSubscription();
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await base44.entities.Song.list('-created_date', 50);
-        setSongs(data);
-      } catch (e) {}
-      setLoading(false);
-    };
-    load();
-  }, []);
 
   const freeIds = useMemo(() => {
     const FREE_COUNT = 12;
