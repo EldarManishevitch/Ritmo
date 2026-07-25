@@ -1,35 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { Loader2, Music2, Award } from 'lucide-react';
-import { levelProgressRepo } from '@/data/repositories/levelProgress.repo';
+import { useLevelProgressFor } from '@/data/hooks/useCurriculum';
 import { songsRepo } from '@/data/repositories/songs.repo';
 import { levelMeta } from '@/lib/curriculum';
 
 export default function CertificatePage() {
   const { level } = useParams();
-  const [loading, setLoading] = useState(true);
-  const [lp, setLp] = useState(null);
-  const [songs, setSongs] = useState([]);
+  const { data: lpList, isLoading: lpLoading } = useLevelProgressFor(level);
+  const lp = lpList?.[0] || null;
+  const songIds = lp?.songs_completed?.slice(0, 8) || [];
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const lps = await levelProgressRepo.byLevel(level);
-        const found = lps?.[0];
-        if (cancelled) return;
-        setLp(found);
-        if (found?.songs_completed?.length) {
-          const loaded = await Promise.all(
-            found.songs_completed.slice(0, 8).map((id) => songsRepo.get(id).catch(() => null))
-          );
-          if (!cancelled) setSongs(loaded.filter(Boolean));
-        }
-      } catch { /* noop */ }
-      if (!cancelled) setLoading(false);
-    })();
-    return () => { cancelled = true; };
-  }, [level]);
+  const { data: songs = [], isLoading: songsLoading } = useQuery({
+    queryKey: ['certificatePage', 'songs', level, songIds],
+    queryFn: () => Promise.all(songIds.map((id) => songsRepo.get(id).catch(() => null))).then((r) => r.filter(Boolean)),
+    enabled: songIds.length > 0,
+  });
+
+  const loading = lpLoading || (songIds.length > 0 && songsLoading);
 
   if (loading) {
     return (
