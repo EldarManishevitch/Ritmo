@@ -1,4 +1,5 @@
-import { base44 } from '@/api/base44Client';
+import { songsRepo } from '@/data/repositories/songs.repo';
+import { genreStatsRepo } from '@/data/repositories/genreStats.repo';
 
 export const GENRES = ['reggaeton', 'bachata', 'pop latino', 'trap latino', 'salsa', 'merengue', 'rock latino'];
 
@@ -74,19 +75,19 @@ const dayStr = () => new Date().toISOString().slice(0, 10);
  */
 export async function upsertGenreStatsOnCompletion({ songId, xpAwarded = 0 }) {
   try {
-    const song = await base44.entities.Song.get(songId);
+    const song = await songsRepo.get(songId);
     if (!song?.genre) return;
-    const existing = await base44.entities.GenreStats.filter({ genre: song.genre });
+    const existing = await genreStatsRepo.byGenre(song.genre);
     const today = dayStr();
     if (existing?.length) {
       const rec = existing[0];
-      await base44.entities.GenreStats.update(rec.id, {
+      await genreStatsRepo.update(rec.id, {
         songs_completed: (rec.songs_completed || 0) + 1,
         total_xp: (rec.total_xp || 0) + xpAwarded,
         last_practiced: today,
       });
     } else {
-      await base44.entities.GenreStats.create({
+      await genreStatsRepo.create({
         genre: song.genre,
         songs_completed: 1,
         total_xp: xpAwarded,
@@ -103,18 +104,18 @@ export async function upsertGenreStatsOnCompletion({ songId, xpAwarded = 0 }) {
 export async function upsertGenreStatsOnWordSaved({ sourceSongId }) {
   if (!sourceSongId) return;
   try {
-    const song = await base44.entities.Song.get(sourceSongId);
+    const song = await songsRepo.get(sourceSongId);
     if (!song?.genre) return;
-    const existing = await base44.entities.GenreStats.filter({ genre: song.genre });
+    const existing = await genreStatsRepo.byGenre(song.genre);
     const today = dayStr();
     if (existing?.length) {
       const rec = existing[0];
-      await base44.entities.GenreStats.update(rec.id, {
+      await genreStatsRepo.update(rec.id, {
         words_saved: (rec.words_saved || 0) + 1,
         last_practiced: today,
       });
     } else {
-      await base44.entities.GenreStats.create({
+      await genreStatsRepo.create({
         genre: song.genre,
         words_saved: 1,
         last_practiced: today,
