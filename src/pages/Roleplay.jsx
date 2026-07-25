@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mic, Loader2, Volume2, Eye, EyeOff, RefreshCw, ArrowRight, MapPin, Sparkles, MessageSquare, Lock } from 'lucide-react';
 import { roleplaySessionsRepo } from '@/data/repositories/roleplaySessions.repo';
+import { useCreateRoleplaySession, useUpdateRoleplaySession } from '@/data/hooks/useRoleplaySessions';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
@@ -27,6 +28,8 @@ export default function Roleplay() {
   const [historyKey, setHistoryKey] = useState(0);
   const { isPro } = useSubscription();
   const { toast } = useToast();
+  const createRoleplaySession = useCreateRoleplaySession();
+  const updateRoleplaySession = useUpdateRoleplaySession();
 
   const handleSelectVoice = () => {
     if (!speechSupported) { toast({ description: 'Voice mode needs Chrome or Edge.' }); return; }
@@ -56,7 +59,7 @@ export default function Roleplay() {
       }
 
       const scene = await generateRoleplayScene({ level: cefr });
-      const created = await roleplaySessionsRepo.create({
+      const created = await createRoleplaySession.mutateAsync({
         scenario_title: scene.scenario_title,
         character_name: scene.character_name,
         location: scene.location,
@@ -91,7 +94,7 @@ export default function Roleplay() {
     setDone(true);
     try {
       if (session && !session.xp_awarded) {
-        await roleplaySessionsRepo.update(session.id, { completed: true, xp_awarded: true });
+        await updateRoleplaySession.mutateAsync({ id: session.id, patch: { completed: true, xp_awarded: true } });
         const res = await awardRoleplayCompletion();
         if (res.leveledUp) setLevelUp(res.newLevel);
       }
