@@ -1,38 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Zap, Check } from 'lucide-react';
-import { dailyLessonRepo } from '@/data/repositories/dailyLesson.repo';
-import { getProgress } from '@/lib/progress';
-import { todayStr, getOrCreateTodayLesson } from '@/lib/dailyLesson';
+import { useUserProgress } from '@/data/hooks/useUserProgress';
+import { useTodayLesson } from '@/data/hooks/useDailyLesson';
 
 export default function DailyLessonBanner() {
-  const [state, setState] = useState(null); // { lesson, progress } or null while loading
+  const { data: progress, isLoading: progressLoading } = useUserProgress();
+  const { data: lesson, isLoading: lessonLoading, isError } = useTodayLesson();
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const progress = await getProgress();
-        const today = todayStr();
-        const existing = await dailyLessonRepo.byDate(today);
-        if (existing?.length) {
-          if (!cancelled) setState({ lesson: existing[0], progress });
-          return;
-        }
-        // No lesson yet — create one (this also picks the song)
-        const lesson = await getOrCreateTodayLesson();
-        if (!cancelled) setState({ lesson, progress });
-      } catch {
-        if (!cancelled) setState({ error: true });
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
+  if (progressLoading || lessonLoading) return null;
+  if (isError || !lesson) return null;
 
-  if (!state) return null;
-  if (state.error) return null;
-
-  const { lesson, progress } = state;
   const streak = progress?.current_streak || 0;
   const done = lesson?.completed;
 
