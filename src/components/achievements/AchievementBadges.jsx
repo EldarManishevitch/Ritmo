@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Award, Loader2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { getProgress } from '@/lib/progress';
 import { ACHIEVEMENTS, unlockedAchievementIds } from '@/lib/achievements';
 
 export default function AchievementBadges() {
@@ -9,11 +9,10 @@ export default function AchievementBadges() {
 
   useEffect(() => {
     let cancelled = false;
-    base44.entities.UserProgress.list('-created_date', 1)
-      .then((rows) => {
+    getProgress()
+      .then((p) => {
         if (cancelled) return;
-        const p = rows[0] || {};
-        setUnlocked(new Set(unlockedAchievementIds(p)));
+        setUnlocked(new Set(unlockedAchievementIds(p || {})));
       })
       .catch(() => { if (!cancelled) setUnlocked(new Set()); })
       .finally(() => { if (!cancelled) setLoading(false); });
