@@ -10,7 +10,12 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
  */
 
 const QUICK_TIMEOUT = 2800;
-const PIPELINE_TIMEOUT = 45000; // Hard cap: 45 seconds for the entire pipeline
+// Hard cap for the entire pipeline (Stage 1 fetch + Stage 2 translate + Stage 3 sync, all
+// awaited in sequence/parallel below). Nothing waits synchronously on this function's HTTP
+// response — resilientLyricsPipeline already invokes it fire-and-forget — so this only needs
+// to be long enough for real work to finish, not fast. A tight cap here previously killed the
+// pipeline mid-translation, stranding songs at sync_status='translating' forever.
+const PIPELINE_TIMEOUT = 170000;
 
 async function fetchGenius(title, artist) {
   const token = Deno.env.get('GENIUS_ACCESS_TOKEN');
@@ -158,13 +163,16 @@ async function runPipeline(sb, base44, songId, title, artist) {
 
   await sb.entities.Song.update(songId, { sync_status: 'translating' });
   // Stage 2/3 invoked with the user-scoped client so they receive the user context.
-  // Fire-and-forget (not awaited): each stage is its own function invocation with
-  // its own execution budget, so a slow translation call can no longer starve Stage 1's
-  // 45s timeout and strand the song at sync_status='translating' forever. Stage 3
-  // (syncLyricsAdvanced) always resolves the terminal status on its own regardless of
-  // whether Stage 2 has finished, so the two stages don't need to be coupled here.
-  base44.functions.invoke('translateLyrics', { songId }).catch((e) => console.log('Stage 2 trigger failed:', e?.message));
-  base44.functions.invoke('syncLyricsAdvanced', { songId }).catch((e) => console.log('Stage 3 trigger failed:', e?.message));
+  // Awaited: un-awaited invokes here were found to die silently once this function's own
+  // process returns (this runtime doesn't keep background work alive past the response),
+  // so songs stayed at sync_status='translating' forever with no error and no retry.
+  // Awaiting inside the now-generous PIPELINE_TIMEOUT keeps the process alive until both
+  // stages actually finish, and the outer catch below still marks the song 'failed' (eligible
+  // for retry) if something genuinely hangs past that budget.
+  await Promise.all([
+    base44.functions.invoke('translateLyrics', { songId }).catch((e) => console.log('Stage 2 failed:', e?.message)),
+    base44.functions.invoke('syncLyricsAdvanced', { songId }).catch((e) => console.log('Stage 3 failed:', e?.message)),
+  ]);
 
   return { success: true, line_count: rawLines.length };
 }
