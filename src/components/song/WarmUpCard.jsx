@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { slangDictionaryRepo } from '@/data/repositories/slangDictionary.repo';
 
 const GENERIC_NOTES = [
   { title: 'Listen for the rhythm', body: 'Try tapping along to the beat before diving into the words. Feeling the rhythm helps your brain process the language faster.' },
@@ -15,7 +15,7 @@ export default function WarmUpCard({ songId, artist, genre }) {
 
   useEffect(() => {
     if (!songId) return;
-    base44.entities.SlangDictionary.filter({ song_id: songId }, 'term', 20)
+    slangDictionaryRepo.bySong(songId, 'term', 20)
       .then((list) => setSlangTerms(list || []))
       .catch(() => {});
   }, [songId]);
