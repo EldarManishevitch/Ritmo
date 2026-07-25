@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { practiceFlagsRepo } from '@/data/repositories/practiceFlags.repo';
+import { useFlagWordMissed } from '@/data/hooks/usePracticeFlags';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Trophy, Check, X, RotateCcw, Loader2 } from 'lucide-react';
@@ -21,6 +22,7 @@ export default function ChorusQuiz({ songId, lines, songTitle, songArtist, songD
   const [done, setDone] = useState(false);
   const { toast } = useToast();
   const [certificate, setCertificate] = useState(null);
+  const flagWordMissed = useFlagWordMissed();
 
   const questions = useMemo(() => {
     void seed;
@@ -93,20 +95,15 @@ export default function ChorusQuiz({ songId, lines, songTitle, songArtist, songD
 
   const flagWrong = async (word) => {
     try {
-      const existing = await base44.entities.PracticeFlag.filter({ word, song_id: songId });
-      if (existing && existing.length) {
-        await base44.entities.PracticeFlag.update(existing[0].id, { miss_count: (existing[0].miss_count || 1) + 1 });
-      } else {
-        await base44.entities.PracticeFlag.create({ word, song_id: songId, miss_count: 1 });
-      }
+      await flagWordMissed.mutateAsync({ word, songId });
     } catch { /* noop */ }
   };
 
   const clearFlag = async (word) => {
     try {
-      const existing = await base44.entities.PracticeFlag.filter({ word, song_id: songId });
+      const existing = await practiceFlagsRepo.filter({ word, song_id: songId });
       if (existing && existing.length) {
-        await base44.entities.PracticeFlag.delete(existing[0].id);
+        await practiceFlagsRepo.delete(existing[0].id);
       }
     } catch { /* noop */ }
   };
