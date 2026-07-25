@@ -1,0 +1,13 @@
+{
+  // Native Base44 scheduled automation — the platform invokes entry.ts directly
+  // on this schedule, with no secret to configure. Runs hourly; entry.ts matches
+  // UserProgress.notifications_time against the current UTC hour itself.
+  "automations": [
+    {
+      "type": "scheduled",
+      "schedule_mode": "recurring",
+      "schedule_type": "cron",
+      "cron_expression": "0 * * * *"
+    }
+  ]
+}
