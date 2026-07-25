@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Music2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { useUpdateUserProgress } from '@/data/hooks/useUserProgress';
 import { PICKER_GENRES, genreColor, genreLabel } from '@/lib/genres';
 import { getProgress } from '@/lib/progress';
 
@@ -9,6 +9,7 @@ export default function GenrePreferencesCard() {
   const [loading, setLoading] = useState(true);
   const debounceRef = useRef(null);
   const progressIdRef = useRef(null);
+  const updateUserProgress = useUpdateUserProgress();
 
   useEffect(() => {
     getProgress()
@@ -29,7 +30,7 @@ export default function GenrePreferencesCard() {
     debounceRef.current = setTimeout(async () => {
       try {
         if (progressIdRef.current) {
-          await base44.entities.UserProgress.update(progressIdRef.current, { fav_genres: newGenres });
+          await updateUserProgress.mutateAsync({ id: progressIdRef.current, patch: { fav_genres: newGenres } });
         }
       } catch { /* noop */ }
     }, 500);
