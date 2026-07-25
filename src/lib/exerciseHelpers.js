@@ -1,4 +1,6 @@
 import { base44 } from '@/api/base44Client';
+import { songsRepo } from '@/data/repositories/songs.repo';
+import { songCompletionsRepo } from '@/data/repositories/songCompletions.repo';
 import { getCachedWordTranslation, prewarmWordTranslations } from '@/lib/aiHelpers';
 import { getProgress, levelForXp } from '@/lib/progress';
 import { unlockedAchievementIds, newlyUnlocked } from '@/lib/achievements';
@@ -230,15 +232,15 @@ export async function awardExerciseCompletion(quizScore = 0) {
 /** Find the next song at the user's CEFR level, skipping already-completed songs. */
 export async function getNextRecommendedSong(cefrLevel, currentSongId) {
   try {
-    const completions = await base44.entities.SongCompletion.filter({}, '-created_date', 200);
+    const completions = await songCompletionsRepo.filter({}, '-created_date', 200);
     const completedIds = new Set((completions || []).map((c) => c.song_id).filter(Boolean));
     completedIds.add(currentSongId);
 
-    const songs = await base44.entities.Song.filter({ cefr_level: cefrLevel }, 'created_date', 50);
+    const songs = await songsRepo.filter({ cefr_level: cefrLevel }, 'created_date', 50);
     const next = (songs || []).find((s) => !completedIds.has(s.id));
     if (next) return next;
 
-    const allSongs = await base44.entities.Song.list('-created_date', 50);
+    const allSongs = await songsRepo.list('-created_date', 50);
     return (allSongs || []).find((s) => !completedIds.has(s.id)) || null;
   } catch {
     return null;
