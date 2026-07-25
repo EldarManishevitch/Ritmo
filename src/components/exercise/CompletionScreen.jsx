@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, Share2, ArrowRight, Flame, Award, BookOpen } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { savedWordsRepo } from '@/data/repositories/savedWords.repo';
 import { getNextRecommendedSong } from '@/lib/exerciseHelpers';
 
 export default function CompletionScreen({ scores, song, progress, certResult, onClose }) {
@@ -14,7 +14,7 @@ export default function CompletionScreen({ scores, song, progress, certResult, o
   const streak = progress?.current_streak || 0;
 
   useEffect(() => {
-    base44.entities.SavedWord.filter({ mastered: true }).then((w) => setMasteredCount(w?.length || 0)).catch(() => {});
+    savedWordsRepo.filter({ mastered: true }).then((w) => setMasteredCount(w?.length || 0)).catch(() => {});
     const cefr = progress?.newLevel?.cefr || progress?.cefr_level || 'A1';
     getNextRecommendedSong(cefr, song.id).then(setNextSong).catch(() => {});
   }, [progress, song.id]);
