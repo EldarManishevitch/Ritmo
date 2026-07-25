@@ -16,13 +16,23 @@ export function useUserProgress(options = {}) {
 
 // For simple field patches (fav_genres, notification prefs, etc.) that
 // don't need the XP/streak logic in progress.js's award* functions.
+// Optimistically merges the patch into the cached progress so every
+// consumer (genre toggles, notification settings, passport trial, etc.)
+// reflects the change instantly instead of waiting on a round trip.
 export function useUpdateUserProgress() {
   const qc = useQueryClient();
   return {
     mutateAsync: async ({ id, patch }) => {
-      const result = await base44.entities.UserProgress.update(id, patch);
-      qc.invalidateQueries({ queryKey: queryKeys.userProgress.current });
-      return result;
+      const previous = qc.getQueryData(queryKeys.userProgress.current);
+      qc.setQueryData(queryKeys.userProgress.current, (old) => (old ? { ...old, ...patch } : old));
+      try {
+        const result = await base44.entities.UserProgress.update(id, patch);
+        qc.invalidateQueries({ queryKey: queryKeys.userProgress.current });
+        return result;
+      } catch (err) {
+        qc.setQueryData(queryKeys.userProgress.current, previous);
+        throw err;
+      }
     },
   };
 }
