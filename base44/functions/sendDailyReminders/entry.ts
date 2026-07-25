@@ -36,17 +36,17 @@ Deno.serve(async (req) => {
     }
 
     // --- Scheduled mode ---
-    // Invoked by Base44's native scheduled automation (see function.jsonc) — those calls
-    // carry no authenticated user, same as any external HTTP call, so we can't require
-    // admin auth here without also blocking the scheduler itself. A manual (non-admin)
-    // caller can still reach this path, but all it does is send reminder emails to users
-    // who already opted in and haven't practiced yet — no data exposure, and duplicate
-    // triggers within the same hour are self-limiting (recipients already emailed that
-    // hour still get skipped because notifications_time only matches once).
+    // Require either an authenticated admin or a trusted cron secret header.
+    // Anonymous callers (no token, no secret) are blocked to prevent unauthenticated
+    // mass-email triggering. The cron secret lets the platform scheduler invoke this
+    // without a user session.
     let schedUser = null;
     try { schedUser = await base44.auth.me(); } catch (e) { /* scheduled / no user */ }
-    if (schedUser && schedUser.role !== 'admin') {
-      return Response.json({ error: 'Forbidden — admin only' }, { status: 403 });
+    const cronSecret = Deno.env.get('CRON_SECRET');
+    const hasCronSecret = !!(cronSecret && req.headers.get('x-cron-secret') === cronSecret);
+    const isAdmin = !!(schedUser && schedUser.role === 'admin');
+    if (!isAdmin && !hasCronSecret) {
+      return Response.json({ error: 'Forbidden — admin or cron secret required' }, { status: 403 });
     }
 
     const now = new Date();

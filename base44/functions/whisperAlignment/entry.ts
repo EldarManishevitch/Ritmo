@@ -102,7 +102,7 @@ function greedyMatch(segments, spanishLines) {
   return result;
 }
 
-async function downloadAndTranscribe(base44, youtubeId) {
+async function downloadAndTranscribe(base44, youtubeId, authHeader) {
   let audioUrl = null;
   for (let attempt = 1; attempt <= DOWNLOAD_RETRIES; attempt++) {
     try {
@@ -135,7 +135,7 @@ async function downloadAndTranscribe(base44, youtubeId) {
       
       const uploadRes = await fetch('https://api.base44.com/v1/integrations/upload', {
         method: 'POST',
-        headers: { 'Authorization': req.headers.get('authorization') },
+        headers: { 'Authorization': authHeader },
         body: formData,
       });
       if (!uploadRes.ok) throw new Error('Upload failed');
@@ -206,7 +206,7 @@ Deno.serve(async (req) => {
     }
 
     // Download and transcribe
-    const rawTranscript = await downloadAndTranscribe(base44, song.youtube_id);
+    const rawTranscript = await downloadAndTranscribe(base44, song.youtube_id, req.headers.get('authorization'));
     console.log(`Stage 3b: transcript length ${rawTranscript.length} chars`);
 
     // Segment the transcript into chunks approximating lyric-line timing
