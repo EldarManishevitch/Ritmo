@@ -2,13 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { genreColor, genreLabel, READY_STATUSES } from '@/lib/genres';
+import SongThumbnail from '@/components/song/SongThumbnail';
 
 export default function CurriculumSongCard({ song }) {
   const isReady = READY_STATUSES.includes(song.sync_status);
   const gc = genreColor(song.genre);
-  const thumb = song.youtube_id
-    ? `https://img.youtube.com/vi/${song.youtube_id}/mqdefault.jpg`
-    : song.album_art_url || '';
 
   const card = (
     <div
@@ -16,11 +14,7 @@ export default function CurriculumSongCard({ song }) {
       style={{ borderRadius: '10px', border: '0.5px solid hsl(var(--border))', background: 'hsl(var(--muted))' }}
     >
       <div className="relative aspect-video">
-        {thumb ? (
-          <img src={thumb} alt={song.title} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full bg-muted" />
-        )}
+        <SongThumbnail song={song} className="w-full h-full object-cover" />
         <span className="absolute top-1.5 right-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/90 text-foreground">
           {song.cefr_level || 'A1'}
         </span>
