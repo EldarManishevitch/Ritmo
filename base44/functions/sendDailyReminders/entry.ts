@@ -87,7 +87,9 @@ Deno.serve(async (req) => {
 
 async function sendReminderEmail(sb, progress, email) {
   const streak = progress.current_streak || 0;
-  const genres = (progress.fav_genres || []).join(', ') || 'reggaeton and Latin pop';
+  const ALLOWED_GENRES = ['reggaeton', 'bachata', 'pop latino', 'trap latino', 'merengue', 'salsa', 'rock latino'];
+  const safeGenres = (progress.fav_genres || []).filter((g) => ALLOWED_GENRES.includes(g));
+  const genres = safeGenres.join(', ') || 'reggaeton and Latin pop';
 
   // Generate a personalized 2-sentence motivational message
   const llmResponse = await sb.integrations.Core.InvokeLLM({
@@ -101,7 +103,13 @@ async function sendReminderEmail(sb, progress, email) {
     }
   });
 
-  const motivationalMessage = llmResponse?.message || `You're on a ${streak}-day streak — keep the momentum going! Every song brings you closer to fluency.`;
+  const rawMessage = llmResponse?.message || `You're on a ${streak}-day streak — keep the momentum going! Every song brings you closer to fluency.`;
+  // Sanitize LLM output before interpolating into HTML — guards against
+  // prompt-injection-driven HTML/XSS payloads reaching the email body.
+  const escapeHtml = (s) => String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  const motivationalMessage = escapeHtml(rawMessage);
 
   const appUrl = Deno.env.get('BASE44_APP_URL') || 'https://ritmo.app';
   const subject = `🔥 Don't break your streak today — ${streak} days and counting`;
@@ -120,7 +128,7 @@ async function sendReminderEmail(sb, progress, email) {
 </body>
 </html>`;
 
-  const textBody = `${motivationalMessage}\n\nYour current streak: ${streak} days\n\nStart today's lesson: ${appUrl}/dashboard`;
+  const textBody = `${rawMessage}\n\nYour current streak: ${streak} days\n\nStart today's lesson: ${appUrl}/dashboard`;
 
   await sb.integrations.Core.SendEmail({
     to: email,

@@ -12,9 +12,10 @@ import { genreColor, genreLabel } from '@/lib/genres';
 import SEOHead from '@/components/SEOHead';
 
 export default function Vocab() {
-  const { data: vocab = [], isLoading: vocabLoading } = useSavedWordsList('-created_date', 200);
-  const { data: songs = [], isLoading: songsLoading } = useSongsList('-created_date', 200);
+  const { data: vocab = [], isLoading: vocabLoading, refetch: refetchVocab } = useSavedWordsList('-created_date', 200);
+  const { data: songs = [], isLoading: songsLoading, refetch: refetchSongs } = useSongsList('-created_date', 200);
   const loading = vocabLoading || songsLoading;
+  const load = async () => { await Promise.all([refetchVocab?.(), refetchSongs?.()]); };
   const [genreFilter, setGenreFilter] = useState('all');
   const { isPro } = useSubscription();
   const deleteSavedWord = useDeleteSavedWord();

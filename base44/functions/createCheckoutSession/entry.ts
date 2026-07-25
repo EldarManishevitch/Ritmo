@@ -18,7 +18,9 @@ Deno.serve(async (req) => {
     };
     const cfg = prices[plan];
 
-    const origin = req.headers.get('origin') || 'https://app.base44.com';
+    // Use a server-configured app URL rather than the client-controlled Origin header
+    // to prevent open-redirect attacks via a spoofed Origin.
+    const origin = Deno.env.get('BASE44_APP_URL') || 'https://app.base44.com';
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
