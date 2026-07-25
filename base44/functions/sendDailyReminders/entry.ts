@@ -36,11 +36,16 @@ Deno.serve(async (req) => {
     }
 
     // --- Scheduled mode ---
-    // Allow scheduled runs (no user) and admin direct calls; block non-admin users
-    // from triggering mass emails by hitting the endpoint directly.
+    // Require either an authenticated admin or a trusted cron secret header.
+    // Anonymous callers (no token, no secret) are blocked to prevent unauthenticated
+    // mass-email triggering. The cron secret lets the platform scheduler invoke this
+    // without a user session.
     let schedUser = null;
     try { schedUser = await base44.auth.me(); } catch (e) { /* scheduled / no user */ }
-    if (schedUser && schedUser.role !== 'admin') {
+    const cronSecret = Deno.env.get('CRON_SECRET');
+    const hasCronSecret = !!(cronSecret && req.headers.get('x-cron-secret') === cronSecret);
+    const isAdmin = !!(schedUser && schedUser.role === 'admin');
+    if (!isAdmin && !hasCronSecret) {
       return Response.json({ error: 'Forbidden — admin only' }, { status: 403 });
     }
 
