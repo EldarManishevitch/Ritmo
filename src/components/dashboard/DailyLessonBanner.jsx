@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Zap, Check } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { dailyLessonRepo } from '@/data/repositories/dailyLesson.repo';
 import { getProgress } from '@/lib/progress';
 import { todayStr, getOrCreateTodayLesson } from '@/lib/dailyLesson';
 
@@ -14,7 +14,7 @@ export default function DailyLessonBanner() {
       try {
         const progress = await getProgress();
         const today = todayStr();
-        const existing = await base44.entities.DailyLesson.filter({ lesson_date: today });
+        const existing = await dailyLessonRepo.byDate(today);
         if (existing?.length) {
           if (!cancelled) setState({ lesson: existing[0], progress });
           return;
