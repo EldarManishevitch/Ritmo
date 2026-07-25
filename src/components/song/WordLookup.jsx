@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Volume2, BookmarkPlus, BookmarkCheck, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
+import { savedWordsRepo } from '@/data/repositories/savedWords.repo';
+import { useSaveWord } from '@/data/hooks/useSavedWords';
 import { translateWord, getCachedWordTranslation } from '@/lib/aiHelpers';
 import { upsertGenreStatsOnWordSaved } from '@/lib/genres';
 import { Link } from 'react-router-dom';
@@ -14,6 +15,7 @@ export default function WordLookup({ word, context, songId, pulseSave = false, o
   const [saved, setSaved] = useState(false);
   const [capReached, setCapReached] = useState(false);
   const { isPro } = useSubscription();
+  const saveWord = useSaveWord();
 
   useEffect(() => {
     if (!word) { setInfo(null); setSaved(false); setCapReached(false); return; }
@@ -43,13 +45,13 @@ export default function WordLookup({ word, context, songId, pulseSave = false, o
     if (!info || saving) return;
     if (!isPro) {
       try {
-        const existing = await base44.entities.SavedWord.list('-created_date', 51);
+        const existing = await savedWordsRepo.list('-created_date', 51);
         if (existing.length >= 50) { setCapReached(true); return; }
       } catch { /* proceed to save */ }
     }
     setSaving(true);
     try {
-      await base44.entities.SavedWord.create({
+      await saveWord.mutateAsync({
         word,
         english_meaning: info.english_meaning,
         pronunciation_hint: info.pronunciation,
