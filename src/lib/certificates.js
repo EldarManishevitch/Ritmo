@@ -1,4 +1,4 @@
-import { base44 } from '@/api/base44Client';
+import { certificatesRepo } from '@/data/repositories/certificates.repo';
 import { songCefrLevel } from '@/lib/cefr';
 
 // Score percentage required to "master" a song and earn a certificate.
@@ -15,17 +15,17 @@ export async function issueCertificateIfMastered({ song, score, total }) {
   if (pct < MASTERY_THRESHOLD) return null;
 
   try {
-    const existing = await base44.entities.Certificate.filter({ song_id: song.id });
+    const existing = await certificatesRepo.filter({ song_id: song.id });
     if (existing && existing.length) {
       const best = existing[0];
       if (pct > (best.score || 0)) {
-        await base44.entities.Certificate.update(best.id, { score: pct });
+        await certificatesRepo.update(best.id, { score: pct });
         return { ...best, score: pct, isNew: false };
       }
       return { ...best, isNew: false };
     }
 
-    const cert = await base44.entities.Certificate.create({
+    const cert = await certificatesRepo.create({
       song_id: song.id,
       song_title: song.title || 'Unknown',
       artist: song.artist || 'Unknown',
