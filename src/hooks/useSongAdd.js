@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { songsRepo } from '@/data/repositories/songs.repo';
 import { youtubeSearch, detectGenre, isSpanishSong } from '@/lib/aiHelpers';
 import { generateLyrics } from '@/lib/lyricsPipeline';
 
@@ -46,7 +46,7 @@ export function useSongAdd() {
         return;
       }
       // Create the song immediately so we can navigate without waiting for the pipeline.
-      const song = await base44.entities.Song.create({
+      const song = await songsRepo.create({
         title: video.title,
         artist: video.artist || 'Unknown',
         youtube_id: video.youtube_id,
@@ -54,7 +54,7 @@ export function useSongAdd() {
       });
       // Detect the real genre in the background (don't block navigation).
       detectGenre({ title: video.title, artist: video.artist })
-        .then((genre) => base44.entities.Song.update(song.id, { genre }))
+        .then((genre) => songsRepo.update(song.id, { genre }))
         .catch(() => {});
       // Fire the heavy lyrics pipeline in the background; SongPage polls and shows progress.
       generateLyrics({ songId: song.id, youtubeId: video.youtube_id }).catch(() => {});
