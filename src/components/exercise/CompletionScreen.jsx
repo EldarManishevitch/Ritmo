@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, Share2, ArrowRight, Flame, Award, BookOpen } from 'lucide-react';
-import { savedWordsRepo } from '@/data/repositories/savedWords.repo';
+import { useSavedWordsFilter } from '@/data/hooks/useSavedWords';
 import { getNextRecommendedSong } from '@/lib/exerciseHelpers';
 
 export default function CompletionScreen({ scores, song, progress, certResult, onClose }) {
   const navigate = useNavigate();
   const [shared, setShared] = useState(false);
   const [nextSong, setNextSong] = useState(null);
-  const [masteredCount, setMasteredCount] = useState(0);
+  const { data: masteredWords = [] } = useSavedWordsFilter({ mastered: true });
+  const masteredCount = masteredWords.length;
 
   const xpGain = scores.quiz * 10 + 15;
   const streak = progress?.current_streak || 0;
 
   useEffect(() => {
-    savedWordsRepo.filter({ mastered: true }).then((w) => setMasteredCount(w?.length || 0)).catch(() => {});
     const cefr = progress?.newLevel?.cefr || progress?.cefr_level || 'A1';
     getNextRecommendedSong(cefr, song.id).then(setNextSong).catch(() => {});
   }, [progress, song.id]);
