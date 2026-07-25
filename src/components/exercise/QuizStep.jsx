@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { generateQuizQuestions, buildBlankedLine } from '@/lib/exerciseHelpers';
-import { base44 } from '@/api/base44Client';
+import { useFlagWordMissed } from '@/data/hooks/usePracticeFlags';
 
 export default function QuizStep({ lines, savedWords, onComplete }) {
   const questions = useMemo(() => generateQuizQuestions(lines, savedWords), [lines, savedWords]);
+  const flagWordMissed = useFlagWordMissed();
   const [currentQ, setCurrentQ] = useState(0);
   const [score, setScore] = useState(0);
   const [selected, setSelected] = useState(null);
@@ -37,12 +38,7 @@ export default function QuizStep({ lines, savedWords, onComplete }) {
       setScore((s) => s + 1);
     } else {
       try {
-        const existing = await base44.entities.PracticeFlag.filter({ word: q.correctWord }).catch(() => []);
-        if (existing?.length) {
-          await base44.entities.PracticeFlag.update(existing[0].id, { miss_count: (existing[0].miss_count || 1) + 1 });
-        } else {
-          await base44.entities.PracticeFlag.create({ word: q.correctWord, miss_count: 1 });
-        }
+        await flagWordMissed.mutateAsync({ word: q.correctWord });
       } catch { /* noop */ }
     }
     const delay = isCorrect ? 800 : 1200;
