@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Award, Loader2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { certificatesRepo } from '@/data/repositories/certificates.repo';
 import CertificateModal from './CertificateModal';
 
 export default function CertificatesSection() {
@@ -8,7 +8,7 @@ export default function CertificatesSection() {
   const [selected, setSelected] = useState(null);
 
   const load = () => {
-    base44.entities.Certificate.list('-created_date', 100)
+    certificatesRepo.list('-created_date', 100)
       .then(setCerts)
       .catch(() => setCerts([]));
   };
