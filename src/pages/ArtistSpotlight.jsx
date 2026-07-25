@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Music2, Loader2, GraduationCap } from 'lucide-react';
-import { songsRepo } from '@/data/repositories/songs.repo';
+import { useSongsFilter } from '@/data/hooks/useSongs';
 import BlogLayout from '@/components/layout/BlogLayout';
 import SEOHead from '@/components/SEOHead';
 import { songCefrLevel } from '@/lib/cefr';
@@ -85,32 +85,17 @@ const ARTISTS = {
 
 export default function ArtistSpotlight({ slug }) {
   const artist = ARTISTS[slug];
-  const [songs, setSongs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [ctaSong, setCtaSong] = useState(null);
-
-  useEffect(() => {
-    if (!artist) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const query = slug === 'aventura'
-          ? { artist: { $regex: 'Aventura|Romeo Santos', $options: 'i' } }
-          : { artist: { $regex: artist.name, $options: 'i' } };
-        const all = await songsRepo.filter(query, '-created_date', 100);
-        if (cancelled) return;
-        setSongs((all || []).filter(isSongReady));
-
-        // Try to find the CTA song
-        const match = (all || []).find((s) =>
-          s.title?.toLowerCase().includes(artist.cta.song.toLowerCase())
-        );
-        if (match) setCtaSong(match);
-      } catch { /* noop */ }
-      if (!cancelled) setLoading(false);
-    })();
-    return () => { cancelled = true; };
-  }, [slug]);
+  const query = artist
+    ? (slug === 'aventura'
+        ? { artist: { $regex: 'Aventura|Romeo Santos', $options: 'i' } }
+        : { artist: { $regex: artist.name, $options: 'i' } })
+    : null;
+  const { data: all = [], isLoading: loading } = useSongsFilter(query, '-created_date', 100);
+  const songs = useMemo(() => (all || []).filter(isSongReady), [all]);
+  const ctaSong = useMemo(
+    () => artist ? (all || []).find((s) => s.title?.toLowerCase().includes(artist.cta.song.toLowerCase())) || null : null,
+    [all, artist]
+  );
 
   if (!artist) return null;
 
