@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { getProgress } from '@/lib/progress';
 import { unlockedAchievementIds, achievementById } from '@/lib/achievements';
 import confetti from 'canvas-confetti';
 
@@ -12,8 +13,7 @@ export default function MilestoneCelebration() {
       try {
         const me = await base44.auth.me();
         const key = `milestone_last_seen_${me?.id || 'anon'}`;
-        const rows = await base44.entities.UserProgress.list('-created_date', 1);
-        const progress = rows[0] || {};
+        const progress = (await getProgress()) || {};
         const unlocked = unlockedAchievementIds(progress);
         const hadKey = localStorage.getItem(key) !== null;
         const lastSeen = hadKey ? JSON.parse(localStorage.getItem(key) || '[]') : unlocked;
