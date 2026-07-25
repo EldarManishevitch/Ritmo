@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { songsRepo } from '@/data/repositories/songs.repo';
+import { useCreateSong, useUpdateSong } from '@/data/hooks/useSongs';
 import { youtubeSearch, detectGenre, isSpanishSong } from '@/lib/aiHelpers';
 import { generateLyrics } from '@/lib/lyricsPipeline';
 
@@ -17,6 +17,8 @@ export function useSongAdd() {
   const [results, setResults] = useState([]);
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState('');
+  const createSong = useCreateSong();
+  const updateSong = useUpdateSong();
 
   const search = async () => {
     if (!query.trim() || searching) return;
@@ -46,7 +48,7 @@ export function useSongAdd() {
         return;
       }
       // Create the song immediately so we can navigate without waiting for the pipeline.
-      const song = await songsRepo.create({
+      const song = await createSong.mutateAsync({
         title: video.title,
         artist: video.artist || 'Unknown',
         youtube_id: video.youtube_id,
@@ -54,7 +56,7 @@ export function useSongAdd() {
       });
       // Detect the real genre in the background (don't block navigation).
       detectGenre({ title: video.title, artist: video.artist })
-        .then((genre) => songsRepo.update(song.id, { genre }))
+        .then((genre) => updateSong.mutateAsync({ id: song.id, patch: { genre } }))
         .catch(() => {});
       // Fire the heavy lyrics pipeline in the background; SongPage polls and shows progress.
       generateLyrics({ songId: song.id, youtubeId: video.youtube_id }).catch(() => {});
