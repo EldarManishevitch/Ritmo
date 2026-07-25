@@ -1,23 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Award, Loader2 } from 'lucide-react';
-import { getProgress } from '@/lib/progress';
+import { useUserProgress } from '@/data/hooks/useUserProgress';
 import { ACHIEVEMENTS, unlockedAchievementIds } from '@/lib/achievements';
 
 export default function AchievementBadges() {
-  const [unlocked, setUnlocked] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    getProgress()
-      .then((p) => {
-        if (cancelled) return;
-        setUnlocked(new Set(unlockedAchievementIds(p || {})));
-      })
-      .catch(() => { if (!cancelled) setUnlocked(new Set()); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
+  const { data: progress, isLoading: loading } = useUserProgress();
+  const unlocked = useMemo(() => new Set(unlockedAchievementIds(progress || {})), [progress]);
 
   if (loading) {
     return (
