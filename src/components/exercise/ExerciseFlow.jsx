@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { savedWordsRepo } from '@/data/repositories/savedWords.repo';
+import { practiceFlagsRepo } from '@/data/repositories/practiceFlags.repo';
+import { songCompletionsRepo } from '@/data/repositories/songCompletions.repo';
 import QuizStep from './QuizStep';
 import VocabMatchStep from './VocabMatchStep';
 import SpeakChorusStep from './SpeakChorusStep';
@@ -29,8 +31,8 @@ export default function ExerciseFlow({ open, onClose, song, lines }) {
     setCertResult(null);
     setProgress(null);
     Promise.all([
-      base44.entities.SavedWord.filter({ source_song_id: song?.id }, '-created_date', 200).catch(() => []),
-      base44.entities.PracticeFlag.filter({ song_id: song?.id }).catch(() => []),
+      savedWordsRepo.filter({ source_song_id: song?.id }, '-created_date', 200).catch(() => []),
+      practiceFlagsRepo.filter({ song_id: song?.id }).catch(() => []),
     ]).then(([w, f]) => {
       setSavedWords(w || []);
       setFlags(f || []);
@@ -44,7 +46,7 @@ export default function ExerciseFlow({ open, onClose, song, lines }) {
     (async () => {
       // Create SongCompletion record first so "next song" excludes it
       const xpAwarded = scores.quiz * 10 + 15;
-      await base44.entities.SongCompletion.create({
+      await songCompletionsRepo.create({
         song_id: song.id,
         song_title: song.title,
         quiz_score: scores.quiz,
