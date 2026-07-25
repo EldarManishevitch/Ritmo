@@ -20,67 +20,60 @@ import GenrePicker from '@/components/dashboard/GenrePicker';
 import SEOHead from '@/components/SEOHead';
 
 export default function Dashboard() {
-  const [songs, setSongs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [userLevel, setUserLevel] = useState('A1');
-  const [completedSongIds, setCompletedSongIds] = useState([]);
-  const [favGenres, setFavGenres] = useState([]);
-  const [recommendedSongs, setRecommendedSongs] = useState([]);
-  const [challengeSongs, setChallengeSongs] = useState([]);
+  const { data: allSongs = [], isLoading: songsLoading, refetch: refetchSongs } = useSongsList('-created_date', 100);
+  const { data: progress, isLoading: progressLoading, refetch: refetchProgress } = useUserProgress();
+  const { data: tracks = [], isLoading: tracksLoading, refetch: refetchTracks } = useCurriculumTracks();
+  const { data: completions = [], isLoading: completionsLoading, refetch: refetchCompletions } = useSongCompletionsList();
   const updateUserProgress = useUpdateUserProgress();
 
-  const loadSongs = async () => {
-    const list = await songsRepo.list('-created_date', 100);
-    setSongs(list.filter(isSongReady));
-    try {
-      const [p, comps, tracks] = await Promise.all([getProgress(), getSongCompletions(), getCurriculumTracks()]);
-      const level = p?.cefr_level || 'A1';
-      setUserLevel(level);
-      setCompletedSongIds(comps.map((c) => c.song_id));
-      setFavGenres(Array.isArray(p?.fav_genres) ? p.fav_genres : []);
+  const songs = useMemo(() => allSongs.filter(isSongReady), [allSongs]);
+  const userLevel = progress?.cefr_level || 'A1';
+  const completedSongIds = useMemo(() => completions.map((c) => c.song_id), [completions]);
+  const favGenres = Array.isArray(progress?.fav_genres) ? progress.fav_genres : [];
 
-      // Recommended For Your Level — from curriculum track
-      const userTrack = tracks.find((t) => t.cefr_level === level);
-      let recs = [];
+  // Recommended For Your Level — from curriculum track, or a CEFR-level fallback
+  const userTrack = useMemo(() => tracks.find((t) => t.cefr_level === userLevel), [tracks, userLevel]);
+  const recommendedQuery = useQuery({
+    queryKey: ['dashboard', 'recommended', userLevel, userTrack?.id],
+    queryFn: async () => {
       if (userTrack?.song_ids?.length) {
         const trackSongs = await songsRepo.filter({ id: { $in: userTrack.song_ids } });
-        recs = trackSongs.filter((s) => ['ready', 'ready_synced', 'ready_unsynced', 'static', 'pending'].includes(s.sync_status));
-      } else {
-        const fallback = await songsRepo.filter({ cefr_level: level, is_catalog_default: true });
-        recs = fallback.slice(0, 12);
+        return trackSongs.filter((s) => ['ready', 'ready_synced', 'ready_unsynced', 'static', 'pending'].includes(s.sync_status));
       }
-      setRecommendedSongs(recs);
+      const fallback = await songsRepo.filter({ cefr_level: userLevel, is_catalog_default: true });
+      return fallback.slice(0, 12);
+    },
+    enabled: !progressLoading && !tracksLoading,
+  });
+  const recommendedSongs = recommendedQuery.data || [];
 
-      // Explore Next Challenges — next CEFR level
-      const nextLevel = LEVEL_ORDER[LEVEL_ORDER.indexOf(level) + 1];
-      let challenges = [];
-      if (nextLevel) {
-        const nextSongs = await songsRepo.filter({ cefr_level: nextLevel, is_catalog_default: true });
-        challenges = nextSongs.slice(0, 6);
-      }
-      setChallengeSongs(challenges);
-    } catch { /* noop */ }
+  // Explore Next Challenges — next CEFR level
+  const nextLevel = LEVEL_ORDER[LEVEL_ORDER.indexOf(userLevel) + 1];
+  const challengeQuery = useQuery({
+    queryKey: ['dashboard', 'challenge', nextLevel],
+    queryFn: () => songsRepo.filter({ cefr_level: nextLevel, is_catalog_default: true }).then((r) => r.slice(0, 6)),
+    enabled: !!nextLevel && !progressLoading,
+  });
+  const challengeSongs = challengeQuery.data || [];
+
+  const loading = songsLoading || progressLoading || tracksLoading || completionsLoading;
+
+  const loadSongs = async () => {
+    await Promise.all([
+      refetchSongs(), refetchProgress(), refetchTracks(), refetchCompletions(),
+      recommendedQuery.refetch(), challengeQuery.refetch(),
+    ]);
   };
 
   const handleToggleGenre = async (genre) => {
+    if (!progress?.id) return;
     const newGenres = favGenres.includes(genre)
       ? favGenres.filter((g) => g !== genre)
       : [...favGenres, genre];
-    setFavGenres(newGenres);
     try {
-      const p = await getProgress();
-      await updateUserProgress.mutateAsync({ id: p.id, patch: { fav_genres: newGenres } });
+      await updateUserProgress.mutateAsync({ id: progress.id, patch: { fav_genres: newGenres } });
     } catch { /* noop */ }
   };
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    loadSongs()
-      .catch(() => {})
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
 
   // Deduplicate by youtube_id (or title+artist fallback) so the same track never appears twice
   const deduped = useMemo(() => {
