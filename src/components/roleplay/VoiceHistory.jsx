@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Mic, MapPin } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { roleplaySessionsRepo } from '@/data/repositories/roleplaySessions.repo';
 
 export default function VoiceHistory({ refreshKey }) {
   const [sessions, setSessions] = useState([]);
 
   useEffect(() => {
     let cancelled = false;
-    base44.entities.RoleplaySession.filter({ voice_mode: true, completed: true }, '-created_date', 3)
+    roleplaySessionsRepo.filter({ voice_mode: true, completed: true }, '-created_date', 3)
       .then((list) => { if (!cancelled) setSessions(list || []); })
       .catch(() => {});
     return () => { cancelled = true; };
