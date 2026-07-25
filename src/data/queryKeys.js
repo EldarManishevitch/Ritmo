@@ -49,4 +49,7 @@ export const queryKeys = {
   genreStats: {
     list: (sort, limit) => ['genreStats', 'list', sort, limit],
   },
+  songCompletions: {
+    list: (sort, limit) => ['songCompletions', 'list', sort, limit],
+  },
 };
