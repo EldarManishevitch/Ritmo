@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
       const uid = progress.created_by_id;
       return {
         id: uid,
-        name: u.full_name || (u.email ? u.email.split('@')[0] : 'Learner'),
+        name: u.full_name || 'Learner',
         xp: progress.xp || 0,
         current_streak: progress.current_streak || 0,
         best_streak: progress.best_streak || 0,

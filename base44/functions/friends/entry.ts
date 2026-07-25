@@ -51,7 +51,8 @@ Deno.serve(async (req) => {
         friend_name: friendName,
         status: 'pending',
       });
-      return Response.json({ ok: true, status: found ? 'pending' : 'invited', friendship: rec });
+      // Uniform response — does not reveal whether the email is registered on the platform.
+      return Response.json({ ok: true, status: 'sent', friendship: rec });
     }
 
     if (action === 'accept') {

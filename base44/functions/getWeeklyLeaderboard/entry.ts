@@ -42,18 +42,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Derive display name from email: part before @, capitalize, truncate at 12 chars
+    // Display name: full_name only, never fall back to email local-part (privacy).
     const displayName = (uid) => {
       const u = userMap.get(uid);
       const name = u?.full_name;
       if (name) return name.slice(0, 12);
-      const email = u?.email || '';
-      const prefix = email.split('@')[0] || 'Learner';
-      if (prefix.includes('.')) {
-        const parts = prefix.split('.');
-        return (parts[0].charAt(0).toUpperCase() + parts[0].slice(1) + ' ' + (parts[1]?.charAt(0).toUpperCase() || '') + '.').slice(0, 12);
-      }
-      return (prefix.charAt(0).toUpperCase() + prefix.slice(1)).slice(0, 12);
+      return 'Learner';
     };
 
     const build = (w) => {
