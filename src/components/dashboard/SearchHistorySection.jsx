@@ -1,16 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Headphones } from 'lucide-react';
-import { searchHistoryRepo } from '@/data/repositories/searchHistory.repo';
+import { useSearchHistoryList } from '@/data/hooks/useSearchHistory';
 
 export default function SearchHistorySection() {
-  const [items, setItems] = useState(null);
-
-  useEffect(() => {
-    searchHistoryRepo.list('-viewed_at', 6)
-      .then((rows) => setItems(rows || []))
-      .catch(() => setItems([]));
-  }, []);
+  const { data: items = null } = useSearchHistoryList();
 
   if (items === null) return null;
 
