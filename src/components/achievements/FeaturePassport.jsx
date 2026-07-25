@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Award, Check, Loader2, Gift, Hand, Bookmark, Lightbulb, Trophy, MessageCircle } from 'lucide-react';
-import { getProgress } from '@/lib/progress';
-import { savedWordsRepo } from '@/data/repositories/savedWords.repo';
-import { roleplaySessionsRepo } from '@/data/repositories/roleplaySessions.repo';
-import { useUpdateUserProgress } from '@/data/hooks/useUserProgress';
+import { useUserProgress, useUpdateUserProgress } from '@/data/hooks/useUserProgress';
+import { useSavedWordsList } from '@/data/hooks/useSavedWords';
+import { useRoleplaySessionsFilter } from '@/data/hooks/useRoleplaySessions';
 
 const LS_GRAMMAR = 'sb_passport_grammar_opened';
 const LS_TAPPED = 'sb_passport_tapped_word';
@@ -23,13 +22,15 @@ function trialActive(expiresAt) {
 }
 
 export default function FeaturePassport() {
-  const [progress, setProgress] = useState(null);
-  const [savedCount, setSavedCount] = useState(0);
-  const [songsCompleted, setSongsCompleted] = useState(0);
-  const [roleplayDone, setRoleplayDone] = useState(false);
+  const { data: progress, isLoading: progressLoading } = useUserProgress();
+  const { data: words, isLoading: wordsLoading } = useSavedWordsList('-created_date', 200);
+  const { data: sessions, isLoading: sessionsLoading } = useRoleplaySessionsFilter({ completed: true });
+  const loading = progressLoading || wordsLoading || sessionsLoading;
+  const savedCount = words?.length || 0;
+  const songsCompleted = progress?.songs_completed || 0;
+  const roleplayDone = (sessions?.length || 0) > 0;
   const [grammarOpened, setGrammarOpened] = useState(false);
   const [tapped, setTapped] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [granting, setGranting] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [trialGranted, setTrialGranted] = useState(false);
@@ -37,27 +38,14 @@ export default function FeaturePassport() {
 
   useEffect(() => {
     setDismissed(localStorage.getItem(LS_DISMISSED) === '1');
-    let cancelled = false;
-    (async () => {
-      try {
-        const [prog, words, sessions] = await Promise.all([
-          getProgress(),
-          savedWordsRepo.list('-created_date', 200),
-          roleplaySessionsRepo.filter({ completed: true }),
-        ]);
-        if (cancelled) return;
-        setProgress(prog);
-        setSavedCount(words?.length || 0);
-        setSongsCompleted(prog.songs_completed || 0);
-        setRoleplayDone((sessions?.length || 0) > 0);
-        setGrammarOpened(localStorage.getItem(LS_GRAMMAR) === '1');
-        setTapped(localStorage.getItem(LS_TAPPED) === '1' || (words?.length || 0) >= 1);
-        if (trialActive(prog.passport_pro_trial_expires_at)) setTrialGranted(true);
-      } catch { /* noop */ }
-      if (!cancelled) setLoading(false);
-    })();
-    return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    if (loading) return;
+    setGrammarOpened(localStorage.getItem(LS_GRAMMAR) === '1');
+    setTapped(localStorage.getItem(LS_TAPPED) === '1' || savedCount >= 1);
+    if (trialActive(progress?.passport_pro_trial_expires_at)) setTrialGranted(true);
+  }, [loading, savedCount, progress]);
 
   const completed = {
     tap: tapped,
