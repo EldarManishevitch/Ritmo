@@ -68,7 +68,7 @@ export default function SongPending() {
   const currentStage = STAGES[stageIdx];
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+    <div className="min-h-[calc(100dvh-4rem)] bg-background flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-md text-center">
         <div className="h-16 w-16 rounded-2xl bg-primary text-white flex items-center justify-center mx-auto mb-6">
           <Music className="h-8 w-8" />

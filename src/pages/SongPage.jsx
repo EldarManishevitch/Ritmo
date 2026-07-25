@@ -348,7 +348,7 @@ export default function SongPage() {
   };
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
+    <div className="h-[calc(100dvh-4rem)] bg-background flex flex-col overflow-hidden">
       <SEOHead
         title={`${song.title} by ${song.artist} — Spanish lyrics with English translation | Spanish Beats`}
         description={`Learn Spanish by singing '${song.title}' by ${song.artist}. Tap any word for an instant translation, sing along with karaoke lyrics, and quiz yourself on the vocabulary. CEFR level: ${song.cefr_level}.`}

@@ -116,9 +116,9 @@ const AuthenticatedApp = () => {
           <Route path="/vocab" element={<Vocab />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/song/:id" element={<PageTransition><SongPage /></PageTransition>} />
+          <Route path="/song/pending/:youtubeId" element={<PageTransition><SongPending /></PageTransition>} />
         </Route>
-        <Route path="/song/:id" element={<PageTransition><SongPage /></PageTransition>} />
-        <Route path="/song/pending/:youtubeId" element={<PageTransition><SongPending /></PageTransition>} />
       </Route>
 
       <Route path="*" element={<PageNotFound />} />
