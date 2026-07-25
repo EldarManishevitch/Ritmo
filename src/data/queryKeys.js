@@ -43,4 +43,10 @@ export const queryKeys = {
   userProgress: {
     current: ['userProgress', 'current'],
   },
+  searchHistory: {
+    list: (sort, limit) => ['searchHistory', 'list', sort, limit],
+  },
+  genreStats: {
+    list: (sort, limit) => ['genreStats', 'list', sort, limit],
+  },
 };
