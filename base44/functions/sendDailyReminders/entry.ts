@@ -107,7 +107,7 @@ async function sendReminderEmail(sb, progress, email) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   const motivationalMessage = escapeHtml(rawMessage);
 
-  const appUrl = Deno.env.get('BASE44_APP_URL') || 'https://ritmo.app';
+  const appUrl = 'https://ritmo.app';
   const subject = `🔥 Don't break your streak today — ${streak} days and counting`;
 
   const htmlBody = `<!DOCTYPE html>
