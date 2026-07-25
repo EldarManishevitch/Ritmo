@@ -1,31 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { savedWordsRepo } from '@/data/repositories/savedWords.repo';
-import { songsRepo } from '@/data/repositories/songs.repo';
+import React from 'react';
+import { useSavedWordsList } from '@/data/hooks/useSavedWords';
+import { useSongsList } from '@/data/hooks/useSongs';
 import { User, BookOpen, Music, Trophy, TrendingUp, Flame } from 'lucide-react';
 import { motion } from 'framer-motion';
 import AchievementBadges from '@/components/achievements/AchievementBadges';
 
 export default function Profile() {
-  const [wordCount, setWordCount] = useState(0);
-  const [masteredCount, setMasteredCount] = useState(0);
-  const [songCount, setSongCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const [words, songs] = await Promise.all([
-          savedWordsRepo.list('-created_date', 500),
-          songsRepo.list('-created_date', 500),
-        ]);
-        setWordCount(words.length);
-        setMasteredCount(words.filter(w => w.mastered).length);
-        setSongCount(songs.length);
-      } catch (e) {}
-      setLoading(false);
-    };
-    load();
-  }, []);
+  const { data: words = [], isLoading: wordsLoading } = useSavedWordsList('-created_date', 500);
+  const { data: songs = [], isLoading: songsLoading } = useSongsList('-created_date', 500);
+  const loading = wordsLoading || songsLoading;
+  const wordCount = words.length;
+  const masteredCount = words.filter((w) => w.mastered).length;
+  const songCount = songs.length;
 
   const level = masteredCount >= 100 ? 'B2' : masteredCount >= 50 ? 'B1' : masteredCount >= 20 ? 'A2' : 'A1';
   const levelProgress = masteredCount >= 100 ? 100 : masteredCount >= 50 ? ((masteredCount - 50) / 50) * 100 : masteredCount >= 20 ? ((masteredCount - 20) / 30) * 100 : (masteredCount / 20) * 100;
