@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Loader2, Check } from 'lucide-react';
 import { completeTodayLesson, updateLessonStep } from '@/lib/dailyLesson';
 import { useTodayLesson } from '@/data/hooks/useDailyLesson';
