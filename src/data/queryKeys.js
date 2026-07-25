@@ -38,7 +38,7 @@ export const queryKeys = {
     list: ['conversations', 'list'],
   },
   certificates: {
-    list: ['certificates', 'list'],
+    list: (sort, limit) => ['certificates', 'list', sort, limit],
   },
   userProgress: {
     current: ['userProgress', 'current'],
