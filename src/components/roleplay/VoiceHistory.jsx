@@ -1,17 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Mic, MapPin } from 'lucide-react';
-import { roleplaySessionsRepo } from '@/data/repositories/roleplaySessions.repo';
+import { useRoleplaySessionsFilter } from '@/data/hooks/useRoleplaySessions';
 
 export default function VoiceHistory({ refreshKey }) {
-  const [sessions, setSessions] = useState([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    roleplaySessionsRepo.filter({ voice_mode: true, completed: true }, '-created_date', 3)
-      .then((list) => { if (!cancelled) setSessions(list || []); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [refreshKey]);
+  const { data: sessions = [] } = useRoleplaySessionsFilter(
+    { voice_mode: true, completed: true },
+    '-created_date',
+    3,
+    { queryKey: ['roleplaySessions', 'voiceHistory', refreshKey] }
+  );
 
   if (!sessions.length) return null;
 
