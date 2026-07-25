@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Check } from 'lucide-react';
-import { getOrCreateTodayLesson, completeTodayLesson, updateLessonStep } from '@/lib/dailyLesson';
-import { getProgress } from '@/lib/progress';
+import { completeTodayLesson, updateLessonStep } from '@/lib/dailyLesson';
+import { useTodayLesson } from '@/data/hooks/useDailyLesson';
+import { useUserProgress } from '@/data/hooks/useUserProgress';
 import LessonHeader from '@/components/lesson/LessonHeader';
 import ListenActivity from '@/components/lesson/ListenActivity';
 import QuizActivity from '@/components/lesson/QuizActivity';
@@ -12,37 +13,31 @@ import SEOHead from '@/components/SEOHead';
 
 export default function Lesson() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  // lesson/lines/step are local, actively-mutated session state (each activity
+  // step reads and advances them) — seeded from the query below, not bound to it.
   const [lesson, setLesson] = useState(null);
   const [lines, setLines] = useState([]);
   const [step, setStep] = useState(0); // 0=listen, 1=quiz, 2=flash, 3=done
   const [quizScore, setQuizScore] = useState(0);
   const [wrongWords, setWrongWords] = useState([]);
   const [result, setResult] = useState(null);
-  const [progress, setProgress] = useState(null);
+
+  const { data: initialLesson, isLoading: lessonLoading } = useTodayLesson();
+  const { data: progress, isLoading: progressLoading } = useUserProgress();
+  const loading = lessonLoading || progressLoading;
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const [l, p] = await Promise.all([getOrCreateTodayLesson(), getProgress()]);
-        if (cancelled) return;
-        if (!l) { setLoading(false); return; }
-        setLesson(l);
-        setProgress(p);
-        setLines(l._lines || []);
-        if (l.completed) {
-          setStep(3);
-          setResult({ alreadyCompleted: true });
-          setQuizScore(l.quiz_score || 0);
-        } else {
-          setStep(Math.max(0, (l.activity_step || 1) - 1));
-        }
-      } catch { /* noop */ }
-      if (!cancelled) setLoading(false);
-    })();
-    return () => { cancelled = true; };
-  }, []);
+    if (!initialLesson) return;
+    setLesson(initialLesson);
+    setLines(initialLesson._lines || []);
+    if (initialLesson.completed) {
+      setStep(3);
+      setResult({ alreadyCompleted: true });
+      setQuizScore(initialLesson.quiz_score || 0);
+    } else {
+      setStep(Math.max(0, (initialLesson.activity_step || 1) - 1));
+    }
+  }, [initialLesson]);
 
   const handleListenReady = () => {
     setStep(1);
