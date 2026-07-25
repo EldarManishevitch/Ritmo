@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BookOpen, Volume2, Bookmark, Check } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { useSaveWord } from '@/data/hooks/useSavedWords';
 import { generateDailyWord } from '@/lib/aiHelpers';
 import PronunciationCheck from '@/components/song/PronunciationCheck';
 import CollapsibleCard from '@/components/song/CollapsibleCard';
@@ -9,6 +9,7 @@ export default function DailyWordCard() {
   const [word, setWord] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
+  const saveWord = useSaveWord();
 
   useEffect(() => {
     let cancelled = false;
@@ -30,7 +31,7 @@ export default function DailyWordCard() {
   const save = async () => {
     if (!word || saved) return;
     try {
-      await base44.entities.SavedWord.create({
+      await saveWord.mutateAsync({
         word: word.spanish_phrase,
         english_meaning: word.english_translation,
         pronunciation_hint: word.pronunciation,
