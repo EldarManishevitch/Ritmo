@@ -3,6 +3,7 @@ import { ArrowRight, Volume2 } from 'lucide-react';
 import { useYouTubePlayer } from '@/hooks/useYouTubePlayer';
 import { translateWordCached } from '@/lib/aiHelpers';
 import { addTappedWord } from '@/lib/dailyLesson';
+import { savedWordsRepo } from '@/data/repositories/savedWords.repo';
 
 export default function ListenActivity({ lesson, lines, onReady }) {
   const [showTranslations, setShowTranslations] = useState(() => Object.create(null));
@@ -31,20 +32,16 @@ export default function ListenActivity({ lesson, lines, onReady }) {
     addTappedWord(clean).catch(() => {});
     // Save to SavedWord (best-effort)
     try {
-      const existing = await import('@/api/base44Client').then(({ base44 }) =>
-        base44.entities.SavedWord.filter({ word: clean, source_song_id: lesson.song_id })
-      );
+      const existing = await savedWordsRepo.filter({ word: clean, source_song_id: lesson.song_id });
       if (!existing?.length) {
         const tr = await translateWordCached(clean).catch(() => null);
-        await import('@/api/base44Client').then(({ base44 }) =>
-          base44.entities.SavedWord.create({
-            word: clean,
-            english_meaning: tr?.english_meaning || '',
-            pronunciation_hint: tr?.pronunciation_hint || '',
-            source_song_id: lesson.song_id,
-            is_slang: false,
-          })
-        );
+        await savedWordsRepo.create({
+          word: clean,
+          english_meaning: tr?.english_meaning || '',
+          pronunciation_hint: tr?.pronunciation_hint || '',
+          source_song_id: lesson.song_id,
+          is_slang: false,
+        });
       }
     } catch { /* noop */ }
   };
