@@ -56,6 +56,9 @@ export default function Lesson() {
     const res = await completeTodayLesson({ quizScore, wordsTapped });
     setResult(res);
     setStep(3);
+    // Reflect completion + streak immediately anywhere else "today's lesson" is read (the Dashboard banner).
+    queryClient.invalidateQueries({ queryKey: ['dailyLesson', 'today'] });
+    queryClient.invalidateQueries({ queryKey: ['userProgress', 'current'] });
   };
 
   if (loading) {
