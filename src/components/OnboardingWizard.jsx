@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Music, Check, ChevronRight, X } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { useUpdateUserProgress } from '@/data/hooks/useUserProgress';
 import { Button } from '@/components/ui/button';
 import { getProgress } from '@/lib/progress';
 
@@ -23,6 +23,7 @@ export default function OnboardingWizard() {
   const [selectedGenres, setSelectedGenres] = useState([]);
   const [selectedGoal, setSelectedGoal] = useState(null);
   const [saving, setSaving] = useState(false);
+  const updateUserProgress = useUpdateUserProgress();
 
   useEffect(() => {
     getProgress().then((p) => {
@@ -42,11 +43,11 @@ export default function OnboardingWizard() {
     setSaving(true);
     try {
       const p = await getProgress();
-      await base44.entities.UserProgress.update(p.id, {
+      await updateUserProgress.mutateAsync({ id: p.id, patch: {
         onboarding_completed: true,
         fav_genres: selectedGenres,
         learning_goal: selectedGoal,
-      });
+      } });
       setOpen(false);
     } catch { /* noop */ }
     setSaving(false);
