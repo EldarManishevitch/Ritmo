@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { BookOpen, Clock, TrendingUp, Loader2 } from 'lucide-react';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { base44 } from '@/api/base44Client';
+import { savedWordsRepo } from '@/data/repositories/savedWords.repo';
+import { certificatesRepo } from '@/data/repositories/certificates.repo';
 
 const DAY_MS = 86400000;
 const MIN_PER_WORD = 2;
@@ -22,8 +23,8 @@ export default function WeeklyInsights() {
   useEffect(() => {
     let cancelled = false;
     Promise.all([
-      base44.entities.SavedWord.list('-created_date', 500),
-      base44.entities.Certificate.list('-created_date', 500),
+      savedWordsRepo.list('-created_date', 500),
+      certificatesRepo.list('-created_date', 500),
     ])
       .then(([w, c]) => {
         if (cancelled) return;
