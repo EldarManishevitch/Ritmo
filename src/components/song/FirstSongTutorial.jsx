@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Hand, MessageCircle, Sparkles } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { getProgress } from '@/lib/progress';
+import { slangDictionaryRepo } from '@/data/repositories/slangDictionary.repo';
 import { Link } from 'react-router-dom';
 
 const LS_DONE = 'sb_first_song_tutorial_done';
@@ -39,10 +40,9 @@ export function useFirstSongTutorial({ songId, lines, playbackStarted, currentTi
   useEffect(() => {
     if (localStorage.getItem(LS_DONE)) return;
     let cancelled = false;
-    base44.entities.UserProgress.filter({})
-      .then((list) => {
+    getProgress()
+      .then((p) => {
         if (cancelled) return;
-        const p = list?.[0];
         setSongsCompleted(p?.songs_completed || 0);
         if (!p || (p.songs_completed || 0) === 0) setActive(true);
       })
@@ -57,7 +57,7 @@ export function useFirstSongTutorial({ songId, lines, playbackStarted, currentTi
     (async () => {
       let slangWords = new Set();
       try {
-        const terms = await base44.entities.SlangDictionary.filter({ song_id: songId });
+        const terms = await slangDictionaryRepo.bySong(songId);
         (terms || []).forEach((t) => { if (t.term) slangWords.add(t.term.toLowerCase().trim()); });
       } catch { /* noop */ }
       const firstLine = lines.find((l) => l.spanish_text && l.spanish_text.trim().length >= 2);
