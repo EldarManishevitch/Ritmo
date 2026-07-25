@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Bell, Loader2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { useUpdateUserProgress } from '@/data/hooks/useUserProgress';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -14,6 +14,7 @@ export default function NotificationPreferencesCard() {
   const [time, setTime] = useState('18:00');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const updateUserProgress = useUpdateUserProgress();
 
   useEffect(() => {
     getProgress()
@@ -30,10 +31,10 @@ export default function NotificationPreferencesCard() {
     if (!progress) return;
     setSaving(true);
     try {
-      await base44.entities.UserProgress.update(progress.id, {
+      await updateUserProgress.mutateAsync({ id: progress.id, patch: {
         notifications_enabled: enabled,
         notifications_time: time,
-      });
+      } });
       toast({ title: 'Notification preferences saved.' });
     } catch { /* noop */ }
     setSaving(false);
