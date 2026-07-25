@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Music, Play, Volume2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { slangDictionaryRepo } from '@/data/repositories/slangDictionary.repo';
+import { songsRepo } from '@/data/repositories/songs.repo';
 import CollapsibleCard from '@/components/song/CollapsibleCard';
 import { artistToGenre, genreColor, genreLabel } from '@/lib/genres';
 
@@ -15,7 +16,7 @@ export default function SlangOfTheDay({ favGenres = [] }) {
     let cancelled = false;
     (async () => {
       try {
-        const rows = await base44.entities.SlangDictionary.filter({ is_urban_slang: true }, '-created_date', 50);
+        const rows = await slangDictionaryRepo.filter({ is_urban_slang: true }, '-created_date', 50);
         if (cancelled) return;
         if (!rows || !rows.length) { setLoading(false); return; }
         // Prefer slang from user's favorite genres using artist→genre map
@@ -30,7 +31,7 @@ export default function SlangOfTheDay({ favGenres = [] }) {
 
         // Try to match the example song to an existing Song record for the play button
         if (pick.example_song_title) {
-          const songs = await base44.entities.Song.filter({}, '-created_date', 200);
+          const songs = await songsRepo.filter({}, '-created_date', 200);
           const match = songs.find((s) =>
             (s.title || '').toLowerCase().includes(pick.example_song_title.toLowerCase())
           );
