@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { extractWords } from '@/lib/exerciseHelpers';
+import { useFlagWordMissed } from '@/data/hooks/usePracticeFlags';
 
 function shuffle(arr) {
   const a = [...arr];
@@ -53,6 +54,7 @@ export default function QuizActivity({ lines, wordsTapped, onComplete }) {
   const [picked, setPicked] = useState(null);
   const [wrongWords, setWrongWords] = useState([]);
   const [showReveal, setShowReveal] = useState(false);
+  const flagWordMissed = useFlagWordMissed();
 
   const q = questions[idx];
   if (!q) return null;
@@ -65,16 +67,7 @@ export default function QuizActivity({ lines, wordsTapped, onComplete }) {
       setScore((s) => s + 1);
     } else {
       setWrongWords((w) => [...w, q.correctWord]);
-      // Upsert PracticeFlag
-      import('@/api/base44Client').then(({ base44 }) =>
-        base44.entities.PracticeFlag.filter({ word: q.correctWord }).then((flags) => {
-          if (flags?.length) {
-            base44.entities.PracticeFlag.update(flags[0].id, { miss_count: (flags[0].miss_count || 0) + 1 });
-          } else {
-            base44.entities.PracticeFlag.create({ word: q.correctWord, miss_count: 1 });
-          }
-        }).catch(() => {})
-      );
+      flagWordMissed.mutateAsync({ word: q.correctWord }).catch(() => {});
     }
     const delay = correct ? 700 : 1200;
     setTimeout(() => {
