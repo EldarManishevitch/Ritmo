@@ -1,22 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Plus, Music } from 'lucide-react';
-import { genreStatsRepo } from '@/data/repositories/genreStats.repo';
+import { useGenreStatsList } from '@/data/hooks/useGenreStats';
 import { PICKER_GENRES, genreColor, genreLabel } from '@/lib/genres';
 import GenrePicker from './GenrePicker';
 
 export default function GenreStatsWidget({ favGenres = [], onToggleGenre }) {
-  const [stats, setStats] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: stats = [], isLoading: loading } = useGenreStatsList();
   const [showPicker, setShowPicker] = useState(false);
-
-  const load = () => {
-    genreStatsRepo.list('-total_xp', 20)
-      .then((rows) => setStats(rows || []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => { load(); }, []);
 
   const statsMap = {};
   stats.forEach((s) => { statsMap[s.genre] = s; });
