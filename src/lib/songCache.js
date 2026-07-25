@@ -1,4 +1,5 @@
-import { base44 } from '@/api/base44Client';
+import { songsRepo } from '@/data/repositories/songs.repo';
+import { lyricLinesRepo } from '@/data/repositories/lyricLines.repo';
 
 // Module-level prefetch cache: Map<songId, { song, lines, at }>
 const cache = new Map();
@@ -10,8 +11,8 @@ export function prefetchSong(songId) {
   const p = (async () => {
     try {
       const [song, lines] = await Promise.all([
-        base44.entities.Song.get(songId).catch(() => null),
-        base44.entities.LyricLine.filter({ song_id: songId }, 'line_index', 500).catch(() => []),
+        songsRepo.get(songId).catch(() => null),
+        lyricLinesRepo.bySong(songId).catch(() => []),
       ]);
       cache.set(songId, { song, lines: lines || [], at: Date.now() });
     } catch { /* noop */ } finally { inflight.delete(songId); }
