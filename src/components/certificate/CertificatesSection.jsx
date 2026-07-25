@@ -1,19 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Award, Loader2 } from 'lucide-react';
-import { certificatesRepo } from '@/data/repositories/certificates.repo';
+import { useCertificatesList } from '@/data/hooks/useCertificates';
 import CertificateModal from './CertificateModal';
 
 export default function CertificatesSection() {
-  const [certs, setCerts] = useState(null);
+  const { data: certs = null } = useCertificatesList();
   const [selected, setSelected] = useState(null);
-
-  const load = () => {
-    certificatesRepo.list('-created_date', 100)
-      .then(setCerts)
-      .catch(() => setCerts([]));
-  };
-
-  useEffect(() => { load(); }, []);
 
   return (
     <div className="mt-8">
