@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, MessageCircle, Loader2, Trash2 } from 'lucide-react';
-import { conversationsRepo } from '@/data/repositories/conversations.repo';
+import { MessageCircle, Loader2, Trash2 } from 'lucide-react';
+import { useConversationsList, useCreateConversation, useDeleteConversation } from '@/data/hooks/useConversations';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import SEOHead from '@/components/SEOHead';
@@ -16,23 +16,15 @@ const SCENARIOS = [
 
 export default function Conversations() {
   const navigate = useNavigate();
-  const [conversations, setConversations] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: conversations = [], isLoading: loading } = useConversationsList();
   const [creating, setCreating] = useState(false);
-
-  const load = async () => {
-    const list = await conversationsRepo.list('-updated_date', 50);
-    setConversations(list);
-  };
-
-  useEffect(() => {
-    load().catch(() => {}).finally(() => setLoading(false));
-  }, []);
+  const createConversation_ = useCreateConversation();
+  const deleteConversation_ = useDeleteConversation();
 
   const createConversation = async (type, desc) => {
     setCreating(true);
     try {
-      const conv = await conversationsRepo.create({
+      const conv = await createConversation_.mutateAsync({
         title: SCENARIOS.find((s) => s.type === type)?.label || 'Conversation',
         scenario: desc,
         roleplay_type: type,
@@ -44,8 +36,7 @@ export default function Conversations() {
   };
 
   const deleteConversation = async (id) => {
-    await conversationsRepo.delete(id);
-    load();
+    await deleteConversation_.mutateAsync(id);
   };
 
   return (
