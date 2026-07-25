@@ -2,6 +2,7 @@ import { curriculumTracksRepo } from '@/data/repositories/curriculumTracks.repo'
 import { levelProgressRepo } from '@/data/repositories/levelProgress.repo';
 import { songCompletionsRepo } from '@/data/repositories/songCompletions.repo';
 import { songsRepo } from '@/data/repositories/songs.repo';
+import { isSongReady } from '@/lib/genres';
 
 const LEVEL_META = {
   A1: { name: 'Novice', desc: 'Basic vocabulary, present tense, everyday phrases and greetings.' },
@@ -80,7 +81,6 @@ export async function getNextSongInTrack(cefr, completedSongIds = []) {
   const tracks = await getCurriculumTracks();
   const track = tracks.find((t) => t.cefr_level === cefr);
   if (!track || !track.song_ids?.length) return null;
-  const nextId = track.song_ids.find((id) => !completedSongIds.includes(id));
-  if (!nextId) return null;
-  return songsRepo.get(nextId);
+  const trackSongs = await songsRepo.filter({ id: { $in: track.song_ids } });
+  return trackSongs.find((s) => isSongReady(s) && !completedSongIds.includes(s.id)) || null;
 }

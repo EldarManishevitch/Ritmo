@@ -8,6 +8,7 @@ import {
   levelMeta, LEVEL_ORDER, getNextSongInTrack,
 } from '@/lib/curriculum';
 import LevelCard from '@/components/curriculum/LevelCard';
+import { isSongReady } from '@/lib/genres';
 import SEOHead from '@/components/SEOHead';
 
 export default function Curriculum() {
@@ -41,7 +42,7 @@ export default function Curriculum() {
           const ids = track.song_ids || [];
           if (!ids.length) return;
           try {
-            const trackSongs = await songsRepo.filter({ id: { $in: ids } });
+            const trackSongs = (await songsRepo.filter({ id: { $in: ids } })).filter(isSongReady);
             const byId = {};
             trackSongs.forEach((s) => { byId[s.id] = s; });
             songsMap[track.id] = ids.map((id) => byId[id]).filter(Boolean);

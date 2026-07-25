@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import { useSubscription } from '@/hooks/useSubscription';
+import { isSongReady } from '@/lib/genres';
 import SEOHead from '@/components/SEOHead';
 
 const GENRES = ['All', 'Reggaeton', 'Latin Pop', 'Bachata', 'Salsa', 'Trap'];
@@ -28,22 +29,24 @@ export default function Catalog() {
   const [level, setLevel] = useState('All');
   const { isPro } = useSubscription();
 
+  const readySongs = useMemo(() => songs.filter(isSongReady), [songs]);
+
   const freeIds = useMemo(() => {
     const FREE_COUNT = 12;
-    const total = songs.length;
+    const total = readySongs.length;
     const ids = new Set();
     if (total <= FREE_COUNT) {
-      songs.forEach(s => ids.add(s.id));
+      readySongs.forEach(s => ids.add(s.id));
     } else {
       const dayOffset = new Date().getDay();
       for (let i = 0; i < FREE_COUNT; i++) {
-        ids.add(songs[(dayOffset * 2 + i) % total].id);
+        ids.add(readySongs[(dayOffset * 2 + i) % total].id);
       }
     }
     return ids;
-  }, [songs]);
+  }, [readySongs]);
 
-  const filtered = songs.filter(s => {
+  const filtered = readySongs.filter(s => {
     const matchSearch = !search ||
       s.title?.toLowerCase().includes(search.toLowerCase()) ||
       s.artist?.toLowerCase().includes(search.toLowerCase());
