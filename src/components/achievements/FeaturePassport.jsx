@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Award, Check, Loader2, Gift, Hand, Bookmark, Lightbulb, Trophy, MessageCircle } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { getProgress } from '@/lib/progress';
+import { savedWordsRepo } from '@/data/repositories/savedWords.repo';
+import { roleplaySessionsRepo } from '@/data/repositories/roleplaySessions.repo';
+import { useUpdateUserProgress } from '@/data/hooks/useUserProgress';
 
 const LS_GRAMMAR = 'sb_passport_grammar_opened';
 const LS_TAPPED = 'sb_passport_tapped_word';
@@ -30,19 +33,19 @@ export default function FeaturePassport() {
   const [granting, setGranting] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [trialGranted, setTrialGranted] = useState(false);
+  const updateUserProgress = useUpdateUserProgress();
 
   useEffect(() => {
     setDismissed(localStorage.getItem(LS_DISMISSED) === '1');
     let cancelled = false;
     (async () => {
       try {
-        const [p, words, sessions] = await Promise.all([
-          base44.entities.UserProgress.filter({}),
-          base44.entities.SavedWord.list('-created_date', 200),
-          base44.entities.RoleplaySession.filter({ completed: true }),
+        const [prog, words, sessions] = await Promise.all([
+          getProgress(),
+          savedWordsRepo.list('-created_date', 200),
+          roleplaySessionsRepo.filter({ completed: true }),
         ]);
         if (cancelled) return;
-        const prog = p?.[0] || {};
         setProgress(prog);
         setSavedCount(words?.length || 0);
         setSongsCompleted(prog.songs_completed || 0);
@@ -71,7 +74,7 @@ export default function FeaturePassport() {
     setGranting(true);
     try {
       const expires = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
-      await base44.entities.UserProgress.update(progress.id, { passport_pro_trial_expires_at: expires });
+      await updateUserProgress.mutateAsync({ id: progress.id, patch: { passport_pro_trial_expires_at: expires } });
       setTrialGranted(true);
     } catch { /* noop */ }
     setGranting(false);
