@@ -1,4 +1,4 @@
-import { base44 } from '@/api/base44Client';
+import { savedWordsRepo } from '@/data/repositories/savedWords.repo';
 
 // A word is "known" after the first successful try, and "mastered" after
 // being answered correctly on this many DIFFERENT calendar dates.
@@ -50,6 +50,6 @@ export async function recordWordSuccess(word) {
     knowledge_level: level,
     mastered: level === 'mastered',
   };
-  await base44.entities.SavedWord.update(word.id, patch);
+  await savedWordsRepo.update(word.id, patch);
   return { ...word, ...patch };
 }
