@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Sparkles, MapPin, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { roleplaySessionsRepo } from '@/data/repositories/roleplaySessions.repo';
+import { voiceAttemptsRepo } from '@/data/repositories/voiceAttempts.repo';
+import { useUpdateUserProgress } from '@/data/hooks/useUserProgress';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
@@ -19,6 +21,7 @@ export default function VoiceCoach({ session, level, onNewScene, onSessionComple
   const navigate = useNavigate();
   const { toast } = useToast();
   const { listening, start, cancel } = useSpeechRecognition();
+  const updateUserProgress = useUpdateUserProgress();
 
   const [turnIndex, setTurnIndex] = useState(0);
   const [messages, setMessages] = useState([]);
@@ -72,9 +75,9 @@ export default function VoiceCoach({ session, level, onNewScene, onSessionComple
     try {
       if (session && !session.xp_awarded) {
         const p = await getProgress();
-        await base44.entities.UserProgress.update(p.id, { xp: (p.xp || 0) + xp });
+        await updateUserProgress.mutateAsync({ id: p.id, patch: { xp: (p.xp || 0) + xp } });
         upsertWeeklyXp({ amount: xp, source: 'xp' });
-        await base44.entities.RoleplaySession.update(session.id, {
+        await roleplaySessionsRepo.update(session.id, {
           completed: true, xp_awarded: true, voice_mode: true,
         });
       }
@@ -109,7 +112,7 @@ export default function VoiceCoach({ session, level, onNewScene, onSessionComple
     const score = Math.max(0, Math.min(100, Math.round(evalRes.score || 0)));
 
     setMessages((m) => [...m, { role: 'user', text: transcript, score }]);
-    base44.entities.VoiceAttempt.create({
+    voiceAttemptsRepo.create({
       session_id: session.id,
       turn_index: turnIndex,
       transcript,
@@ -123,7 +126,7 @@ export default function VoiceCoach({ session, level, onNewScene, onSessionComple
     }).catch(() => {});
 
     if (evalRes.understood) {
-      if (score >= 85) { getProgress().then((p) => base44.entities.UserProgress.update(p.id, { xp: (p.xp || 0) + 5 })).catch(() => {}); }
+      if (score >= 85) { getProgress().then((p) => updateUserProgress.mutateAsync({ id: p.id, patch: { xp: (p.xp || 0) + 5 } })).catch(() => {}); }
       recordResult({ turnIndex, score, understood: true, skipped: false });
       setFeedback({ ...evalRes, understood: true });
       setPhase('feedback');
@@ -152,7 +155,7 @@ export default function VoiceCoach({ session, level, onNewScene, onSessionComple
   const handleSkip = () => {
     cancel();
     recordResult({ turnIndex, score: 0, understood: false, skipped: true });
-    base44.entities.VoiceAttempt.create({
+    voiceAttemptsRepo.create({
       session_id: session.id, turn_index: turnIndex, expected_reply: steps[turnIndex]?.suggested_reply,
       score: 0, understood: false, attempts: attemptsRef.current, skipped: true,
     }).catch(() => {});
