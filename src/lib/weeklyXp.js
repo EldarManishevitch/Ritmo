@@ -1,4 +1,4 @@
-import { base44 } from '@/api/base44Client';
+import { weeklyXpRepo } from '@/data/repositories/weeklyXp.repo';
 import { getWeekStart } from '@/lib/dateHelpers';
 
 /**
@@ -14,16 +14,16 @@ export async function upsertWeeklyXp({ amount, source = 'xp' }) {
   if (!amount) return;
   try {
     const weekStart = getWeekStart();
-    const existing = await base44.entities.WeeklyXP.filter({ week_start: weekStart });
+    const existing = await weeklyXpRepo.byWeek(weekStart);
     if (existing && existing.length) {
       const rec = existing[0];
-      await base44.entities.WeeklyXP.update(rec.id, {
+      await weeklyXpRepo.update(rec.id, {
         xp_earned: (rec.xp_earned || 0) + amount,
         lessons_completed: (rec.lessons_completed || 0) + (source === 'lesson' ? 1 : 0),
         songs_completed: (rec.songs_completed || 0) + (source === 'song' ? 1 : 0),
       });
     } else {
-      await base44.entities.WeeklyXP.create({
+      await weeklyXpRepo.create({
         week_start: weekStart,
         xp_earned: amount,
         lessons_completed: source === 'lesson' ? 1 : 0,
