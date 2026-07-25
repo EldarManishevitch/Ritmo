@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { BookOpen, Clock, TrendingUp, Loader2 } from 'lucide-react';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { savedWordsRepo } from '@/data/repositories/savedWords.repo';
-import { certificatesRepo } from '@/data/repositories/certificates.repo';
+import { useSavedWordsList } from '@/data/hooks/useSavedWords';
+import { useCertificatesList } from '@/data/hooks/useCertificates';
 
 const DAY_MS = 86400000;
 const MIN_PER_WORD = 2;
@@ -16,25 +16,9 @@ function formatMinutes(min) {
 }
 
 export default function WeeklyInsights() {
-  const [words, setWords] = useState(null);
-  const [certs, setCerts] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all([
-      savedWordsRepo.list('-created_date', 500),
-      certificatesRepo.list('-created_date', 500),
-    ])
-      .then(([w, c]) => {
-        if (cancelled) return;
-        setWords(w);
-        setCerts(c);
-      })
-      .catch(() => {})
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
+  const { data: words, isLoading: wordsLoading } = useSavedWordsList('-created_date', 500);
+  const { data: certs, isLoading: certsLoading } = useCertificatesList('-created_date', 500);
+  const loading = wordsLoading || certsLoading;
 
   const masteredCount = useMemo(
     () => (words || []).filter((w) => w.mastered).length,
