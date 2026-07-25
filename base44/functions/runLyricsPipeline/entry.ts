@@ -158,10 +158,13 @@ async function runPipeline(sb, base44, songId, title, artist) {
 
   await sb.entities.Song.update(songId, { sync_status: 'translating' });
   // Stage 2/3 invoked with the user-scoped client so they receive the user context.
-  await Promise.all([
-    base44.functions.invoke('translateLyrics', { songId }).catch((e) => console.log('Stage 2 skipped:', e?.message)),
-    base44.functions.invoke('syncLyricsAdvanced', { songId }).catch((e) => console.log('Stage 3 skipped:', e?.message)),
-  ]);
+  // Fire-and-forget (not awaited): each stage is its own function invocation with
+  // its own execution budget, so a slow translation call can no longer starve Stage 1's
+  // 45s timeout and strand the song at sync_status='translating' forever. Stage 3
+  // (syncLyricsAdvanced) always resolves the terminal status on its own regardless of
+  // whether Stage 2 has finished, so the two stages don't need to be coupled here.
+  base44.functions.invoke('translateLyrics', { songId }).catch((e) => console.log('Stage 2 trigger failed:', e?.message));
+  base44.functions.invoke('syncLyricsAdvanced', { songId }).catch((e) => console.log('Stage 3 trigger failed:', e?.message));
 
   return { success: true, line_count: rawLines.length };
 }
