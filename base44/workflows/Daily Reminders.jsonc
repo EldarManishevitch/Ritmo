@@ -1,0 +1,45 @@
+{
+  "name": "Daily Reminders",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 * * * *",
+      "one_time_date": null,
+      "timezone": "Asia/Jerusalem",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "daily_reminders",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "send_reminders": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendDailyReminders",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Send daily reminders",
+            "description": "Emails users who opted in"
+          }
+        }
+      }
+    ]
+  },
+  "description": "Fires hourly to send personalized practice reminder emails to users who haven't practiced yet today."
+}

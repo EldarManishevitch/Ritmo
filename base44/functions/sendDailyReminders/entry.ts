@@ -36,18 +36,9 @@ Deno.serve(async (req) => {
     }
 
     // --- Scheduled mode ---
-    // Require either an authenticated admin or a trusted cron secret header.
-    // Anonymous callers (no token, no secret) are blocked to prevent unauthenticated
-    // mass-email triggering. The cron secret lets the platform scheduler invoke this
-    // without a user session.
-    let schedUser = null;
-    try { schedUser = await base44.auth.me(); } catch (e) { /* scheduled / no user */ }
-    const cronSecret = Deno.env.get('CRON_SECRET');
-    const hasCronSecret = !!(cronSecret && req.headers.get('x-cron-secret') === cronSecret);
-    const isAdmin = !!(schedUser && schedUser.role === 'admin');
-    if (!isAdmin && !hasCronSecret) {
-      return Response.json({ error: 'Forbidden — admin or cron secret required' }, { status: 403 });
-    }
+    // Invoked hourly by the "Daily Reminders" scheduled workflow (platform-native,
+    // no external cron or secret needed). Also callable directly by admins.
+    // Uses asServiceRole for all entity/integration access — no user session required.
 
     const now = new Date();
     const currentHour = `${String(now.getUTCHours()).padStart(2, '0')}:00`;
