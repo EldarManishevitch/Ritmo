@@ -1,4 +1,8 @@
 import { base44 } from '@/api/base44Client';
+import { songsRepo } from '@/data/repositories/songs.repo';
+import { lyricLinesRepo } from '@/data/repositories/lyricLines.repo';
+import { dailyLessonRepo } from '@/data/repositories/dailyLesson.repo';
+import { genreStatsRepo } from '@/data/repositories/genreStats.repo';
 import { getProgress } from '@/lib/progress';
 import { getCurriculumTracks, getSongCompletions } from '@/lib/curriculum';
 import { upsertWeeklyXp } from '@/lib/weeklyXp';
@@ -29,7 +33,7 @@ function hashIndex(str, mod) {
  */
 export async function getOrCreateTodayLesson() {
   const today = todayStr();
-  const existing = await base44.entities.DailyLesson.filter({ lesson_date: today });
+  const existing = await dailyLessonRepo.byDate(today);
   if (existing && existing.length) {
     const lesson = existing[0];
     // Attach the chorus lines for the UI
@@ -45,7 +49,7 @@ export async function getOrCreateTodayLesson() {
     getProgress(),
     getSongCompletions(),
     getCurriculumTracks(),
-    base44.entities.Song.list('-created_date', 300),
+    songsRepo.list('-created_date', 300),
   ]);
   const cefr = progress?.cefr_level || 'A1';
   const favGenres = Array.isArray(progress?.fav_genres) ? progress.fav_genres : [];
@@ -83,7 +87,7 @@ export async function getOrCreateTodayLesson() {
 
   const chosenLines = await pickChorusLines(selected.id);
 
-  const lesson = await base44.entities.DailyLesson.create({
+  const lesson = await dailyLessonRepo.create({
     lesson_date: today,
     song_id: selected.id,
     song_title: selected.title,
@@ -102,13 +106,13 @@ export async function getOrCreateTodayLesson() {
 
 async function loadLessonLines(lesson) {
   if (!lesson?.chorus_line_ids?.length) return [];
-  const lines = await base44.entities.LyricLine.filter({ song_id: lesson.song_id }, 'line_index', 300);
+  const lines = await lyricLinesRepo.bySong(lesson.song_id, 300);
   const byId = new Map((lines || []).map((l) => [l.id, l]));
   return lesson.chorus_line_ids.map((id) => byId.get(id)).filter(Boolean);
 }
 
 async function pickChorusLines(songId) {
-  const lines = await base44.entities.LyricLine.filter({ song_id: songId }, 'line_index', 300);
+  const lines = await lyricLinesRepo.bySong(songId, 300);
   const chorus = (lines || []).filter((l) => l.is_chorus).slice(0, 5);
   const nonChorus = (lines || []).filter((l) => !l.is_chorus);
   const chosen = [...chorus];
@@ -132,14 +136,14 @@ export function getMilestone(streak) {
  */
 export async function completeTodayLesson({ quizScore, wordsTapped }) {
   const today = todayStr();
-  const lessons = await base44.entities.DailyLesson.filter({ lesson_date: today });
+  const lessons = await dailyLessonRepo.byDate(today);
   const lesson = lessons?.[0];
   if (!lesson) return null;
 
   const xpGain = (quizScore || 0) * 10 + 15;
 
   if (lesson.streak_awarded) {
-    await base44.entities.DailyLesson.update(lesson.id, {
+    await dailyLessonRepo.update(lesson.id, {
       completed: true,
       completed_at: new Date().toISOString(),
       quiz_score: quizScore,
@@ -167,7 +171,7 @@ export async function completeTodayLesson({ quizScore, wordsTapped }) {
     xp: newXp,
   });
   upsertWeeklyXp({ amount: xpGain, source: 'lesson' });
-  await base44.entities.DailyLesson.update(lesson.id, {
+  await dailyLessonRepo.update(lesson.id, {
     completed: true,
     completed_at: new Date().toISOString(),
     quiz_score: quizScore,
@@ -177,16 +181,16 @@ export async function completeTodayLesson({ quizScore, wordsTapped }) {
 
   // GenreStats upsert (entity created as part of the genre-cohorts feature)
   try {
-    const existing = await base44.entities.GenreStats.filter({ genre: lesson.song_genre });
+    const existing = await genreStatsRepo.byGenre(lesson.song_genre);
     if (existing?.length) {
       const gs = existing[0];
-      await base44.entities.GenreStats.update(gs.id, {
+      await genreStatsRepo.update(gs.id, {
         songs_completed: (gs.songs_completed || 0) + 1,
         total_xp: (gs.total_xp || 0) + xpGain,
         last_practiced: today,
       });
     } else {
-      await base44.entities.GenreStats.create({
+      await genreStatsRepo.create({
         genre: lesson.song_genre,
         songs_completed: 1,
         total_xp: xpGain,
@@ -200,17 +204,17 @@ export async function completeTodayLesson({ quizScore, wordsTapped }) {
 
 export async function updateLessonStep(step, extra = {}) {
   const today = todayStr();
-  const lessons = await base44.entities.DailyLesson.filter({ lesson_date: today });
+  const lessons = await dailyLessonRepo.byDate(today);
   if (!lessons?.length) return;
-  await base44.entities.DailyLesson.update(lessons[0].id, { activity_step: step, ...extra });
+  await dailyLessonRepo.update(lessons[0].id, { activity_step: step, ...extra });
 }
 
 export async function addTappedWord(word) {
   const today = todayStr();
-  const lessons = await base44.entities.DailyLesson.filter({ lesson_date: today });
+  const lessons = await dailyLessonRepo.byDate(today);
   if (!lessons?.length) return;
   const lesson = lessons[0];
   const words = Array.isArray(lesson.words_tapped) ? lesson.words_tapped : [];
   if (words.includes(word)) return;
-  await base44.entities.DailyLesson.update(lesson.id, { words_tapped: [...words, word] });
+  await dailyLessonRepo.update(lesson.id, { words_tapped: [...words, word] });
 }
