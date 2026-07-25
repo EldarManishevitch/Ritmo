@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Headphones } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { searchHistoryRepo } from '@/data/repositories/searchHistory.repo';
 
 export default function SearchHistorySection() {
   const [items, setItems] = useState(null);
 
   useEffect(() => {
-    base44.entities.SearchHistory.list('-viewed_at', 6)
+    searchHistoryRepo.list('-viewed_at', 6)
       .then((rows) => setItems(rows || []))
       .catch(() => setItems([]));
   }, []);
