@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { getCachedWordTranslation, translateWordCached } from '@/lib/aiHelpers';
-import { base44 } from '@/api/base44Client';
+import { savedWordsRepo } from '@/data/repositories/savedWords.repo';
+import { useUpdateSavedWord } from '@/data/hooks/useSavedWords';
+import { useFlagWordMissed } from '@/data/hooks/usePracticeFlags';
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
@@ -13,6 +15,8 @@ export default function FlashActivity({ lines, wordsTapped, wrongWords, onComple
   const [cards, setCards] = useState([]);
   const [idx, setIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
+  const updateSavedWord = useUpdateSavedWord();
+  const flagWordMissed = useFlagWordMissed();
 
   // Build 3 flashcards from priority sources
   useEffect(() => {
@@ -57,7 +61,7 @@ export default function FlashActivity({ lines, wordsTapped, wrongWords, onComple
 
   const handleResult = async (gotIt) => {
     try {
-      const existing = await base44.entities.SavedWord.filter({ word: card.word });
+      const existing = await savedWordsRepo.filter({ word: card.word });
       const sw = existing?.[0];
       const today = todayStr();
       if (gotIt) {
@@ -65,18 +69,13 @@ export default function FlashActivity({ lines, wordsTapped, wrongWords, onComple
         const mastered = successDates.length >= 21;
         const knowledge = mastered ? 'mastered' : successDates.length >= 1 ? 'known' : 'new';
         if (sw) {
-          await base44.entities.SavedWord.update(sw.id, { success_dates: successDates, knowledge_level: knowledge, mastered });
+          await updateSavedWord.mutateAsync({ id: sw.id, patch: { success_dates: successDates, knowledge_level: knowledge, mastered } });
         }
       } else {
         // Need practice — upsert PracticeFlag
-        const flags = await base44.entities.PracticeFlag.filter({ word: card.word }).catch(() => []);
-        if (flags?.length) {
-          await base44.entities.PracticeFlag.update(flags[0].id, { miss_count: (flags[0].miss_count || 0) + 1 });
-        } else {
-          await base44.entities.PracticeFlag.create({ word: card.word, miss_count: 1 });
-        }
+        await flagWordMissed.mutateAsync({ word: card.word }).catch(() => {});
         if (sw) {
-          await base44.entities.SavedWord.update(sw.id, { knowledge_level: 'new' });
+          await updateSavedWord.mutateAsync({ id: sw.id, patch: { knowledge_level: 'new' } });
         }
       }
     } catch { /* noop */ }
