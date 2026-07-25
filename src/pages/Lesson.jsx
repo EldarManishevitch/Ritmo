@@ -26,6 +26,7 @@ export default function Lesson() {
   const { data: initialLesson, isLoading: lessonLoading } = useTodayLesson();
   const { data: progress, isLoading: progressLoading } = useUserProgress();
   const loading = lessonLoading || progressLoading;
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!initialLesson) return;
