@@ -1,4 +1,5 @@
 import { base44 } from '@/api/base44Client';
+import { dailyPhraseRepo } from '@/data/repositories/dailyPhrase.repo';
 
 // Module-level word-translation cache: Map<lowercase-word, result>
 const wordCache = new Map();
@@ -95,7 +96,7 @@ export async function youtubeSearch({ query }) {
 /** Get (or create) today's daily phrase. Idempotent per day. */
 export async function generateDailyPhrase() {
   const today = new Date().toISOString().slice(0, 10);
-  const existing = await base44.entities.DailyPhrase.filter({ phrase_date: today });
+  const existing = await dailyPhraseRepo.byDate(today);
   if (existing.length) return existing[0];
 
   const result = await base44.integrations.Core.InvokeLLM({
@@ -113,13 +114,13 @@ export async function generateDailyPhrase() {
     },
   });
 
-  return base44.entities.DailyPhrase.create({ phrase_date: today, ...result });
+  return dailyPhraseRepo.create({ phrase_date: today, ...result });
 }
 
 /** Get (or create) today's daily vocabulary word. Idempotent per day. */
 export async function generateDailyWord() {
   const today = new Date().toISOString().slice(0, 10);
-  const existing = await base44.entities.DailyPhrase.filter({ phrase_date: today });
+  const existing = await dailyPhraseRepo.byDate(today);
   if (existing.length) return existing[0];
 
   const result = await base44.integrations.Core.InvokeLLM({
@@ -137,7 +138,7 @@ export async function generateDailyWord() {
     },
   });
 
-  return base44.entities.DailyPhrase.create({ phrase_date: today, ...result });
+  return dailyPhraseRepo.create({ phrase_date: today, ...result });
 }
 
 export const SONG_GENRES = ['reggaeton', 'bachata', 'pop latino', 'trap latino', 'merengue', 'salsa', 'rock latino'];
