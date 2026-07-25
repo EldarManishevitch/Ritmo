@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { songsRepo } from '@/data/repositories/songs.repo';
 import { queryKeys } from '@/data/queryKeys';
 
@@ -25,5 +25,21 @@ export function useSong(id, options = {}) {
     queryFn: () => songsRepo.get(id),
     enabled: !!id,
     ...options,
+  });
+}
+
+export function useCreateSong() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data) => songsRepo.create(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['songs'] }),
+  });
+}
+
+export function useUpdateSong() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, patch }) => songsRepo.update(id, patch),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['songs'] }),
   });
 }
