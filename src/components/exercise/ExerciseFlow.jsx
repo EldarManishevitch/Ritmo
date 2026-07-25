@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
-import { savedWordsRepo } from '@/data/repositories/savedWords.repo';
-import { practiceFlagsRepo } from '@/data/repositories/practiceFlags.repo';
+import { useSavedWordsForSong } from '@/data/hooks/useSavedWords';
+import { usePracticeFlagsForSong } from '@/data/hooks/usePracticeFlags';
 import { songCompletionsRepo } from '@/data/repositories/songCompletions.repo';
 import QuizStep from './QuizStep';
 import VocabMatchStep from './VocabMatchStep';
@@ -16,12 +16,13 @@ const STEP_LABELS = ['Quiz', 'Vocab Match', 'Speak'];
 export default function ExerciseFlow({ open, onClose, song, lines }) {
   const [step, setStep] = useState(0);
   const [scores, setScores] = useState({ quiz: 0, quizTotal: 10, vocab: 0, vocabTotal: 6, chorus: 0, chorusTotal: 3 });
-  const [savedWords, setSavedWords] = useState([]);
-  const [flags, setFlags] = useState([]);
   const [progress, setProgress] = useState(null);
   const [certResult, setCertResult] = useState(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [dbWriteDone, setDbWriteDone] = useState(false);
+
+  const { data: savedWords = [] } = useSavedWordsForSong(song?.id, { enabled: open && !!song?.id });
+  const { data: flags = [] } = usePracticeFlagsForSong(song?.id, { enabled: open && !!song?.id });
 
   useEffect(() => {
     if (!open) return;
@@ -30,13 +31,6 @@ export default function ExerciseFlow({ open, onClose, song, lines }) {
     setDbWriteDone(false);
     setCertResult(null);
     setProgress(null);
-    Promise.all([
-      savedWordsRepo.filter({ source_song_id: song?.id }, '-created_date', 200).catch(() => []),
-      practiceFlagsRepo.filter({ song_id: song?.id }).catch(() => []),
-    ]).then(([w, f]) => {
-      setSavedWords(w || []);
-      setFlags(f || []);
-    });
   }, [open, song?.id]);
 
   // DB writes happen once when step reaches 3 (completion)
