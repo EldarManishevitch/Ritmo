@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Loader2, Check } from 'lucide-react';
+import { ArrowLeft, Loader2, Check, Music, BookOpen, Trophy } from 'lucide-react';
 import { completeTodayLesson, updateLessonStep } from '@/lib/dailyLesson';
 import { useTodayLesson } from '@/data/hooks/useDailyLesson';
 import { useUserProgress } from '@/data/hooks/useUserProgress';
@@ -127,6 +127,35 @@ export default function Lesson() {
       </div>
 
       <LessonHeader lesson={lesson} step={step} resume={step > 0 && !lesson.completed} />
+
+      {/* Tab pills — matches the song page */}
+      <div className="px-4 py-3 flex gap-2 border-b border-border">
+        {[
+          { id: 'listen', label: 'Lyrics', icon: Music },
+          { id: 'quiz', label: 'Quiz', icon: Trophy },
+          { id: 'flash', label: 'Vocab', icon: BookOpen },
+        ].map((t, i) => {
+          const Icon = t.icon;
+          const active = step === i;
+          return (
+            <button
+              key={t.id}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                active ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/70'
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Lyrics ready status bar — matches the song page */}
+      <div className="px-4 py-2 flex items-center justify-center gap-2 text-xs font-medium border-b bg-green-100 text-green-700 border-green-200">
+        <span>✅</span>
+        <span>Lyrics ready (synced)</span>
+      </div>
 
       <div className="flex-1 flex flex-col min-h-0">
         {step === 0 && (

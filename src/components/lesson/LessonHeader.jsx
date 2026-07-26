@@ -38,22 +38,24 @@ export default function LessonHeader({ lesson, step, resume }) {
         })}
       </div>
 
-      {/* Song info row */}
-      <div className="flex items-center gap-3 mt-3">
+      {/* Song header — matches the standard song page */}
+      <div className="flex items-center gap-4 mt-3">
         <img
           src={lesson.song_youtube_id ? `https://img.youtube.com/vi/${lesson.song_youtube_id}/mqdefault.jpg` : ''}
           alt={lesson.song_title}
-          className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+          className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
         />
-        <div className="min-w-0">
-          <p className="font-bold text-sm text-foreground truncate">{lesson.song_title}</p>
-          <p className="text-xs text-muted-foreground truncate">{lesson.song_artist}</p>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            {lesson.song_genre && (
+              <span className="text-[10px] font-semibold text-white px-2 py-0.5 rounded-full" style={{ backgroundColor: '#2A4B62' }}>
+                {lesson.song_genre}
+              </span>
+            )}
+          </div>
+          <h2 className="text-xl font-bold text-primary truncate">{lesson.song_title}</h2>
+          <p className="text-sm text-muted-foreground truncate">{lesson.song_artist}</p>
         </div>
-        {lesson.song_genre && (
-          <span className="ml-auto text-[10px] font-semibold text-white px-2 py-0.5 rounded-full" style={{ backgroundColor: '#B0801F' }}>
-            {lesson.song_genre}
-          </span>
-        )}
       </div>
     </div>
   );

@@ -47,44 +47,65 @@ export default function ListenActivity({ lesson, lines, onReady }) {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0">
-      {/* YouTube player */}
-      <div className="relative bg-black aspect-video flex-shrink-0">
-        <div id={playerContainerId} className="w-full h-full" />
-        {!ready && <div className="absolute inset-0 flex items-center justify-center bg-black"><div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" /></div>}
-      </div>
-
-      {/* Language toggle — matches the song page */}
-      <div className="px-4 py-2 flex items-center justify-end border-b border-border">
-        <div className="flex rounded-full bg-muted p-0.5">
-          {[
-            { id: 'spanish', label: 'ES' },
-            { id: 'both', label: 'ES/EN' },
-            { id: 'english', label: 'EN' },
-          ].map((opt) => (
-            <button
-              key={opt.id}
-              onClick={() => setDisplayMode(opt.id)}
-              className={`text-xs font-medium px-3 py-1 rounded-full transition-colors ${
-                displayMode === opt.id ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+    <div className="flex-1 flex flex-col lg:flex-row min-h-0">
+      {/* Left column: YouTube player */}
+      <div className="lg:w-3/5 flex flex-col shrink-0">
+        <div className="relative bg-black aspect-video">
+          <div id={playerContainerId} className="w-full h-full" />
+          {!ready && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black">
+              <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            </div>
+          )}
+        </div>
+        <div className="px-4 py-3 flex items-center gap-3 border-b lg:border-b-0 lg:border-r border-border">
+          <button
+            onClick={onReady}
+            className="flex-shrink-0 h-9 px-4 rounded-lg bg-primary text-white text-sm font-medium flex items-center gap-1.5 hover:bg-primary/90 transition-colors"
+          >
+            I'm ready for the quiz <ArrowRight className="h-4 w-4" />
+          </button>
+          <p className="text-xs text-muted-foreground">
+            Listen, tap any unfamiliar word, then continue to the quiz.
+          </p>
         </div>
       </div>
 
-      {/* Chorus lines — same component the full song page uses */}
-      <div className="flex-1 overflow-y-auto min-h-0">
-        <SyncedLyrics
-          lines={lines}
-          currentTime={currentTime}
-          displayMode={displayMode}
-          onWordTap={handleWordTap}
-          onLineSeek={seekTo}
-          onPausePlayer={pause}
-        />
+      {/* Right column: language toggle + lyrics — independent scroll */}
+      <div className="lg:w-2/5 flex-1 flex flex-col min-h-0 overflow-hidden">
+        {/* Lyrics header with language toggle */}
+        <div className="px-4 py-2 flex items-center justify-between border-b border-border">
+          <span className="text-sm font-semibold text-foreground">The Chorus</span>
+          <div className="flex rounded-full bg-muted p-0.5">
+            {[
+              { id: 'spanish', label: 'ES' },
+              { id: 'both', label: 'ES/EN' },
+              { id: 'english', label: 'EN' },
+            ].map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => setDisplayMode(opt.id)}
+                className={`text-xs font-medium px-3 py-1 rounded-full transition-colors ${
+                  displayMode === opt.id ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Chorus lines — same component the full song page uses */}
+        <div className="flex-1 overflow-y-auto min-h-0 no-scrollbar">
+          <SyncedLyrics
+            lines={lines}
+            currentTime={currentTime}
+            displayMode={displayMode}
+            onWordTap={handleWordTap}
+            onLineSeek={seekTo}
+            onPausePlayer={pause}
+          />
+        </div>
       </div>
 
       {showNudge && (
@@ -98,15 +119,6 @@ export default function ListenActivity({ lesson, lines, onReady }) {
           Saved ✓
         </div>
       )}
-
-      <div className="px-4 py-3 border-t border-border flex-shrink-0">
-        <button
-          onClick={onReady}
-          className="w-full h-12 rounded-xl bg-primary text-white font-medium flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors"
-        >
-          I'm ready for the quiz <ArrowRight className="h-4 w-4" />
-        </button>
-      </div>
     </div>
   );
 }
