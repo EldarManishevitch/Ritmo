@@ -1,18 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Volume2 } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useYouTubePlayer } from '@/hooks/useYouTubePlayer';
 import { translateWordCached } from '@/lib/aiHelpers';
 import { addTappedWord } from '@/lib/dailyLesson';
 import { savedWordsRepo } from '@/data/repositories/savedWords.repo';
+import SyncedLyrics from '@/components/song/SyncedLyrics';
 
 export default function ListenActivity({ lesson, lines, onReady }) {
-  const [showTranslations, setShowTranslations] = useState(() => Object.create(null));
   const [tapped, setTapped] = useState(new Set(lesson.words_tapped || []));
   const [savedFlash, setSavedFlash] = useState(null);
+  const [displayMode, setDisplayMode] = useState('both');
   const playerContainerId = 'lesson-yt-player';
   const nudgeTimer = useRef(null);
 
-  const { ready, isPlaying } = useYouTubePlayer(lesson.song_youtube_id || '', playerContainerId);
+  const { ready, isPlaying, currentTime, seekTo, pause } = useYouTubePlayer(lesson.song_youtube_id || '', playerContainerId);
 
   // 90s nudge
   useEffect(() => {
@@ -22,8 +23,7 @@ export default function ListenActivity({ lesson, lines, onReady }) {
   }, [isPlaying]);
   const [showNudge, setShowNudge] = useState(false);
 
-  const handleWordTap = async (word, e) => {
-    e.stopPropagation();
+  const handleWordTap = async (word) => {
     const clean = word.replace(/[^a-záéíóúüñ]/gi, '').toLowerCase();
     if (!clean || tapped.has(clean)) return;
     setTapped((prev) => new Set([...prev, clean]));
@@ -46,59 +46,45 @@ export default function ListenActivity({ lesson, lines, onReady }) {
     } catch { /* noop */ }
   };
 
-  const tokenize = (text) =>
-    (text || '').split(/(\s+)/).map((tok, i) => {
-      const isWord = /[a-záéíóúüñ]/i.test(tok);
-      const clean = tok.replace(/[^a-záéíóúüñ]/gi, '').toLowerCase();
-      const isTapped = isWord && tapped.has(clean);
-      return (
-        <span key={i}>
-          {isWord ? (
-            <span
-              onClick={(e) => handleWordTap(tok, e)}
-              className={`cursor-pointer rounded ${isTapped ? 'underline decoration-green-500 decoration-2 underline-offset-2 text-green-600' : 'hover:bg-primary/10'}`}
-            >
-              {tok}
-            </span>
-          ) : tok}
-        </span>
-      );
-    });
-
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-4">
+    <div className="flex-1 flex flex-col min-h-0">
       {/* YouTube player */}
-      <div className="relative bg-black rounded-xl overflow-hidden mb-4">
-        <div id={playerContainerId} className="w-full aspect-video" />
+      <div className="relative bg-black aspect-video flex-shrink-0">
+        <div id={playerContainerId} className="w-full h-full" />
         {!ready && <div className="absolute inset-0 flex items-center justify-center bg-black"><div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" /></div>}
       </div>
 
-      {/* Chorus lines */}
-      <div className="space-y-3">
-        {lines.map((line, idx) => {
-          const showTr = showTranslations[line.id];
-          return (
-            <div key={line.id} className="rounded-xl bg-card border border-border p-3">
-              <div className="flex items-start justify-between gap-2 mb-1">
-                <p className="text-base font-medium text-foreground leading-relaxed">{tokenize(line.spanish_text)}</p>
-                {line.english_translation && (
-                  <button
-                    onClick={() => setShowTranslations((s) => ({ ...s, [line.id]: !s[line.id] }))}
-                    className="text-xs text-primary flex-shrink-0 mt-0.5"
-                  >
-                    {showTr ? 'Hide' : 'EN'}
-                  </button>
-                )}
-              </div>
-              {showTr && line.english_translation && (
-                <p className="text-sm text-muted-foreground mb-1">{line.english_translation}</p>
-              )}
-              {line.pronunciation && (
-                <p className="text-xs text-primary/70">🔊 {line.pronunciation}</p>
-              )}
-            </div>
-          );
-        })}
+      {/* Language toggle — matches the song page */}
+      <div className="px-4 py-2 flex items-center justify-end border-b border-border">
+        <div className="flex rounded-full bg-muted p-0.5">
+          {[
+            { id: 'spanish', label: 'ES' },
+            { id: 'both', label: 'ES/EN' },
+            { id: 'english', label: 'EN' },
+          ].map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => setDisplayMode(opt.id)}
+              className={`text-xs font-medium px-3 py-1 rounded-full transition-colors ${
+                displayMode === opt.id ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Chorus lines — same component the full song page uses */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <SyncedLyrics
+          lines={lines}
+          currentTime={currentTime}
+          displayMode={displayMode}
+          onWordTap={handleWordTap}
+          onLineSeek={seekTo}
+          onPausePlayer={pause}
+        />
       </div>
 
       {showNudge && (
@@ -113,12 +99,14 @@ export default function ListenActivity({ lesson, lines, onReady }) {
         </div>
       )}
 
-      <button
-        onClick={onReady}
-        className="mt-4 w-full h-12 rounded-xl bg-primary text-white font-medium flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors"
-      >
-        I'm ready for the quiz <ArrowRight className="h-4 w-4" />
-      </button>
+      <div className="px-4 py-3 border-t border-border flex-shrink-0">
+        <button
+          onClick={onReady}
+          className="w-full h-12 rounded-xl bg-primary text-white font-medium flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors"
+        >
+          I'm ready for the quiz <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }
