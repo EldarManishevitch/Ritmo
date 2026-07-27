@@ -52,4 +52,7 @@ export const queryKeys = {
   songCompletions: {
     list: (sort, limit) => ['songCompletions', 'list', sort, limit],
   },
+  weeklyXp: {
+    byWeek: (weekStart) => ['weeklyXp', 'byWeek', weekStart],
+  },
 };
