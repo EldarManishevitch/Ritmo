@@ -81,6 +81,7 @@ export default function SongPage() {
   const [audioFailed, setAudioFailed] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [tier1Progress, setTier1Progress] = useState(0);
+  const [audioSlow, setAudioSlow] = useState(false);
   const playerContainerId = retryCount > 0 ? `yt-player-r${retryCount}` : 'yt-player';
 
   const inProgress = song ? ['pending', 'fetching_lyrics', 'translating'].includes(song.sync_status) : false;
@@ -277,6 +278,14 @@ export default function SongPage() {
       setTier1Progress((p) => Math.min(p + 2.5, 90));
     }, 100);
     return () => clearInterval(interval);
+  }, [ready, audioFailed, retryCount]);
+
+  // Spec 2.4: if Tier 1 (audio) is slow, turn the stall into a lesson by surfacing
+  // a "Preview the vocabulary" shortcut instead of just a spinner.
+  useEffect(() => {
+    if (ready || audioFailed) { setAudioSlow(false); return; }
+    const timer = setTimeout(() => setAudioSlow(true), 4000);
+    return () => clearTimeout(timer);
   }, [ready, audioFailed, retryCount]);
 
   const handleAudioRetry = () => {
