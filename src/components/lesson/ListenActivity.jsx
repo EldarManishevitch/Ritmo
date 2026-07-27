@@ -4,6 +4,7 @@ import { useYouTubePlayer } from '@/hooks/useYouTubePlayer';
 import { translateWordCached } from '@/lib/aiHelpers';
 import { addTappedWord } from '@/lib/dailyLesson';
 import { savedWordsRepo } from '@/data/repositories/savedWords.repo';
+import { incrementWeeklyWordTap } from '@/lib/weeklyXp';
 import SyncedLyrics from '@/components/song/SyncedLyrics';
 
 export default function ListenActivity({ lesson, lines, onReady }) {
@@ -30,6 +31,7 @@ export default function ListenActivity({ lesson, lines, onReady }) {
     setSavedFlash(clean);
     setTimeout(() => setSavedFlash(null), 1200);
     addTappedWord(clean).catch(() => {});
+    incrementWeeklyWordTap();
     // Save to SavedWord (best-effort)
     try {
       const existing = await savedWordsRepo.filter({ word: clean, source_song_id: lesson.song_id });
