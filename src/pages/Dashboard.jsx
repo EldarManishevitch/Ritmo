@@ -19,6 +19,7 @@ import { LEVEL_ORDER } from '@/lib/curriculum';
 import CurriculumProgressWidget from '@/components/curriculum/CurriculumProgressWidget';
 import { isSongReady } from '@/lib/genres';
 import GenreStatsWidget from '@/components/dashboard/GenreStatsWidget';
+import WordsTappedWidget from '@/components/dashboard/WordsTappedWidget';
 import GenrePicker from '@/components/dashboard/GenrePicker';
 import SEOHead from '@/components/SEOHead';
 
@@ -126,6 +127,9 @@ export default function Dashboard() {
 
       {/* This week's goal */}
       <GenreStatsWidget favGenres={favGenres} onToggleGenre={handleToggleGenre} />
+
+      {/* Words tapped this week */}
+      <WordsTappedWidget />
 
       {/* Add a New Song */}
       <div className="mb-4">
