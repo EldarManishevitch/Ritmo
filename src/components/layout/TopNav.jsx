@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Sparkles, BookOpen, RotateCcw, MessageCircle, Mic, Settings, Flame, LogOut, Music2, User, GraduationCap, Zap, Languages, Library, CreditCard } from 'lucide-react';
+import { Sparkles, BookOpen, RotateCcw, MessageCircle, Mic, Settings, Flame, LogOut, Music2, User, GraduationCap, Zap, Languages, Library } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { getProgress, levelForXp } from '@/lib/progress';
 import NavDropdown from '@/components/layout/NavDropdown';
@@ -24,7 +24,6 @@ const practiceDropdown = [
 
 const profileDropdown = [
   { path: '/leaderboard', icon: User, label: 'Profile' },
-  { path: '/pricing', icon: CreditCard, label: 'Pricing' },
   { path: '/settings', icon: Settings, label: 'Settings' },
 ];
 
