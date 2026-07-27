@@ -15,6 +15,7 @@ import GenerationProgressPill from '@/components/song/GenerationProgressPill';
 import SongPageSkeleton from '@/components/song/SongPageSkeleton';
 import WarmUpCard from '@/components/song/WarmUpCard';
 import { useFirstSongTutorial, FirstSongCoach, FirstSongRoleplayPrompt } from '@/components/song/FirstSongTutorial';
+import { incrementWeeklyWordTap } from '@/lib/weeklyXp';
 import { generateLyrics, ensureLyricsLoaded } from '@/lib/lyricsPipeline';
 import { recordSongView } from '@/lib/searchHistory';
 import { getCachedSong } from '@/lib/songCache';
