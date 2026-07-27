@@ -1,0 +1,12 @@
+{
+  // Daily, 17:00 UTC. The function itself no-ops for any user with nothing due,
+  // so this being daily doesn't mean users get emailed daily.
+  "automations": [
+    {
+      "type": "scheduled",
+      "schedule_mode": "recurring",
+      "schedule_type": "cron",
+      "cron_expression": "0 17 * * *"
+    }
+  ]
+}
