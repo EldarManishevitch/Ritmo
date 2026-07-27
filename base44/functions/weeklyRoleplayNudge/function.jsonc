@@ -1,0 +1,12 @@
+{
+  // Weekly, Monday 16:00 UTC. Native Base44 scheduled automation — no secret needed,
+  // same pattern as sendDailyReminders/function.jsonc.
+  "automations": [
+    {
+      "type": "scheduled",
+      "schedule_mode": "recurring",
+      "schedule_type": "cron",
+      "cron_expression": "0 16 * * 1"
+    }
+  ]
+}
