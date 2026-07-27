@@ -1,31 +1,9 @@
-import { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
-
 /**
- * Reads the current user's UserProgress.subscription_status.
- * Returns { isPro: boolean, loading: boolean }.
- * Admins set subscription_status manually on the UserProgress entity.
+ * The paid tier is disabled — the app is fully open, no account is gated.
+ * Kept as a hook (same { isPro, loading } shape) so every existing call site
+ * keeps working unchanged; this is the single source every paywall check
+ * reads from, so returning isPro: true here unlocks the whole app at once.
  */
 export function useSubscription() {
-  const [isPro, setIsPro] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    base44.entities.UserProgress.filter({})
-      .then((list) => {
-        if (cancelled) return;
-        const progress = list?.[0];
-        const subPro = progress?.subscription_status === 'pro';
-        const passportTrial =
-          !!progress?.passport_pro_trial_expires_at &&
-          new Date(progress.passport_pro_trial_expires_at + 'T23:59:59') > new Date();
-        setIsPro(subPro || passportTrial);
-      })
-      .catch(() => {})
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
-
-  return { isPro, loading };
+  return { isPro: true, loading: false };
 }
