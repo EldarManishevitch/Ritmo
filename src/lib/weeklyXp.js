@@ -32,3 +32,21 @@ export async function upsertWeeklyXp({ amount, source = 'xp' }) {
     }
   } catch { /* fire-and-forget */ }
 }
+
+/**
+ * Fire-and-forget increment of this week's tapped-word count (spec 3.4: reinforce
+ * tap-to-translate adoption via a "words tapped this week" dashboard widget).
+ * Call WITHOUT await from the word-tap handler — never block the translation lookup on this.
+ */
+export async function incrementWeeklyWordTap() {
+  try {
+    const weekStart = getWeekStart();
+    const existing = await weeklyXpRepo.byWeek(weekStart);
+    if (existing && existing.length) {
+      const rec = existing[0];
+      await weeklyXpRepo.update(rec.id, { words_tapped: (rec.words_tapped || 0) + 1 });
+    } else {
+      await weeklyXpRepo.create({ week_start: weekStart, words_tapped: 1 });
+    }
+  } catch { /* fire-and-forget */ }
+}
