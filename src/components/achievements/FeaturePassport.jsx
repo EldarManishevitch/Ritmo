@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Award, Check, Loader2, Gift, Hand, Bookmark, Lightbulb, Trophy, MessageCircle } from 'lucide-react';
-import { useUserProgress, useUpdateUserProgress } from '@/data/hooks/useUserProgress';
+import { Award, Check, Loader2, Hand, Bookmark, Lightbulb, Trophy, MessageCircle } from 'lucide-react';
+import { useUserProgress } from '@/data/hooks/useUserProgress';
 import { useSavedWordsList } from '@/data/hooks/useSavedWords';
 import { useRoleplaySessionsFilter } from '@/data/hooks/useRoleplaySessions';
 
@@ -16,11 +16,6 @@ const ITEMS = [
   { id: 'roleplay', icon: MessageCircle, label: 'Complete a Roleplay', desc: 'Use it in conversation' },
 ];
 
-function trialActive(expiresAt) {
-  if (!expiresAt) return false;
-  return new Date(expiresAt + 'T23:59:59') > new Date();
-}
-
 export default function FeaturePassport() {
   const { data: progress, isLoading: progressLoading } = useUserProgress();
   const { data: words, isLoading: wordsLoading } = useSavedWordsList('-created_date', 200);
@@ -31,10 +26,7 @@ export default function FeaturePassport() {
   const roleplayDone = (sessions?.length || 0) > 0;
   const [grammarOpened, setGrammarOpened] = useState(false);
   const [tapped, setTapped] = useState(false);
-  const [granting, setGranting] = useState(false);
   const [dismissed, setDismissed] = useState(false);
-  const [trialGranted, setTrialGranted] = useState(false);
-  const updateUserProgress = useUpdateUserProgress();
 
   useEffect(() => {
     setDismissed(localStorage.getItem(LS_DISMISSED) === '1');
@@ -44,8 +36,7 @@ export default function FeaturePassport() {
     if (loading) return;
     setGrammarOpened(localStorage.getItem(LS_GRAMMAR) === '1');
     setTapped(localStorage.getItem(LS_TAPPED) === '1' || savedCount >= 1);
-    if (trialActive(progress?.passport_pro_trial_expires_at)) setTrialGranted(true);
-  }, [loading, savedCount, progress]);
+  }, [loading, savedCount]);
 
   const completed = {
     tap: tapped,
@@ -56,23 +47,6 @@ export default function FeaturePassport() {
   };
   const doneCount = Object.values(completed).filter(Boolean).length;
   const allDone = doneCount === 5;
-
-  const grantTrial = async () => {
-    if (!progress?.id || granting || trialGranted) return;
-    setGranting(true);
-    try {
-      const expires = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
-      await updateUserProgress.mutateAsync({ id: progress.id, patch: { passport_pro_trial_expires_at: expires } });
-      setTrialGranted(true);
-    } catch { /* noop */ }
-    setGranting(false);
-  };
-
-  // Auto-grant the 7-day Pro trial once all 5 items are complete
-  useEffect(() => {
-    if (allDone && !trialGranted && progress?.id) grantTrial();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allDone, trialGranted, progress]);
 
   const dismiss = () => {
     localStorage.setItem(LS_DISMISSED, '1');
@@ -103,9 +77,9 @@ export default function FeaturePassport() {
       <div className="flex items-center gap-2 mb-1">
         <Award className="h-5 w-5 text-primary" />
         <h2 className="font-semibold text-foreground">Feature Passport</h2>
-        {trialGranted && (
+        {allDone && (
           <span className="ml-auto text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full flex items-center gap-1">
-            <Gift className="h-3 w-3" /> 7-day Pro
+            <Award className="h-3 w-3" /> Complete
           </span>
         )}
         {!allDone && (
@@ -115,7 +89,7 @@ export default function FeaturePassport() {
         )}
       </div>
       <p className="text-xs text-muted-foreground mb-4">
-        {allDone ? 'All stamps collected!' : `Complete all 5 to unlock 7 days of Pro. ${doneCount}/5 done.`}
+        {allDone ? 'All stamps collected!' : `Complete all 5 to master every core feature. ${doneCount}/5 done.`}
       </p>
       <div className="space-y-2">
         {ITEMS.map((item) => {
@@ -143,9 +117,9 @@ export default function FeaturePassport() {
           );
         })}
       </div>
-      {allDone && trialGranted && (
+      {allDone && (
         <div className="mt-4 rounded-xl bg-primary/10 border border-primary/20 p-3 text-center">
-          <p className="text-sm font-semibold text-primary">🎉 Passport complete — 7 days of Pro unlocked!</p>
+          <p className="text-sm font-semibold text-primary">🎉 Passport complete — you've mastered every core feature!</p>
         </div>
       )}
     </div>
