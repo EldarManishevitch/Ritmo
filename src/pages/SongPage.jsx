@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, RefreshCw, SlidersHorizontal, X, Music, BookOpen, Trophy, Volume2, GraduationCap, Play } from 'lucide-react';
+import { ArrowLeft, RefreshCw, SlidersHorizontal, X, Music, BookOpen, Trophy, Volume2, GraduationCap, Play, Lightbulb } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { songsRepo } from '@/data/repositories/songs.repo';
 import { savedWordsRepo } from '@/data/repositories/savedWords.repo';
@@ -511,7 +511,17 @@ export default function SongPage() {
               <Button size="sm" variant="outline" onClick={() => setTab('quiz')} className="flex-shrink-0">
                 <Trophy className="h-4 w-4 mr-1" /> Practice with a Quiz
               </Button>
-              <p className="text-xs text-muted-foreground">
+              {grammarLineCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setTab('lyrics')}
+                  className="flex-shrink-0 flex items-center gap-1 text-xs font-medium text-[#6C6BD4] hover:underline"
+                  title="Every line has a grammar note — tap the lightbulb under any line to open it"
+                >
+                  <Lightbulb className="h-3.5 w-3.5" /> {grammarLineCount} grammar notes in this song
+                </button>
+              )}
+              <p className="text-xs text-muted-foreground hidden sm:block">
                 Listen, tap any unfamiliar word, then ace the quiz to mark this song complete.
               </p>
             </div>
