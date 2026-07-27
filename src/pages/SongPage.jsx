@@ -289,6 +289,13 @@ export default function SongPage() {
     speechSynthesis.speak(u);
   };
 
+  // Every non-instrumental line has an on-demand grammar note (GrammarInsight) —
+  // surface the count near the play button so this depth isn't hidden (spec 3.4).
+  const grammarLineCount = useMemo(
+    () => lines.filter((l) => l.spanish_text && l.spanish_text.trim().length >= 2).length,
+    [lines]
+  );
+
   // Section tabs appear progressively as lines stream in (Full → Chorus → Verses)
   const sections = useMemo(() => {
     const secs = [{ id: 'full', label: 'Full Song' }];
