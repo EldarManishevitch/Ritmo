@@ -209,6 +209,7 @@ export default function SongPage() {
     setSelectedWord(word);
     setSelectedContext(context);
     try { localStorage.setItem('sb_passport_tapped_word', '1'); } catch { /* noop */ }
+    incrementWeeklyWordTap();
   };
 
   const handleSaveOffset = async () => {
