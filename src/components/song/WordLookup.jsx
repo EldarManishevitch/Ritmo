@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Volume2, BookmarkPlus, BookmarkCheck, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Volume2, BookmarkPlus, BookmarkCheck, Loader2, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { savedWordsRepo } from '@/data/repositories/savedWords.repo';
 import { useSaveWord } from '@/data/hooks/useSavedWords';
+import { useSlangTerms } from '@/data/hooks/useSlangDictionary';
 import { translateWord, getCachedWordTranslation } from '@/lib/aiHelpers';
 import { upsertGenreStatsOnWordSaved } from '@/lib/genres';
 import { Link } from 'react-router-dom';
@@ -16,6 +17,14 @@ export default function WordLookup({ word, context, songId, pulseSave = false, o
   const [capReached, setCapReached] = useState(false);
   const { isPro } = useSubscription();
   const saveWord = useSaveWord();
+  const { data: slangTerms } = useSlangTerms();
+  // Only deep-link when a curated SlangDictionary entry actually exists for this
+  // exact word — the AI translation's own is_slang flag isn't reliable enough to
+  // guarantee /slang/:term resolves to a real page.
+  const slangMatch = useMemo(
+    () => (slangTerms || []).find((s) => s.term?.toLowerCase() === word?.toLowerCase()),
+    [slangTerms, word]
+  );
 
   useEffect(() => {
     if (!word) { setInfo(null); setSaved(false); setCapReached(false); return; }
@@ -117,6 +126,14 @@ export default function WordLookup({ word, context, songId, pulseSave = false, o
                 <p className="text-xs text-muted-foreground mb-1">50-word free limit reached</p>
                 <Link to="/pricing" className="text-xs font-semibold text-primary hover:underline">Upgrade to Pro for unlimited →</Link>
               </div>
+            )}
+            {slangMatch && (
+              <Link
+                to={`/slang/${encodeURIComponent(slangMatch.term)}`}
+                className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+              >
+                <BookOpen className="h-3.5 w-3.5" /> See more words like this →
+              </Link>
             )}
           </motion.div>
         )}
