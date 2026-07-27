@@ -18,12 +18,17 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const isTest = body.test === true;
 
+    // Require admin authentication for ALL invocations — both test and scheduled
+    // mode. This blocks unauthenticated external callers from triggering batch
+    // email dispatches and LLM invocations. The native scheduled workflow
+    // (invoke_backend_function) runs with platform service-role context that
+    // satisfies this check.
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (user.role !== 'admin') return Response.json({ error: 'Forbidden — admin only' }, { status: 403 });
+
     // --- Test mode: send to the current user only ---
     if (isTest) {
-      const user = await base44.auth.me();
-      if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-      if (user.role !== 'admin') return Response.json({ error: 'Forbidden — admin only' }, { status: 403 });
-
       const progressList = await sb.entities.UserProgress.filter({ created_by_id: user.id });
       const progress = progressList?.[0];
       if (!progress) return Response.json({ error: 'No progress record found' }, { status: 404 });
@@ -38,7 +43,7 @@ Deno.serve(async (req) => {
     // --- Scheduled mode ---
     // Invoked hourly by the "Daily Reminders" scheduled workflow (platform-native,
     // no external cron or secret needed). Also callable directly by admins.
-    // Uses asServiceRole for all entity/integration access — no user session required.
+    // Admin auth is enforced above; asServiceRole is used for bulk entity/integration access.
 
     const now = new Date();
     const currentHour = `${String(now.getUTCHours()).padStart(2, '0')}:00`;
