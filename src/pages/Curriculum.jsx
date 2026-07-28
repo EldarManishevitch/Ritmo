@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, ArrowRight, GraduationCap } from 'lucide-react';
+import { Loader2, ArrowRight, GraduationCap, ChevronDown, ChevronUp } from 'lucide-react';
 import { songsRepo } from '@/data/repositories/songs.repo';
 import { getProgress, levelForXp } from '@/lib/progress';
 import {
@@ -10,6 +10,67 @@ import {
 import LevelCard from '@/components/curriculum/LevelCard';
 import { isSongReady } from '@/lib/genres';
 import SEOHead from '@/components/SEOHead';
+
+const SONG_ROUTINE = [
+  { step: 'Cold listen', desc: 'Melody only, no lyrics. What’s the mood? What words jump out?' },
+  { step: 'Gap listen', desc: 'Lyrics with 6–10 words blanked; fill from listening.' },
+  { step: 'Grammar mining', desc: 'Pull the target structure from the lyrics; study it explicitly.' },
+  { step: 'Shadowing', desc: 'Sing along to train mouth, rhythm, and connected speech.' },
+  { step: 'Production', desc: 'Reuse the structure to say something true about yourself.' },
+];
+
+const WEEKLY_RHYTHM = [
+  { label: 'Grammar + structured practice', pct: 50 },
+  { label: 'Songs (the routine above)', pct: 20 },
+  { label: 'Reading', pct: 15 },
+  { label: 'Speaking + writing', pct: 15 },
+];
+
+function CurriculumMethodology() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-2xl bg-card border border-border p-5 mb-6">
+      <button type="button" onClick={() => setOpen((o) => !o)} className="flex items-center justify-between w-full text-left">
+        <div>
+          <h2 className="font-bold text-foreground">How this curriculum works</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">The 5-step song routine, and how to split your study time</p>
+        </div>
+        {open ? <ChevronUp className="h-4 w-4 text-muted-foreground flex-shrink-0" /> : <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
+      </button>
+      {open && (
+        <div className="mt-4 space-y-4">
+          <div>
+            <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">The 5-step song routine (per anchor song)</p>
+            <ol className="space-y-1.5 text-sm">
+              {SONG_ROUTINE.map((s, i) => (
+                <li key={s.step} className="flex gap-2">
+                  <span className="font-semibold text-primary flex-shrink-0">{i + 1}.</span>
+                  <span><span className="font-medium text-foreground">{s.step}</span> <span className="text-muted-foreground">— {s.desc}</span></span>
+                </li>
+              ))}
+            </ol>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">Weekly rhythm (≈ 6–8 hrs/week for steady progress)</p>
+            <div className="space-y-2">
+              {WEEKLY_RHYTHM.map((r) => (
+                <div key={r.label}>
+                  <div className="flex items-center justify-between text-xs mb-0.5">
+                    <span className="text-muted-foreground">{r.label}</span>
+                    <span className="font-semibold text-foreground">{r.pct}%</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div className="h-full rounded-full bg-primary" style={{ width: `${r.pct}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Curriculum() {
   const [loading, setLoading] = useState(true);
@@ -82,14 +143,16 @@ export default function Curriculum() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 pb-24">
       <SEOHead
-        title="Spanish CEFR curriculum A1 to C1 — learn through music | Spanish Beats"
-        description="A structured Spanish learning path from absolute beginner (A1) to advanced (C1) — using real reggaeton, bachata, and pop latino songs. Earn certificates at every level."
+        title="Spanish CEFR curriculum A1 to C2 — learn through music | Spanish Beats"
+        description="A structured Spanish learning path from absolute beginner (A1) to near-native mastery (C2) — anchored by real songs, with a grammar syllabus mined from the lyrics at every level. Earn certificates at every level."
       />
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Your Spanish journey</h1>
         <p className="text-sm text-muted-foreground mt-1">Complete songs, earn certificates, advance your level.</p>
       </div>
+
+      <CurriculumMethodology />
 
       {/* Current level banner */}
       <div className="rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-white p-5 mb-6">
