@@ -30,6 +30,9 @@ export const queryKeys = {
   curriculumTracks: {
     list: ['curriculumTracks', 'list'],
   },
+  grammarCloze: {
+    byLevel: (cefrLevel) => ['grammarCloze', 'byLevel', cefrLevel],
+  },
   levelProgress: {
     list: ['levelProgress', 'list'],
     byLevel: (cefrLevel) => ['levelProgress', 'byLevel', cefrLevel],
