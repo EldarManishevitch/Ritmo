@@ -1,14 +1,17 @@
 import { base44 } from '@/api/base44Client';
 import { unlockedAchievementIds, newlyUnlocked } from '@/lib/achievements';
 import { upsertWeeklyXp } from '@/lib/weeklyXp';
+import { LEVEL_ORDER, levelMeta } from '@/lib/curriculum';
 
-export const LEVELS = [
-  { xp: 2000, cefr: 'C1', title: 'Maestro' },
-  { xp: 1000, cefr: 'B2', title: 'Experto' },
-  { xp: 500, cefr: 'B1', title: 'Duro' },
-  { xp: 200, cefr: 'A2', title: 'Amigo' },
-  { xp: 0, cefr: 'A1', title: 'Novice' },
-];
+// XP thresholds only — level names/order come from curriculum.js's LEVEL_META,
+// the single source of truth, instead of being hardcoded a second time here.
+const XP_THRESHOLDS = { A1: 0, A2: 200, B1: 500, B2: 1000, C1: 2000, C2: 3500 };
+
+export const LEVELS = [...LEVEL_ORDER].reverse().map((cefr) => ({
+  xp: XP_THRESHOLDS[cefr] ?? 0,
+  cefr,
+  title: levelMeta(cefr).name,
+}));
 
 export function levelForXp(xp = 0) {
   return LEVELS.find((l) => xp >= l.xp) || LEVELS[LEVELS.length - 1];
