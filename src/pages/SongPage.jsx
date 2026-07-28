@@ -19,6 +19,7 @@ import { incrementWeeklyWordTap } from '@/lib/weeklyXp';
 import { generateLyrics, ensureLyricsLoaded } from '@/lib/lyricsPipeline';
 import { recordSongView } from '@/lib/searchHistory';
 import { getCachedSong } from '@/lib/songCache';
+import { getCachedLines, setCachedLines } from '@/lib/lyricsCache';
 import { prewarmWordTranslations } from '@/lib/aiHelpers';
 import ExerciseFlow from '@/components/exercise/ExerciseFlow';
 import SEOHead from '@/components/SEOHead';
