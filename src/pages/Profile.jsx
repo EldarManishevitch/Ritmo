@@ -24,9 +24,8 @@ export default function Profile() {
     { level: 'C1', from: 200, to: 350 },
     { level: 'C2', from: 350, to: 350 },
   ];
-  const tierIndex = MASTERY_THRESHOLDS.findIndex((t) => masteredCount < t.to) is not -1
-    ? MASTERY_THRESHOLDS.findIndex((t) => masteredCount < t.to)
-    : MASTERY_THRESHOLDS.length - 1;
+  const foundIndex = MASTERY_THRESHOLDS.findIndex((t) => masteredCount < t.to);
+  const tierIndex = foundIndex !== -1 ? foundIndex : MASTERY_THRESHOLDS.length - 1;
   const tier = MASTERY_THRESHOLDS[tierIndex];
   const level = tier.level;
   const levelProgress = tier.to > tier.from ? Math.min(100, ((masteredCount - tier.from) / (tier.to - tier.from)) * 100) : 100;
