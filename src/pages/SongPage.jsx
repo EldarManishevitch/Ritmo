@@ -503,6 +503,16 @@ export default function SongPage() {
                     <Play className="h-6 w-6 text-white/50 ml-0.5" />
                   </button>
                   <p className="text-xs text-white/40 mt-3">Loading audio…</p>
+                  {audioSlow && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-4 bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white"
+                      onClick={() => setTab('vocab')}
+                    >
+                      <BookOpen className="h-3.5 w-3.5 mr-1.5" /> Preview the vocabulary
+                    </Button>
+                  )}
                   <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10">
                     <div className="h-full bg-primary transition-all duration-100 ease-out" style={{ width: `${tier1Progress}%` }} />
                   </div>
