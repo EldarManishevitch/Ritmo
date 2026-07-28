@@ -7,10 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import { useSubscription } from '@/hooks/useSubscription';
 import { isSongReady } from '@/lib/genres';
+import { CEFR_LEVELS } from '@/lib/cefr';
 import SEOHead from '@/components/SEOHead';
 
 const GENRES = ['All', 'Reggaeton', 'Latin Pop', 'Bachata', 'Salsa', 'Trap'];
-const LEVELS = ['All', 'A1', 'A2', 'B1', 'B2', 'C1'];
+const LEVELS = ['All', ...CEFR_LEVELS];
 
 // Song.genre stores lowercase values that don't all match the display labels
 // above 1:1 (e.g. 'Trap' vs 'trap latino').
