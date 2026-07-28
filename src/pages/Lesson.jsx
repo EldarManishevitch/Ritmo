@@ -28,6 +28,20 @@ export default function Lesson() {
   const loading = lessonLoading || progressLoading;
   const queryClient = useQueryClient();
 
+  // Spec 3.3: the first-session tutorial (tap → save → grammar → quiz → Roleplay
+  // prompt) only exists on the full song page (useFirstSongTutorial in SongPage.jsx).
+  // If a brand-new user's first click is "Daily" instead of a song, sending them
+  // into this page's compact Listen/Quiz/Flash flow would skip that tutorial
+  // entirely. Redirect them to the same song via the full page instead, so the one
+  // tutorial implementation stays authoritative rather than duplicating it here.
+  useEffect(() => {
+    if (loading || !initialLesson || initialLesson.completed) return;
+    const isFirstTimer = (progress?.songs_completed || 0) === 0 && !localStorage.getItem('sb_first_song_tutorial_done');
+    if (isFirstTimer && initialLesson.song_id) {
+      navigate(`/song/${initialLesson.song_id}`, { replace: true });
+    }
+  }, [loading, initialLesson, progress, navigate]);
+
   useEffect(() => {
     if (!initialLesson) return;
     setLesson(initialLesson);
