@@ -9,8 +9,10 @@ import { ChevronDown, ChevronUp, BookOpen, AlertTriangle, Target } from 'lucide-
  */
 export default function LevelSyllabus({ track }) {
   const [open, setOpen] = useState(false);
-  const hasContent = track.grammar_syllabus?.length || track.l1_interference?.length || track.exit_criteria;
+  const hasContent = track.grammar_syllabus?.length || track.l1_interference?.length || track.exit_criteria || track.exit_exam;
   if (!hasContent) return null;
+
+  const exam = track.exit_exam || {};
 
   const skills = track.supporting_skills || {};
 
@@ -62,6 +64,17 @@ export default function LevelSyllabus({ track }) {
                 <Target className="h-3.5 w-3.5" /> Exit criteria
               </p>
               <p className="text-muted-foreground">{track.exit_criteria}</p>
+            </div>
+          )}
+          {(exam.listening || exam.reading || exam.speaking || exam.writing) && (
+            <div>
+              <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-1.5">Week 8 transfer mini-exam</p>
+              <ul className="space-y-1 text-muted-foreground">
+                {exam.listening && <li><span className="font-medium text-foreground">Listening:</span> {exam.listening}</li>}
+                {exam.reading && <li><span className="font-medium text-foreground">Reading:</span> {exam.reading}</li>}
+                {exam.speaking && <li><span className="font-medium text-foreground">Speaking:</span> {exam.speaking}</li>}
+                {exam.writing && <li><span className="font-medium text-foreground">Writing:</span> {exam.writing}</li>}
+              </ul>
             </div>
           )}
         </div>
