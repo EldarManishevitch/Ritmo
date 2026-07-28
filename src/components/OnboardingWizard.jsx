@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Music, Check, ChevronRight, X } from 'lucide-react';
 import { useUpdateUserProgress } from '@/data/hooks/useUserProgress';
 import { Button } from '@/components/ui/button';
 import { getProgress } from '@/lib/progress';
+import { songsRepo } from '@/data/repositories/songs.repo';
+import { isSongReady } from '@/lib/genres';
 
 const GENRES = [
   { id: 'bachata', label: 'Bachata', emoji: '💃' },
@@ -18,6 +21,7 @@ const GOALS = [
 ];
 
 export default function OnboardingWizard() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [selectedGenres, setSelectedGenres] = useState([]);
@@ -39,6 +43,25 @@ export default function OnboardingWizard() {
     );
   };
 
+  // Spec 3.3 Step 0: picking a genre "gives you enough to pick a starter song" —
+  // immediately route into it (Step 1: "Play immediately") rather than leaving the
+  // user on whatever page they were on, so the in-song tutorial reliably follows.
+  const findStarterSong = async () => {
+    for (const genre of selectedGenres) {
+      try {
+        const matches = await songsRepo.filter({ genre, cefr_level: 'A1', is_catalog_default: true }, 'title', 20);
+        const ready = (matches || []).filter(isSongReady);
+        if (ready.length) return ready[Math.floor(Math.random() * ready.length)];
+      } catch { /* try next genre */ }
+    }
+    try {
+      const fallback = await songsRepo.filter({ cefr_level: 'A1', is_catalog_default: true }, 'title', 20);
+      const ready = (fallback || []).filter(isSongReady);
+      if (ready.length) return ready[Math.floor(Math.random() * ready.length)];
+    } catch { /* noop */ }
+    return null;
+  };
+
   const handleFinish = async () => {
     setSaving(true);
     try {
@@ -49,6 +72,8 @@ export default function OnboardingWizard() {
         learning_goal: selectedGoal,
       } });
       setOpen(false);
+      const starter = await findStarterSong();
+      if (starter) navigate(`/song/${starter.id}`);
     } catch { /* noop */ }
     setSaving(false);
   };
