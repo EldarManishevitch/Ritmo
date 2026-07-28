@@ -11,7 +11,6 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import PageTransition from '@/components/PageTransition';
 import AppShell from '@/components/layout/AppShell';
 import RootGate from '@/components/RootGate';
-import OnboardingWizard from '@/components/OnboardingWizard';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
