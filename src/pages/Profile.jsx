@@ -13,10 +13,26 @@ export default function Profile() {
   const masteredCount = words.filter((w) => w.mastered).length;
   const songCount = songs.length;
 
-  const level = masteredCount >= 100 ? 'B2' : masteredCount >= 50 ? 'B1' : masteredCount >= 20 ? 'A2' : 'A1';
-  const levelProgress = masteredCount >= 100 ? 100 : masteredCount >= 50 ? ((masteredCount - 50) / 50) * 100 : masteredCount >= 20 ? ((masteredCount - 20) / 30) * 100 : (masteredCount / 20) * 100;
-  const nextLevel = level === 'A1' ? 'A2' : level === 'A2' ? 'B1' : level === 'B1' ? 'B2' : 'C1';
-  const wordsToNext = level === 'A1' ? 20 - masteredCount : level === 'A2' ? 50 - masteredCount : level === 'B1' ? 100 - masteredCount : 0;
+  // Mastered-word thresholds for this display's own level ladder (independent of
+  // the curriculum track's CEFR level). One ordered table instead of a ternary
+  // chain per field, so adding/adjusting a level only means editing this array.
+  const MASTERY_THRESHOLDS = [
+    { level: 'A1', from: 0, to: 20 },
+    { level: 'A2', from: 20, to: 50 },
+    { level: 'B1', from: 50, to: 100 },
+    { level: 'B2', from: 100, to: 200 },
+    { level: 'C1', from: 200, to: 350 },
+    { level: 'C2', from: 350, to: 350 },
+  ];
+  const tierIndex = MASTERY_THRESHOLDS.findIndex((t) => masteredCount < t.to) is not -1
+    ? MASTERY_THRESHOLDS.findIndex((t) => masteredCount < t.to)
+    : MASTERY_THRESHOLDS.length - 1;
+  const tier = MASTERY_THRESHOLDS[tierIndex];
+  const level = tier.level;
+  const levelProgress = tier.to > tier.from ? Math.min(100, ((masteredCount - tier.from) / (tier.to - tier.from)) * 100) : 100;
+  const nextTier = MASTERY_THRESHOLDS[tierIndex + 1];
+  const nextLevel = nextTier ? nextTier.level : level;
+  const wordsToNext = nextTier ? Math.max(0, tier.to - masteredCount) : 0;
 
   const stats = [
     { icon: BookOpen, label: 'Words Saved', value: wordCount, color: 'bg-blue-50 text-blue-600' },
