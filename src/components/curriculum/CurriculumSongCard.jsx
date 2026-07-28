@@ -18,6 +18,14 @@ export default function CurriculumSongCard({ song }) {
         <span className="absolute top-1.5 right-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/90 text-foreground">
           {song.cefr_level || 'A1'}
         </span>
+        {song.grammar_anchor_note && (
+          <span
+            title={song.grammar_anchor_note}
+            className="absolute top-1.5 left-1.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-primary text-white"
+          >
+            Anchor
+          </span>
+        )}
         {!isReady && (
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
             <span className="text-[10px] font-medium text-white flex items-center gap-1">
@@ -34,6 +42,11 @@ export default function CurriculumSongCard({ song }) {
           {song.title}
         </p>
         <p className="text-muted-foreground truncate" style={{ fontSize: '11px' }}>{song.artist}</p>
+        {song.grammar_anchor_note && (
+          <p className="text-muted-foreground" style={{ fontSize: '10px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            {song.grammar_anchor_note}
+          </p>
+        )}
         {song.genre && (
           <span className={`inline-block mt-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full text-white ${gc.solid}`}>
             {genreLabel(song.genre)}
