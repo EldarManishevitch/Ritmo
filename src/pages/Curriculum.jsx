@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, ArrowRight, GraduationCap, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, ArrowRight, GraduationCap } from 'lucide-react';
 import { songsRepo } from '@/data/repositories/songs.repo';
 import { getProgress, levelForXp } from '@/lib/progress';
 import {
@@ -8,6 +8,8 @@ import {
   levelMeta, LEVEL_ORDER, getNextSongInTrack,
 } from '@/lib/curriculum';
 import LevelCard from '@/components/curriculum/LevelCard';
+import CollapsibleSection from '@/components/curriculum/CollapsibleSection';
+import ProgramPrinciples from '@/components/curriculum/ProgramPrinciples';
 import { isSongReady } from '@/lib/genres';
 import SEOHead from '@/components/SEOHead';
 
@@ -27,48 +29,36 @@ const WEEKLY_RHYTHM = [
 ];
 
 function CurriculumMethodology() {
-  const [open, setOpen] = useState(false);
   return (
-    <div className="rounded-2xl bg-card border border-border p-5 mb-6">
-      <button type="button" onClick={() => setOpen((o) => !o)} className="flex items-center justify-between w-full text-left">
-        <div>
-          <h2 className="font-bold text-foreground">How this curriculum works</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">The 5-step song routine, and how to split your study time</p>
-        </div>
-        {open ? <ChevronUp className="h-4 w-4 text-muted-foreground flex-shrink-0" /> : <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
-      </button>
-      {open && (
-        <div className="mt-4 space-y-4">
-          <div>
-            <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">The 5-step song routine (per anchor song)</p>
-            <ol className="space-y-1.5 text-sm">
-              {SONG_ROUTINE.map((s, i) => (
-                <li key={s.step} className="flex gap-2">
-                  <span className="font-semibold text-primary flex-shrink-0">{i + 1}.</span>
-                  <span><span className="font-medium text-foreground">{s.step}</span> <span className="text-muted-foreground">— {s.desc}</span></span>
-                </li>
-              ))}
-            </ol>
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">Weekly rhythm (≈ 6–8 hrs/week for steady progress)</p>
-            <div className="space-y-2">
-              {WEEKLY_RHYTHM.map((r) => (
-                <div key={r.label}>
-                  <div className="flex items-center justify-between text-xs mb-0.5">
-                    <span className="text-muted-foreground">{r.label}</span>
-                    <span className="font-semibold text-foreground">{r.pct}%</span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full rounded-full bg-primary" style={{ width: `${r.pct}%` }} />
-                  </div>
-                </div>
-              ))}
+    <CollapsibleSection title="How this curriculum works" subtitle="The 5-step song routine, and how to split your study time">
+      <div>
+        <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">The 5-step song routine (per anchor song)</p>
+        <ol className="space-y-1.5 text-sm">
+          {SONG_ROUTINE.map((s, i) => (
+            <li key={s.step} className="flex gap-2">
+              <span className="font-semibold text-primary flex-shrink-0">{i + 1}.</span>
+              <span><span className="font-medium text-foreground">{s.step}</span> <span className="text-muted-foreground">— {s.desc}</span></span>
+            </li>
+          ))}
+        </ol>
+      </div>
+      <div>
+        <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">Weekly rhythm (≈ 6–8 hrs/week for steady progress)</p>
+        <div className="space-y-2">
+          {WEEKLY_RHYTHM.map((r) => (
+            <div key={r.label}>
+              <div className="flex items-center justify-between text-xs mb-0.5">
+                <span className="text-muted-foreground">{r.label}</span>
+                <span className="font-semibold text-foreground">{r.pct}%</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                <div className="h-full rounded-full bg-primary" style={{ width: `${r.pct}%` }} />
+              </div>
             </div>
-          </div>
+          ))}
         </div>
-      )}
-    </div>
+      </div>
+    </CollapsibleSection>
   );
 }
 
@@ -153,6 +143,7 @@ export default function Curriculum() {
       </div>
 
       <CurriculumMethodology />
+      <ProgramPrinciples />
 
       {/* Current level banner */}
       <div className="rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-white p-5 mb-6">
