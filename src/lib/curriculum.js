@@ -5,14 +5,15 @@ import { songsRepo } from '@/data/repositories/songs.repo';
 import { isSongReady } from '@/lib/genres';
 
 const LEVEL_META = {
-  A1: { name: 'Novice', desc: 'Basic vocabulary, present tense, everyday phrases and greetings.' },
-  A2: { name: 'Amigo', desc: 'Common expressions, past tense, simple conversations about familiar topics.' },
-  B1: { name: 'Duro', desc: 'Intermediate fluency, opinions and plans, navigating everyday situations.' },
-  B2: { name: 'Experto', desc: 'Advanced fluency, complex grammar, expressing nuanced ideas and emotions.' },
-  C1: { name: 'Maestro', desc: 'Near-native mastery, idiomatic expressions, abstract and literary language.' },
+  A1: { name: 'Novice', desc: 'Introduce yourself, say what you like/want, describe origin and profession, talk about near-future plans.' },
+  A2: { name: 'Amigo', desc: 'Describe past events, distinguish states from identity (ser vs. estar), compare things, handle everyday transactions.' },
+  B1: { name: 'Duro', desc: 'Express wishes and doubt with the subjunctive, narrate with both past tenses, use conditionals, handle most travel situations.' },
+  B2: { name: 'Experto', desc: 'Argue a position, understand metaphor and social commentary, use the subjunctive across purpose/time/concession, handle hypotheticals.' },
+  C1: { name: 'Maestro', desc: 'Understand slang and dialect, use the full mood/tense system for effect, read literary texts, shift register fluidly.' },
+  C2: { name: 'Leyenda', desc: 'Grasp idiom, wordplay, and cultural allusion; understand philosophical and literary register; produce nuanced, stylistically controlled language.' },
 };
 
-export const LEVEL_ORDER = ['A1', 'A2', 'B1', 'B2', 'C1'];
+export const LEVEL_ORDER = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 export const levelMeta = (cefr) => LEVEL_META[cefr] || LEVEL_META.A1;
 
 /** Load all 5 curriculum tracks. */
