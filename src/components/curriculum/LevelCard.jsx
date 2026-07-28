@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { levelMeta } from '@/lib/curriculum';
 import CurriculumSongCard from '@/components/curriculum/CurriculumSongCard';
 import LevelSyllabus from '@/components/curriculum/LevelSyllabus';
+import WeeklyPlan from '@/components/curriculum/WeeklyPlan';
+import GrammarPracticeSet from '@/components/curriculum/GrammarPracticeSet';
 
 const TOTAL_SLOTS = 12;
 
@@ -64,6 +66,8 @@ export default function LevelCard({ track, levelProgress, songs = [], isLocked, 
       </div>
 
       <LevelSyllabus track={track} />
+      <WeeklyPlan track={track} />
+      <GrammarPracticeSet cefrLevel={track.cefr_level} />
     </div>
   );
 }
