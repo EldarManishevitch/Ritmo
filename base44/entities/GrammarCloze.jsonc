@@ -1,0 +1,76 @@
+{
+  "name": "GrammarCloze",
+  "type": "object",
+  "properties": {
+    "cefr_level": {
+      "type": "string",
+      "enum": [
+        "A1",
+        "A2",
+        "B1",
+        "B2",
+        "C1",
+        "C2"
+      ],
+      "description": "CEFR level this cloze set belongs to"
+    },
+    "title": {
+      "type": "string",
+      "description": "Name of the grammar structure drilled, e.g. 'the gustar construction'"
+    },
+    "instructions": {
+      "type": "string",
+      "description": "Short instruction line, e.g. 'Fill the blank with gusta or gustan'"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0,
+      "description": "Order within the level, matching the doc's week order"
+    },
+    "sentences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "Sentence with a blank, e.g. 'A m\u00ed me ____ el caf\u00e9.'"
+          },
+          "answer": {
+            "type": "string",
+            "description": "Correct answer for the blank"
+          },
+          "note": {
+            "type": "string",
+            "description": "Optional short parenthetical explaining the answer"
+          }
+        }
+      },
+      "default": [],
+      "description": "Original (non-copyrighted) drill sentences with answer keys"
+    }
+  },
+  "required": [
+    "cefr_level",
+    "title",
+    "sentences"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": null,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
