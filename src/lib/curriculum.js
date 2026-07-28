@@ -16,7 +16,7 @@ const LEVEL_META = {
 export const LEVEL_ORDER = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 export const levelMeta = (cefr) => LEVEL_META[cefr] || LEVEL_META.A1;
 
-/** Load all 5 curriculum tracks. */
+/** Load all curriculum tracks (one per CEFR level). */
 export async function getCurriculumTracks() {
   const tracks = await curriculumTracksRepo.list('-cefr_level', 10);
   return tracks.sort((a, b) => LEVEL_ORDER.indexOf(a.cefr_level) - LEVEL_ORDER.indexOf(b.cefr_level));
