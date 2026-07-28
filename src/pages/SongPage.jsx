@@ -114,8 +114,15 @@ export default function SongPage() {
       })
       .catch(() => { setPendingSong(false); });
 
+    // Instant reopen: paint cached lines immediately (may be stale), then
+    // refresh from the network below and re-cache whatever comes back.
+    getCachedLines(id).then((cached) => { if (cached) setLines(cached); });
+
     base44.entities.LyricLine.filter({ song_id: id }, 'line_index', 500)
-      .then((loadedLines) => setLines(loadedLines || []))
+      .then((loadedLines) => {
+        setLines(loadedLines || []);
+        setCachedLines(id, loadedLines);
+      })
       .catch(() => {});
 
     // If no lines exist after load, trigger pipeline (covers edge cases)
