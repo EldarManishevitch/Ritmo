@@ -3,6 +3,7 @@ import { Lock, Plus, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { levelMeta } from '@/lib/curriculum';
 import CurriculumSongCard from '@/components/curriculum/CurriculumSongCard';
+import LevelSyllabus from '@/components/curriculum/LevelSyllabus';
 
 const TOTAL_SLOTS = 12;
 
@@ -61,6 +62,8 @@ export default function LevelCard({ track, levelProgress, songs = [], isLocked, 
           </Link>
         ))}
       </div>
+
+      <LevelSyllabus track={track} />
     </div>
   );
 }
