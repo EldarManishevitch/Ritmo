@@ -59,11 +59,11 @@ Deno.serve(async (req) => {
       return Response.json({ sent: 1, test: true, email });
     }
 
-    // Scheduled mode — invoked by the native weekly automation (function.jsonc), no
-    // authenticated user is present, same pattern as sendDailyReminders.
-    let schedUser = null;
-    try { schedUser = await base44.auth.me(); } catch { /* scheduled / no user */ }
-    if (schedUser && schedUser.role !== 'admin') {
+    // Scheduled mode — invoked by the native weekly automation (function.jsonc).
+    // Still require admin auth on all HTTP invocations to prevent unauthenticated
+    // triggering of mass email dispatch (matches sendDailyReminders enforcement).
+    const schedUser = await base44.auth.me();
+    if (!schedUser || schedUser.role !== 'admin') {
       return Response.json({ error: 'Forbidden — admin only' }, { status: 403 });
     }
 
