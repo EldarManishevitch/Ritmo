@@ -43,6 +43,7 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import Pricing from './pages/Pricing';
 import Catalog from './pages/Catalog';
+import AdminCurriculumHealth from './pages/AdminCurriculumHealth';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -104,6 +105,7 @@ const AuthenticatedApp = () => {
 
       {/* Authenticated app */}
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+        <Route path="/admin/curriculum-health" element={<AdminCurriculumHealth />} />
         <Route element={<AppShell />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/lesson" element={<PageTransition><Lesson /></PageTransition>} />

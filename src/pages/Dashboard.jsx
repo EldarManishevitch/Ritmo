@@ -17,6 +17,7 @@ import MilestoneCelebration from '@/components/achievements/MilestoneCelebration
 import { songCefrLevel } from '@/lib/cefr';
 import { LEVEL_ORDER } from '@/lib/curriculum';
 import CurriculumProgressWidget from '@/components/curriculum/CurriculumProgressWidget';
+import CurriculumHealthBanner from '@/components/dashboard/CurriculumHealthBanner';
 import { isSongReady } from '@/lib/genres';
 import GenreStatsWidget from '@/components/dashboard/GenreStatsWidget';
 import WordsTappedWidget from '@/components/dashboard/WordsTappedWidget';
@@ -104,6 +105,7 @@ export default function Dashboard() {
         description="Learn Spanish through real music — Bad Bunny, Aventura, Shakira, and more. Tap any word for an instant translation. Karaoke lyrics synced to YouTube. AI voice coach. Start free."
       />
       <MilestoneCelebration />
+      <CurriculumHealthBanner tracks={tracks} songs={allSongs} />
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl sm:text-4xl font-bold text-foreground">

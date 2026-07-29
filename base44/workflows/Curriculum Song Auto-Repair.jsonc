@@ -1,0 +1,39 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "curriculum_auto_repair",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "repair_songs": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "ensureCurriculumSongsReady",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Check and trigger pending songs",
+            "description": "Ensures all curriculum songs have lyrics"
+          }
+        }
+      }
+    ]
+  },
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create",
+        "update"
+      ],
+      "entity_name": "CurriculumTrack"
+    }
+  },
+  "description": "When a CurriculumTrack is created or updated, checks all referenced songs and triggers lyrics generation for any that are still pending or failed \u2014 prevents regressions without waiting for an admin to notice.",
+  "name": "Curriculum Song Auto-Repair"
+}
