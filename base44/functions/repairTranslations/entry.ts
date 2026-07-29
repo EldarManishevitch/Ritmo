@@ -57,52 +57,73 @@ ${textList}`,
 }
 
 async function translateAndVerifyBatch(sb, lines) {
-  const translations = await translateLines(sb, lines);
+  // Up to 3 attempts per batch with exponential backoff — catches API errors,
+  // malformed/truncated JSON, and partial responses (fewer results than requested).
+  let lastError = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const translations = await translateLines(sb, lines);
 
-  const updates = [];
-  for (const t of translations) {
-    const line = lines.find((l) => l.line_index === t.line_index);
-    if (line && t.english_translation) {
-      updates.push({
-        id: line.id,
-        english_translation: t.english_translation,
-        pronunciation: t.pronunciation || line.pronunciation || '',
-      });
-    }
-  }
-  if (updates.length > 0) {
-    await sb.entities.LyricLine.bulkUpdate(updates);
-  }
+      // Validate we got a complete response — truncated/partial responses
+      // are the most common silent failure mode for large batches.
+      if (!translations || translations.length !== lines.length) {
+        throw new Error(`Expected ${lines.length} translations, got ${translations?.length || 0}`);
+      }
 
-  // Verify writes persisted — re-query the updated records by id
-  const updatedIds = updates.map((u) => u.id);
-  let verified = updatedIds.length > 0
-    ? await sb.entities.LyricLine.filter({ id: { $in: updatedIds } }, 'line_index', 500)
-    : [];
-  let stillEmpty = verified.filter((l) => !l.english_translation || l.english_translation.trim() === '');
-
-  // Retry individual lines up to 2 times
-  for (let attempt = 1; attempt <= 2 && stillEmpty.length > 0; attempt++) {
-    console.log(`Repair verify: ${stillEmpty.length} lines still empty, retrying individually (attempt ${attempt}/2)`);
-    for (const line of stillEmpty) {
-      try {
-        const singleResult = await translateLines(sb, [line]);
-        const t = singleResult[0];
-        if (t && t.english_translation) {
-          await sb.entities.LyricLine.update(line.id, {
+      const updates = [];
+      for (const t of translations) {
+        const line = lines.find((l) => l.line_index === t.line_index);
+        if (line && t.english_translation) {
+          updates.push({
+            id: line.id,
             english_translation: t.english_translation,
             pronunciation: t.pronunciation || line.pronunciation || '',
           });
         }
-      } catch (e) {
-        console.log(`Individual retry failed for line ${line.id}: ${e.message}`);
+      }
+      if (updates.length > 0) {
+        await sb.entities.LyricLine.bulkUpdate(updates);
+      }
+      return { translated: updates.length };
+    } catch (err) {
+      lastError = err;
+      console.log(`Batch attempt ${attempt}/3 failed (${lines.length} lines): ${err.message}`);
+      if (attempt < 3) await new Promise((r) => setTimeout(r, 1000 * attempt));
+    }
+  }
+  console.error(`Batch failed after 3 attempts (lines ${lines.map((l) => l.line_index).join(',')}): ${lastError?.message}`);
+  return { translated: 0 };
+}
+
+async function retryIndividualLines(sb, songId) {
+  // After all batches, re-query the whole song and individually retry any
+  // still-missing lines one at a time — a single-line call is far less likely
+  // to fail than a 10-line batch, and isolates exactly which line is the problem.
+  const allLines = await sb.entities.LyricLine.filter({ song_id: songId }, 'line_index', 500);
+  const stillMissing = allLines.filter((l) => !l.english_translation || l.english_translation.trim() === '');
+
+  for (const line of stillMissing) {
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const translations = await translateLines(sb, [line]);
+        const t = translations[0];
+        if (!t || !t.english_translation) {
+          throw new Error('Empty translation returned');
+        }
+        await sb.entities.LyricLine.update(line.id, {
+          english_translation: t.english_translation,
+          pronunciation: t.pronunciation || line.pronunciation || '',
+        });
+        break; // success — move to next line
+      } catch (err) {
+        if (attempt === 3) {
+          console.error(`Line ${line.id} (song ${songId}, index ${line.line_index}) failed all individual retries: ${err.message}`);
+        } else {
+          await new Promise((r) => setTimeout(r, 1000 * attempt));
+        }
       }
     }
-    verified = await sb.entities.LyricLine.filter({ id: { $in: stillEmpty.map((l) => l.id) } }, 'line_index', 500);
-    stillEmpty = verified.filter((l) => !l.english_translation || l.english_translation.trim() === '');
   }
-
-  return { translated: updates.length, stillMissing: stillEmpty.length };
 }
 
 export default async function(req) {
@@ -150,7 +171,13 @@ export default async function(req) {
       }
     }
 
-    // Check if all lines are now translated and handle sync_status
+    // After all batches, individually retry any still-missing lines one at a time.
+    // This catches lines that failed in-batch (API error, truncated response, etc.)
+    // and is also the primary recovery path when the admin page calls us with
+    // a specific lineIds batch that silently produced zero updates.
+    await retryIndividualLines(sb, songId);
+
+    // Final verification — re-query ALL lines for the song and count accurately
     const allLines = await sb.entities.LyricLine.filter({ song_id: songId }, 'line_index', 500);
     const totalStillMissing = allLines.filter((l) => !l.english_translation || l.english_translation.trim() === '').length;
 
