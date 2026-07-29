@@ -135,6 +135,81 @@ async function raceForLyrics(client, title, artist) {
   }
 }
 
+const VERIFY_SCHEMA = {
+  type: 'object',
+  properties: {
+    lines: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          line_index: { type: 'number' },
+          english_translation: { type: 'string' },
+          pronunciation: { type: 'string' },
+        },
+        required: ['line_index', 'english_translation', 'pronunciation'],
+      },
+    },
+  },
+  required: ['lines'],
+};
+
+/**
+ * FIX 3: After the translate + sync stages complete, verify every LyricLine
+ * has a non-empty english_translation. If any are missing, retry translation
+ * for just those lines (up to 3 attempts). If still missing, mark the song
+ * 'failed' — never leave it in a 'ready' state with empty translations.
+ */
+async function verifyAndRetryTranslations(sb, songId) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const lines = await sb.entities.LyricLine.filter({ song_id: songId }, 'line_index', 500);
+    const missing = lines.filter((l) => !l.english_translation || l.english_translation.trim() === '');
+    if (missing.length === 0) return;
+
+    console.log(`Translation verification attempt ${attempt}/3: ${missing.length} lines still missing`);
+    const textList = missing.map((l) => `${l.line_index}. "${l.spanish_text}"`).join('\n');
+    try {
+      const result = await sb.integrations.Core.InvokeLLM({
+        prompt: `You are a Spanish-to-English lyric translator. Translate each line below accurately and naturally. The number is the line_index — include it in your output.
+
+For each line provide:
+- line_index: the input number
+- english_translation: a natural, accurate English translation
+- pronunciation: phonetic guide in English letters, hyphenated by syllable, CAPS on the stressed syllable
+
+Lines:
+${textList}`,
+        response_json_schema: VERIFY_SCHEMA,
+        model: 'claude_sonnet_4_6',
+      });
+      const parsed = result?.response ?? result;
+      const translations = parsed?.lines || [];
+      const updates = [];
+      for (const t of translations) {
+        const line = missing.find((l) => l.line_index === t.line_index);
+        if (line && t.english_translation) {
+          updates.push({
+            id: line.id,
+            english_translation: t.english_translation,
+            pronunciation: t.pronunciation || line.pronunciation || '',
+          });
+        }
+      }
+      if (updates.length > 0) await sb.entities.LyricLine.bulkUpdate(updates);
+    } catch (e) {
+      console.log(`Translation retry attempt ${attempt} failed: ${e.message}`);
+    }
+  }
+
+  // Final check — if still missing after 3 attempts, mark as failed
+  const lines = await sb.entities.LyricLine.filter({ song_id: songId }, 'line_index', 500);
+  const stillMissing = lines.filter((l) => !l.english_translation || l.english_translation.trim() === '');
+  if (stillMissing.length > 0) {
+    console.log(`Translation failed after 3 attempts: ${stillMissing.length} lines still missing — marking song as failed`);
+    await sb.entities.Song.update(songId, { sync_status: 'failed' });
+  }
+}
+
 async function runPipeline(sb, base44, songId, title, artist) {
   console.log('Worker Stage 1: racing 6 providers for', title, 'by', artist);
 
@@ -173,6 +248,9 @@ async function runPipeline(sb, base44, songId, title, artist) {
     base44.functions.invoke('translateLyrics', { songId }).catch((e) => console.log('Stage 2 failed:', e?.message)),
     base44.functions.invoke('syncLyricsAdvanced', { songId }).catch((e) => console.log('Stage 3 failed:', e?.message)),
   ]);
+
+  // FIX 3: Verify all lines have translations before the song is considered ready.
+  await verifyAndRetryTranslations(sb, songId);
 
   return { success: true, line_count: rawLines.length };
 }

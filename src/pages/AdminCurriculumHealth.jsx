@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, RefreshCw, Loader2, CheckCircle2, XCircle, AlertTriangle, Wrench } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -33,6 +33,8 @@ export default function AdminCurriculumHealth() {
   const [progress, setProgress] = useState({ current: 0, total: 0, song: null });
   const [log, setLog] = useState([]);
   const [manualReview, setManualReview] = useState([]);
+  const [translationProgress, setTranslationProgress] = useState(null);
+  const linesBySongRef = useRef({});
 
   // Run the full check (Step 1)
   const runCheck = useCallback(async () => {
@@ -77,6 +79,22 @@ export default function AdminCurriculumHealth() {
   }, []);
 
   useEffect(() => { runCheck(); }, [runCheck]);
+  useEffect(() => { linesBySongRef.current = linesBySong; }, [linesBySong]);
+
+  // Re-check a single song and update its row live (Step 2)
+  const recheckSong = useCallback(async (songId) => {
+    try {
+      const [song, lines] = await Promise.all([
+        base44.entities.Song.get(songId),
+        base44.entities.LyricLine.filter({ song_id: songId }, 'line_index', 500),
+      ]);
+      setSongsById((prev) => ({ ...prev, [songId]: song }));
+      setLinesBySong((prev) => ({ ...prev, [songId]: lines || [] }));
+      return lines || [];
+    } catch {
+      return [];
+    }
+  }, []);
 
   const requiredSongIds = useMemo(() => {
     const ids = new Set();
@@ -162,14 +180,31 @@ export default function AdminCurriculumHealth() {
     }
 
     if (needsTranslationRepair) {
-      try {
-        const res = await base44.functions.invoke('repairTranslations', { songId: song.id });
-        const repaired = res.data?.repaired || 0;
-        if (repaired > 0) return { status: 'success', message: `Repaired ${repaired} translations` };
-        return { status: 'failed', message: 'No translations repaired' };
-      } catch (err) {
-        return { status: 'failed', message: err.message };
+      const songLines = linesBySongRef.current[song.id] || [];
+      const incomplete = songLines.filter((l) => !l.english_translation || l.english_translation.trim() === '');
+      const total = incomplete.length;
+      const batchSize = 10;
+
+      for (let i = 0; i < incomplete.length; i += batchSize) {
+        const batch = incomplete.slice(i, i + batchSize);
+        setTranslationProgress({ songId: song.id, done: i, total, title: song.title });
+        try {
+          await base44.functions.invoke('repairTranslations', {
+            songId: song.id,
+            lineIds: batch.map((l) => l.id),
+          });
+        } catch { /* continue to next batch */ }
       }
+      setTranslationProgress({ songId: song.id, done: total, total, title: song.title });
+
+      // Fetch fresh lines to verify the result
+      const freshLines = await base44.entities.LyricLine.filter({ song_id: song.id }, 'line_index', 500);
+      const stillMissing = freshLines.filter((l) => !l.english_translation || l.english_translation.trim() === '').length;
+
+      if (stillMissing > 0) {
+        return { status: 'failed', message: `Retry failed — ${stillMissing} lines still missing` };
+      }
+      return { status: 'success', message: `Translated ${total} lines` };
     }
 
     return { status: 'skipped', message: 'No repair needed' };
@@ -181,6 +216,7 @@ export default function AdminCurriculumHealth() {
     setFixing(true);
     setLog([]);
     setManualReview([]);
+    setTranslationProgress(null);
     const toFix = [...failingSongs];
     setProgress({ current: 0, total: toFix.length, song: null });
 
@@ -192,12 +228,34 @@ export default function AdminCurriculumHealth() {
       if (result.status === 'permanent_failure') {
         setManualReview((prev) => [...prev, song]);
       }
+      // Live row update: re-check just this song after each repair
+      if (result.status !== 'skipped') {
+        await recheckSong(song.id);
+      }
     }
 
     setProgress({ current: 0, total: 0, song: null });
+    setTranslationProgress(null);
     setFixing(false);
     await runCheck();
-  }, [fixing, failingSongs, repairSong, runCheck]);
+  }, [fixing, failingSongs, repairSong, recheckSong, runCheck]);
+
+  // Per-row translate for a single song (Step 2)
+  const handleTranslateOne = useCallback(async (song) => {
+    if (fixing) return;
+    setFixing(true);
+    setLog([]);
+    setManualReview([]);
+    setTranslationProgress(null);
+    setProgress({ current: 1, total: 1, song });
+    const result = await repairSong(song);
+    setLog([{ id: song.id, title: song.title, artist: song.artist, ...result }]);
+    if (result.status === 'permanent_failure') setManualReview([song]);
+    if (result.status !== 'skipped') await recheckSong(song.id);
+    setProgress({ current: 0, total: 0, song: null });
+    setTranslationProgress(null);
+    setFixing(false);
+  }, [fixing, repairSong, recheckSong]);
 
   if (!user || user.role !== 'admin') {
     return (
@@ -221,7 +279,7 @@ export default function AdminCurriculumHealth() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={runCheck} disabled={loading || fixing}>
-            <RefreshCw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} /> Recheck
+            <RefreshCw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} /> Verify all
           </Button>
           <Button size="sm" onClick={handleFixAll} disabled={fixing || failingSongs.length === 0}>
             <Wrench className="h-4 w-4 mr-1" /> Fix all ({failingSongs.length})
@@ -235,11 +293,17 @@ export default function AdminCurriculumHealth() {
             <div className="flex items-center gap-2 mb-2">
               <Loader2 className="h-4 w-4 animate-spin text-primary" />
               <p className="text-sm font-medium">
-                Fixing {progress.current} of {progress.total} — {progress.song.title} by {progress.song.artist}...
+                {translationProgress
+                  ? `Translating ${translationProgress.title} (${translationProgress.done}/${translationProgress.total} lines)...`
+                  : `Fixing ${progress.current} of ${progress.total} — ${progress.song.title} by ${progress.song.artist}...`}
               </p>
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
-              <div className="h-full bg-primary transition-all duration-300" style={{ width: `${(progress.current / Math.max(progress.total, 1)) * 100}%` }} />
+              <div className="h-full bg-primary transition-all duration-300" style={{
+                width: translationProgress
+                  ? `${(translationProgress.done / Math.max(translationProgress.total, 1)) * 100}%`
+                  : `${(progress.current / Math.max(progress.total, 1)) * 100}%`
+              }} />
             </div>
           </div>
         )}
@@ -320,6 +384,7 @@ export default function AdminCurriculumHealth() {
                               <th className="text-left px-3 py-2 font-medium">Status</th>
                               <th className="text-right px-3 py-2 font-medium">Lines</th>
                               <th className="text-right px-3 py-2 font-medium">Missing</th>
+                              {key === 'missing_translations' && <th className="px-3 py-2 font-medium">Action</th>}
                             </tr>
                           </thead>
                           <tbody>
@@ -331,6 +396,13 @@ export default function AdminCurriculumHealth() {
                                 <td className="px-3 py-2"><span className="text-xs font-mono">{s.sync_status}</span></td>
                                 <td className="px-3 py-2 text-right">{s.lineCount}</td>
                                 <td className="px-3 py-2 text-right">{s.missingTranslations}</td>
+                                {key === 'missing_translations' && (
+                                  <td className="px-3 py-2">
+                                    <Button size="sm" variant="outline" onClick={() => handleTranslateOne(s)} disabled={fixing}>
+                                      Translate
+                                    </Button>
+                                  </td>
+                                )}
                               </tr>
                             ))}
                           </tbody>
