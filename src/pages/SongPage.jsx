@@ -124,12 +124,15 @@ export default function SongPage() {
 
     // Instant reopen: paint cached lines immediately (may be stale), then
     // refresh from the network below and re-cache whatever comes back.
-    getCachedLines(id).then((cached) => { if (cached) setLines(cached); });
+    getCachedLines(id).then((cached) => {
+      if (cached) setLines([...cached].sort((a, b) => (a.line_index ?? 0) - (b.line_index ?? 0)));
+    });
 
     base44.entities.LyricLine.filter({ song_id: id }, 'line_index', 500)
       .then((loadedLines) => {
-        setLines(loadedLines || []);
-        setCachedLines(id, loadedLines);
+        const sorted = [...(loadedLines || [])].sort((a, b) => (a.line_index ?? 0) - (b.line_index ?? 0));
+        setLines(sorted);
+        setCachedLines(id, sorted);
       })
       .catch(() => {});
 

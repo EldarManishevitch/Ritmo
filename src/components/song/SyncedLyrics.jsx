@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Volume2, Star, RotateCcw, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -27,49 +27,96 @@ export default function SyncedLyrics({
   onGrammarOpen,
 }) {
   const containerRef = useRef(null);
+  const lineRefs = useRef([]);
   const [karaokeResults, setKaraokeResults] = useState({});
-  
-  // Derived UI state directly from props — the backend (pipeline) marks ready when lyrics are
-  // fully translated and saved with zero-placeholder timestamps. Sync mode (seek/highlight) only
-  // activates when real >0 timestamps exist. This matches the template's static-first approach.
-  const hasSyncTimestamps = lines.some((l) => (l.start_seconds || 0) > 0);
-  const hasTranslations = lines.some((l) => l.english_translation);
-  const isSynced = lines.length > 0 && mode !== 'static' && hasSyncTimestamps;
+
+  // FIX 1: Sort lines by line_index — the DB returns records in insertion order
+  // which is not guaranteed to match line_index. Never use the raw unsorted array.
+  const sortedLines = useMemo(
+    () => [...lines].sort((a, b) => (a.line_index ?? 0) - (b.line_index ?? 0)),
+    [lines]
+  );
+
+  const hasSyncTimestamps = sortedLines.some((l) => (l.start_seconds || 0) > 0);
+  const hasTranslations = sortedLines.some((l) => l.english_translation);
+  const isSynced = sortedLines.length > 0 && mode !== 'static' && hasSyncTimestamps;
   const adjustedTime = currentTime + offset;
 
-  // Issue 2c: unsynced songs (ready_unsynced / static) have start_seconds=0 on
-  // every line — the real-timestamp loop finds no active line. Fall back to
-  // time-based estimation: divide duration evenly across lines.
-  const allZeroTimestamps = lines.length > 0 && lines.every((l) => (l.start_seconds || 0) === 0);
-  const useEstimatedSync = !isSynced && allZeroTimestamps && duration > 0 && lines.length > 0;
+  const allZeroTimestamps = sortedLines.length > 0 && sortedLines.every((l) => (l.start_seconds || 0) === 0);
+  const useEstimatedSync = !isSynced && allZeroTimestamps && duration > 0 && sortedLines.length > 0;
 
-  let activeIndex = -1;
-  if (isSynced) {
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      if (line.start_seconds <= adjustedTime && adjustedTime < (line.end_seconds || line.start_seconds + 5)) {
-        activeIndex = i;
-      }
-    }
-    if (activeIndex === -1 && lines.length && adjustedTime >= lines[0].start_seconds) {
-      for (let i = lines.length - 1; i >= 0; i--) {
-        if (adjustedTime >= lines[i].start_seconds) { activeIndex = i; break; }
-      }
-    }
-  } else if (useEstimatedSync) {
-    const secondsPerLine = duration / lines.length;
-    activeIndex = Math.min(lines.length - 1, Math.floor(adjustedTime / secondsPerLine));
-  }
-
-  const activeLineId = activeIndex >= 0 ? (lines[activeIndex]?.id || `line-${activeIndex}`) : null;
+  // FIX 2: Active line is monotonically increasing during normal playback.
+  // Only moves backward when the user seeked (currentTime jumped back > 2s).
+  const activeLineRef = useRef(-1);
+  const lastTimeRef = useRef(0);
+  const [activeLineIndex, setActiveLineIndex] = useState(-1);
 
   useEffect(() => {
-    if ((!isSynced && !useEstimatedSync) || !activeLineId || !containerRef.current) return;
-    const el = containerRef.current.querySelector(`[data-line-id="${activeLineId}"]`);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (!sortedLines.length || (!isSynced && !useEstimatedSync)) return;
+
+    let newIdx = activeLineRef.current;
+    const lastTime = lastTimeRef.current;
+    const userSeekedBackward = lastTime - adjustedTime > 2;
+    lastTimeRef.current = adjustedTime;
+
+    if (userSeekedBackward) {
+      // Full rescan from beginning — user jumped back
+      newIdx = sortedLines.findIndex((line, i) => {
+        const next = sortedLines[i + 1];
+        const start = line.start_seconds || 0;
+        if (adjustedTime < start) return false;
+        if (!next) return true;
+        const nextStart = next.start_seconds || 0;
+        return !nextStart || adjustedTime < nextStart;
+      });
+      if (newIdx === -1) newIdx = 0;
+    } else {
+      // Forward-only scan from current position
+      const startScan = Math.max(0, activeLineRef.current);
+      if (isSynced) {
+        for (let i = startScan; i < sortedLines.length; i++) {
+          const line = sortedLines[i];
+          const nextLine = sortedLines[i + 1];
+          if (line.start_seconds > 0) {
+            if (adjustedTime >= line.start_seconds) {
+              if (!nextLine || !nextLine.start_seconds || adjustedTime < nextLine.start_seconds) {
+                newIdx = i;
+                break;
+              }
+            }
+          }
+        }
+      } else if (useEstimatedSync) {
+        const secondsPerLine = duration / sortedLines.length;
+        newIdx = Math.min(Math.floor(adjustedTime / secondsPerLine), sortedLines.length - 1);
+      }
     }
-  }, [activeLineId, isSynced, useEstimatedSync]);
+
+    if (newIdx !== activeLineRef.current) {
+      activeLineRef.current = newIdx;
+      setActiveLineIndex(newIdx);
+    }
+  }, [adjustedTime, sortedLines, isSynced, useEstimatedSync, duration]);
+
+  // FIX 3: Debounced scrollIntoView — only fires when activeLineIndex changes,
+  // and only if the active line is not already visible in the scroll container.
+  useEffect(() => {
+    const el = lineRefs.current[activeLineIndex];
+    if (!el) return;
+
+    const container = containerRef.current;
+    if (container) {
+      const elRect = el.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      const margin = 40;
+      const isVisible =
+        elRect.top >= containerRect.top + margin &&
+        elRect.bottom <= containerRect.bottom - margin;
+      if (isVisible) return;
+    }
+
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [activeLineIndex]);
 
   const handleKaraokeResult = (lineId, result) => {
     setKaraokeResults((prev) => ({ ...prev, [lineId]: result }));
@@ -136,7 +183,7 @@ export default function SyncedLyrics({
     });
   };
 
-  if (!lines.length) {
+  if (!sortedLines.length) {
     if (loading) {
       return (
         <div className="h-full overflow-y-auto px-4 py-6 space-y-3 no-scrollbar">
@@ -157,9 +204,9 @@ export default function SyncedLyrics({
   }
 
   return (
-    <div ref={containerRef} className={`overflow-y-auto px-4 py-6 space-y-3 no-scrollbar ${lines.length > 40 ? 'max-h-[560px]' : 'h-full'}`}>
+    <div ref={containerRef} className={`overflow-y-auto px-4 py-6 space-y-3 no-scrollbar ${sortedLines.length > 40 ? 'max-h-[560px]' : 'h-full'}`}>
       {/* Static mode banner + manual resync */}
-      {mode === 'static' && lines.length > 0 && !hasSyncTimestamps && (
+      {mode === 'static' && sortedLines.length > 0 && !hasSyncTimestamps && (
         <div className="mb-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 flex items-start justify-between gap-2">
           <div className="text-xs">
             <p className="font-semibold text-amber-700">📄 Static lyrics</p>
@@ -189,7 +236,7 @@ export default function SyncedLyrics({
       )}
 
       {/* Sync banner — only when timestamps are actively pending (not in estimated mode) */}
-      {!hasSyncTimestamps && !useEstimatedSync && lines.length > 0 && (
+      {!hasSyncTimestamps && !useEstimatedSync && sortedLines.length > 0 && (
         <div className="mb-3 rounded-lg bg-orange-50 border border-orange-200 px-3 py-2 flex items-start gap-2">
           <Loader2 className="h-4 w-4 text-orange-600 mt-0.5 animate-spin flex-shrink-0" />
           <div className="text-xs">
@@ -200,7 +247,7 @@ export default function SyncedLyrics({
       )}
 
       {/* Translation banner */}
-      {!hasTranslations && lines.length > 0 && (
+      {!hasTranslations && sortedLines.length > 0 && (
         <div className="mb-3 rounded-lg bg-purple-50 border border-purple-200 px-3 py-2 flex items-start gap-2">
           <Loader2 className="h-4 w-4 text-purple-600 mt-0.5 animate-spin flex-shrink-0" />
           <div className="text-xs">
@@ -210,8 +257,8 @@ export default function SyncedLyrics({
         </div>
       )}
 
-      {lines.map((line, idx) => {
-        const active = (isSynced || useEstimatedSync) && idx === activeIndex;
+      {sortedLines.map((line, idx) => {
+        const active = (isSynced || useEstimatedSync) && idx === activeLineIndex;
         const isInstrumental = !line.spanish_text || line.spanish_text.trim().length < 2;
         const lineKey = line.id || `line-${idx}`;
         const karaokeResult = karaokeResults[lineKey];
@@ -229,6 +276,7 @@ export default function SyncedLyrics({
         return (
           <motion.div
             key={lineKey}
+            ref={(el) => { lineRefs.current[idx] = el; }}
             data-line-id={lineKey}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}

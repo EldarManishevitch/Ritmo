@@ -45,7 +45,7 @@ export default function Lesson() {
   useEffect(() => {
     if (!initialLesson) return;
     setLesson(initialLesson);
-    setLines(initialLesson._lines || []);
+    setLines([...(initialLesson._lines || [])].sort((a, b) => (a.line_index ?? 0) - (b.line_index ?? 0)));
     if (initialLesson.completed) {
       setStep(3);
       setResult({ alreadyCompleted: true });
