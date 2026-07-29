@@ -9,6 +9,7 @@ import GrammarInsight from '@/components/song/GrammarInsight';
 export default function SyncedLyrics({
   lines = [],
   currentTime = 0,
+  duration = 0,
   offset = 0,
   mode = 'synced',
   displayMode = 'both',
@@ -36,6 +37,12 @@ export default function SyncedLyrics({
   const isSynced = lines.length > 0 && mode !== 'static' && hasSyncTimestamps;
   const adjustedTime = currentTime + offset;
 
+  // Issue 2c: unsynced songs (ready_unsynced / static) have start_seconds=0 on
+  // every line — the real-timestamp loop finds no active line. Fall back to
+  // time-based estimation: divide duration evenly across lines.
+  const allZeroTimestamps = lines.length > 0 && lines.every((l) => (l.start_seconds || 0) === 0);
+  const useEstimatedSync = !isSynced && allZeroTimestamps && duration > 0 && lines.length > 0;
+
   let activeIndex = -1;
   if (isSynced) {
     for (let i = 0; i < lines.length; i++) {
@@ -49,17 +56,20 @@ export default function SyncedLyrics({
         if (adjustedTime >= lines[i].start_seconds) { activeIndex = i; break; }
       }
     }
+  } else if (useEstimatedSync) {
+    const secondsPerLine = duration / lines.length;
+    activeIndex = Math.min(lines.length - 1, Math.floor(adjustedTime / secondsPerLine));
   }
 
   const activeLineId = activeIndex >= 0 ? (lines[activeIndex]?.id || `line-${activeIndex}`) : null;
 
   useEffect(() => {
-    if (!isSynced || !activeLineId || !containerRef.current) return;
+    if ((!isSynced && !useEstimatedSync) || !activeLineId || !containerRef.current) return;
     const el = containerRef.current.querySelector(`[data-line-id="${activeLineId}"]`);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [activeLineId, isSynced]);
+  }, [activeLineId, isSynced, useEstimatedSync]);
 
   const handleKaraokeResult = (lineId, result) => {
     setKaraokeResults((prev) => ({ ...prev, [lineId]: result }));
@@ -167,8 +177,19 @@ export default function SyncedLyrics({
         </div>
       )}
 
-      {/* Sync banner */}
-      {!hasSyncTimestamps && lines.length > 0 && (
+      {/* Estimated sync badge — unsynced songs use time-based line estimation */}
+      {useEstimatedSync && (
+        <div className="mb-3 rounded-lg bg-blue-50 border border-blue-200 px-3 py-2 flex items-start gap-2">
+          <span className="text-sm flex-shrink-0">⚡</span>
+          <div className="text-xs">
+            <p className="font-semibold text-blue-700">Estimated sync</p>
+            <p className="text-blue-600/80 mt-0.5">Approximate line timing — no exact timestamps found for this song. Read along and tap words to learn.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Sync banner — only when timestamps are actively pending (not in estimated mode) */}
+      {!hasSyncTimestamps && !useEstimatedSync && lines.length > 0 && (
         <div className="mb-3 rounded-lg bg-orange-50 border border-orange-200 px-3 py-2 flex items-start gap-2">
           <Loader2 className="h-4 w-4 text-orange-600 mt-0.5 animate-spin flex-shrink-0" />
           <div className="text-xs">
@@ -190,7 +211,7 @@ export default function SyncedLyrics({
       )}
 
       {lines.map((line, idx) => {
-        const active = isSynced && idx === activeIndex;
+        const active = (isSynced || useEstimatedSync) && idx === activeIndex;
         const isInstrumental = !line.spanish_text || line.spanish_text.trim().length < 2;
         const lineKey = line.id || `line-${idx}`;
         const karaokeResult = karaokeResults[lineKey];

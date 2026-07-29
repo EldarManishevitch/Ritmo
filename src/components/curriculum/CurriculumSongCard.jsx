@@ -56,6 +56,5 @@ export default function CurriculumSongCard({ song }) {
     </div>
   );
 
-  if (!isReady) return card;
   return <Link to={`/song/${song.id}`}>{card}</Link>;
 }

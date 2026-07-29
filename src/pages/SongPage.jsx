@@ -83,6 +83,7 @@ export default function SongPage() {
   const [retryCount, setRetryCount] = useState(0);
   const [tier1Progress, setTier1Progress] = useState(0);
   const [audioSlow, setAudioSlow] = useState(false);
+  const [generationTimedOut, setGenerationTimedOut] = useState(false);
   const playerContainerId = retryCount > 0 ? `yt-player-r${retryCount}` : 'yt-player';
 
   const inProgress = song ? ['pending', 'fetching_lyrics', 'translating'].includes(song.sync_status) : false;
@@ -110,8 +111,14 @@ export default function SongPage() {
         setAutoSyncAttempted(false);
         recordSongView(s);
 
-        // Never auto-re-trigger the pipeline here — it runs end-to-end in one execution.
-        // The Realtime subscription handles progressive UI updates as lines appear.
+        // Auto-trigger the lyrics pipeline for catalog songs seeded as "pending"
+        // or songs that previously failed. The pipeline runs end-to-end in one
+        // execution; the realtime subscription streams progressive line updates.
+        // Do NOT re-trigger if already "fetching_lyrics" or "translating" — it's running.
+        if (s.sync_status === 'pending' || s.sync_status === 'failed') {
+          console.log('Auto-triggering lyrics pipeline for', s.sync_status, 'song');
+          generateLyrics({ songId: id }).catch(() => {});
+        }
       })
       .catch(() => { setPendingSong(false); });
 
@@ -276,6 +283,17 @@ export default function SongPage() {
     }, timeout);
     return () => clearTimeout(timer);
   }, [ready, audioFailed, retryCount]);
+
+  // Generation timeout: if the lyrics pipeline is still running after 45s,
+  // surface a retry prompt instead of leaving the user staring at a spinner.
+  useEffect(() => {
+    if (!inProgress) {
+      setGenerationTimedOut(false);
+      return;
+    }
+    const timer = setTimeout(() => setGenerationTimedOut(true), 45000);
+    return () => clearTimeout(timer);
+  }, [inProgress]);
 
   // Tier 1 determinate progress bar (0→90% while loading, 100% when ready)
   useEffect(() => {
@@ -482,6 +500,19 @@ export default function SongPage() {
             </Button>
           </div>
         </div>
+      ) : generationTimedOut ? (
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center">
+          <p className="text-sm font-medium text-foreground">This song is taking longer than expected.</p>
+          <p className="text-xs text-muted-foreground max-w-[280px]">
+            The lyrics pipeline is still working. Try refreshing the page, or retry below.
+          </p>
+          <Button size="sm" onClick={() => {
+            setGenerationTimedOut(false);
+            generateLyrics({ songId: id }).catch(() => {});
+          }}>
+            <RefreshCw className="h-4 w-4 mr-1" /> Retry
+          </Button>
+        </div>
       ) : (
         <>
           {/* Lyrics status indicator */}
@@ -630,6 +661,7 @@ export default function SongPage() {
                     <SyncedLyrics
                       lines={filteredLines}
                       currentTime={currentTime}
+                      duration={duration}
                       offset={song.sync_offset_seconds || 0}
                       mode={mode}
                       displayMode={displayMode}

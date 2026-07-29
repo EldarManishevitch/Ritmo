@@ -77,25 +77,30 @@ export function useYouTubePlayer(videoId, containerId) {
     };
   }, [videoId, containerId]);
 
+  // rAF loop: START on play (state 1), PAUSE on pause/buffer (state 2/3),
+  // RESUME on play again, STOP on unmount. Throttled to 250ms reads.
+  // Raw YT.Player API — getCurrentTime() is synchronous (returns a number).
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || !isPlaying) return;
     let raf;
     let lastReadAt = 0;
     const tick = () => {
-      raf = requestAnimationFrame(tick);
-      // Keep the rAF loop alive (vsync) but only read getCurrentTime() every 250ms
-      const now = performance.now();
-      if (now - lastReadAt < 250) return;
-      lastReadAt = now;
-      try {
-        if (playerRef.current?.getCurrentTime) {
-          setCurrentTime(playerRef.current.getCurrentTime());
+      // Guard: if the player ref is null (destroyed mid-loop), keep rAF alive
+      // but skip the read — the effect cleanup will cancel on unmount.
+      if (playerRef.current?.getCurrentTime) {
+        const now = performance.now();
+        if (now - lastReadAt >= 250) {
+          lastReadAt = now;
+          try {
+            setCurrentTime(playerRef.current.getCurrentTime());
+          } catch { /* noop */ }
         }
-      } catch { /* noop */ }
+      }
+      raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [ready]);
+  }, [ready, isPlaying]);
 
   const seekTo = useCallback((seconds) => {
     try { playerRef.current?.seekTo(Math.max(0, seconds), true); } catch { /* noop */ }
